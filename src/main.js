@@ -8,9 +8,8 @@ const worldH    = 8192;
 const viewW     = 1280;
 const viewH     = 720;
 
-// =====================
 //   PARAMETRY AUTA
-// =====================
+
 let CAR_WIDTH = 60;
 let CAR_HEIGHT = 112;
 let wheelBase = 104; // rozstaw osi (px)
@@ -18,24 +17,22 @@ let carMass = 1200; // masa auta w kg
 let carDragCoefficient = 0.32; // współczynnik oporu aerodynamicznego (Cx)
 let carFrontalArea = 2.2; // powierzchnia czołowa auta w m^2
 let airDensity = 1.225; // gęstość powietrza (kg/m^3)
-let rollingResistance = 0.015; // współczynnik oporu toczenia
+let rollingResistance = 5; // współczynnik oporu toczenia
 
-// =====================
 //   PARAMETRY JAZDY
-// =====================
+
 let MAX_STEER_DEG   = 21; // maksymalny kąt skrętu kół (stopnie)
 let STEER_SPEED_DEG = 44; // szybkość skręcania kół (stopnie/sek)
 let STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
 let accel           = 1000; // przyspieszenie
 let maxSpeed        = 800; // maksymalna prędkość
 
-// =====================
 //   PARAMETRY DRIFTU / POŚLIZGU
-// =====================
+
 let slipBase = 700; // bazowa siła poślizgu
-let SLIP_START_SPEED = 0.7 * maxSpeed; // próg prędkości, od której zaczyna się poślizg
-let SLIP_STEER_THRESHOLD_RATIO = 0.5; // próg skrętu (procent maxSteer)
-let sideFrictionMultiplier = 2; // SIŁA tłumienia bocznego driftu (im większa, tym szybciej znika poślizg)
+let SLIP_START_SPEED = 0.6 * maxSpeed; // próg prędkości, od której zaczyna się poślizg
+let SLIP_STEER_THRESHOLD_RATIO = 0.3; // próg skrętu (procent maxSteer)
+let sideFrictionMultiplier = 3; // SIŁA tłumienia bocznego driftu (im większa, tym szybciej znika poślizg)
 let obstacleBounce = 0.25; // SIŁA odbicia od przeszkody/ściany (0 = brak odbicia, 1 = pełne odbicie)
 const terrainGripMultiplier = { 'asphalt': 1.0, 'grass': 0.85, 'gravel': 0.6, 'water': 0.2 };
 
@@ -51,7 +48,6 @@ let v_x = 0; // prędkość wzdłuż auta (przód/tył)
 let v_y = 0; // prędkość boczna (drift)
 let carAngle = 0; // orientacja auta (car.rotation)
 let carX, carY; // pozycja auta
-
 
 let trackTiles = [];
 let fpsText;
@@ -76,7 +72,7 @@ const config = {
 };
 
 async function startGame() {
-  worldData = await loadSVGPhaserWorld('assets/SCENE_1.svg', worldH, 256);
+  worldData = await loadSVGPhaserWorld('assets/levels/scene_1.svg', worldH, 256);
   new Phaser.Game(config);
 }
 
@@ -90,7 +86,7 @@ function preload() {
     cropped.getContext('2d').drawImage(tile.canvas, 0, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
     this.textures.addCanvas(tile.id, cropped);
   }
-  this.load.image('car', 'assets/car.png');
+  this.load.image('car', 'assets/images/car.png');
 }
 
 function create() {

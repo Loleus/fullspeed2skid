@@ -41,9 +41,9 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
 
   // 3. Załaduj wszystkie obrazy przed rasteryzacją
   const [bgImg, asphaltImg, cobblestoneImg] = await Promise.all([
-    loadImage(`./assets/images/${bgTexture}.jpg`).catch(() => null),
-    loadImage('./assets/images/asphalt.jpg').catch(() => null),
-    loadImage('./assets/images/cobblestone.jpg').catch(() => null)
+    loadImage(`assets/images/${bgTexture}.jpg`).catch(() => null),
+    loadImage('assets/images/asphalt.jpg').catch(() => null),
+    loadImage('assets/images/cobblestone.jpg').catch(() => null)
   ]);
   const obstacleTextureCache = {};
   // console.log('[SVG LOADER] Załadowano tekstury:', { bgImg, asphaltImg, cobblestoneImg });
@@ -116,7 +116,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
       let texImg = obstacleTextureCache[texName];
       if (!texImg) {
         try {
-          texImg = await loadImage(`./assets/images/${texName}.jpg`);
+          texImg = await loadImage(`assets/images/${texName}.jpg`);
           obstacleTextureCache[texName] = texImg;
         } catch {
           texImg = null;

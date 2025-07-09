@@ -72,7 +72,7 @@ const config = {
 };
 
 async function startGame() {
-  worldData = await loadSVGPhaserWorld('assets/levels/scene_1.svg', worldH, 256);
+  worldData = await loadSVGPhaserWorld('./assets/levels/scene_1.svg', worldH, 256);
   new Phaser.Game(config);
 }
 

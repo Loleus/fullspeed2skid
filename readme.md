@@ -1,7 +1,5 @@
 # Full Speed 2 Skid
 
-**Full Speed 2 Skid** to dynamiczna gra wyścigowa 2D z realistyczną fizyką jazdy, poślizgami i różnymi nawierzchniami. Sterujesz autem z widoku z góry, walcząc z oporem powietrza, poślizgiem i przeszkodami na trasie.
-
 ## Sterowanie
 - Strzałka w górę: przyspieszenie
 - Strzałka w dół: hamowanie / cofanie

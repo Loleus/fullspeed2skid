@@ -4,7 +4,7 @@ html, body {
     width: 100vw;
     height: 100vh;
     overflow: hidden;
-    background: #222;
+    background: #000;
   }
   body {
     display: flex;
@@ -21,7 +21,7 @@ html, body {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     box-shadow: 0 0 32px #000a;
-    background: #222;
+    background: #000;
     transition: width 0.2s, height 0.2s;
   }
   /* Fullscreen: canvas wypełnia cały ekran */
@@ -34,3 +34,40 @@ html, body {
       max-height: 100vh;
     }
   }
+
+/* Ekran ładowania */
+.loading-overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s;
+  opacity: 1;
+}
+.loading-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.loading-text {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Arial, sans-serif;
+  font-size: 25px;
+  color: black;
+}

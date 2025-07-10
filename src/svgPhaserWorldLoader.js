@@ -35,7 +35,6 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
     const id = el.id || '';
     if (!id && (fill === 'none' || fillOpacity === '0')) {
       el.parentNode.removeChild(el);
-      console.log('[SVG LOADER] Usunięto przezroczysty element bez id:', el);
     }
   });
 
@@ -211,7 +210,6 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
       tiles.push({ x: tx * tileSize, y: ty * tileSize, canvas: tileCanvas, id: `tile_${tx}_${ty}` });
     }
   }
-  console.log('[SVG LOADER] Utworzono kafle:', tiles.length);
 
   // 5. Pozycja startowa
   let startPos = { x: worldSize / 2, y: worldSize / 2 };
@@ -272,11 +270,9 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
  * @returns {Promise<string>} - klucz tekstury Phaser
  */
 export function createMinimapTextureFromSVG(scene, svgUrl, outputSize = 128) {
-  console.log('[MINIMAPA] Start generowania minimapy z SVG:', svgUrl);
   return createMinimapFromSVG(svgUrl, outputSize).then(canvas => {
     const key = 'minimap-' + Date.now();
     scene.textures.addCanvas(key, canvas);
-    console.log('[MINIMAPA] Zarejestrowano teksturę minimapy:', key);
     return key;
   });
 }
@@ -322,7 +318,6 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
         img.onload = () => {
           ctx.drawImage(img, 0, 0, outputSize, outputSize);
           URL.revokeObjectURL(url);
-          console.log('[MINIMAPA] Canvas minimapy wygenerowany.');
           resolve(canvas);
         };
         img.onerror = (e) => {
@@ -331,7 +326,6 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
         img.src = url;
       })
       .catch(error => {
-        console.error('Minimap creation failed:', error);
         const fallback = document.createElement('canvas');
         fallback.width = fallback.height = 128;
         const ctx = fallback.getContext('2d');

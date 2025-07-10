@@ -1,7 +1,4 @@
 // main.js
-
-
-throw new Error('TEST ERROR MAIN.JS');  
 import { loadSVGPhaserWorld, createMinimapTextureFromSVG } from './svgPhaserWorldLoader.js';
 
 console.log('[DEBUG] main.js startuje');
@@ -185,18 +182,15 @@ async function create() {
 
   // ===================== MINIMAPA: inicjalizacja =====================
   if (minimapa) {
-    console.log('[DEBUG] startuje blok minimapy');
     createMinimapTextureFromSVG(this, 'assets/levels/scene_1.svg', minimapSize).then(key => {
-      console.log('[DEBUG] then minimapy');
       minimapKey = key;
-      console.log('[MINIMAPA] minimapKey:', minimapKey);
-      console.log('[MINIMAPA] tekstura istnieje?', this.textures.exists(minimapKey));
-      minimapImage = this.add.image(minimapMargin + minimapSize/2, minimapMargin + minimapSize/2, minimapKey)
+      // Przesunięcie minimapy pod licznik FPS (np. 50px od góry)
+      const minimapOffsetX = minimapMargin;
+      const minimapOffsetY = minimapMargin + 50;
+      minimapImage = this.add.image(minimapOffsetX + minimapSize/2, minimapOffsetY + minimapSize/2, minimapKey)
         .setScrollFactor(0)
         .setDepth(100);
-      console.log('[MINIMAPA] minimapImage dodany:', minimapImage);
       minimapOverlay = this.add.graphics().setScrollFactor(0).setDepth(101);
-      console.log('[MINIMAPA] minimapOverlay utworzony:', minimapOverlay);
     });
   }
   // ===================== /MINIMAPA =====================
@@ -450,12 +444,13 @@ function update(time, dt) {
   // ===================== MINIMAPA: rysowanie pozycji gracza =====================
   if (minimapa && minimapOverlay) {
     minimapOverlay.clear();
-    // Skalowanie pozycji samochodu względem świata SVG (przyjmujemy 1024x1024)
-    const px = Phaser.Math.Clamp(car.x, 0, minimapWorldSize);
-    const py = Phaser.Math.Clamp(car.y, 0, minimapWorldSize);
-    const carX = minimapMargin + (px / minimapWorldSize * minimapSize);
-    const carY = minimapMargin + (py / minimapWorldSize * minimapSize);
-    console.log('[MINIMAPA] car.x, car.y:', car.x, car.y, '-> minimapa:', carX, carY);
+    // Skalowanie pozycji samochodu względem świata gry (6144x6144)
+    const px = Phaser.Math.Clamp(car.x, 0, worldW);
+    const py = Phaser.Math.Clamp(car.y, 0, worldH);
+    const minimapOffsetX = minimapMargin;
+    const minimapOffsetY = minimapMargin + 50;
+    const carX = minimapOffsetX + (px / worldW * minimapSize);
+    const carY = minimapOffsetY + (py / worldH * minimapSize);
     minimapOverlay.fillStyle(0xff0000, 1);
     minimapOverlay.fillCircle(carX, carY, 3);
     minimapOverlay.lineStyle(1, 0xffffff, 1);

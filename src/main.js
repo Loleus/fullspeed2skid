@@ -1,7 +1,7 @@
 // main.js
 
 
-throw new Error('TEST ERROR MAIN.JS');
+throw new Error('TEST ERROR MAIN.JS');  
 import { loadSVGPhaserWorld, createMinimapTextureFromSVG } from './svgPhaserWorldLoader.js';
 
 console.log('[DEBUG] main.js startuje');

@@ -3,8 +3,8 @@
 import { loadSVGPhaserWorld } from './svgPhaserWorldLoader.js';
 
 const tileSize  = 256;
-const worldW    = 8192;
-const worldH    = 8192;
+const worldW    = 6144;
+const worldH    = 6144;
 const viewW     = 1280;
 const viewH     = 720;
 
@@ -53,9 +53,48 @@ let trackTiles = [];
 let fpsText;
 let carWidth = CAR_WIDTH, carHeight = CAR_HEIGHT;
 let worldData = null;
-let carCollisionRadius = 0.35 * Math.sqrt(CAR_WIDTH * CAR_WIDTH + CAR_HEIGHT * CAR_HEIGHT);
+let carCollisionRadius = 0.36 * Math.sqrt(CAR_WIDTH * CAR_WIDTH + CAR_HEIGHT * CAR_HEIGHT);
 let steerInput = 0; // wygładzony sygnał sterowania
 
+// --- EKRAN ŁADOWANIA ---
+let loadingOverlay, loadingCircle, loadingText;
+let loadingProgress = 0;
+let loadingFadeOut = false;
+// --- ZMIENNA DO OBSŁUGI UKRYWANIA LOADERA ---
+let loaderShouldHide = false;
+
+function showLoadingOverlay() {
+  // Tworzymy overlay na body (poza Phaserem, bo assety jeszcze się nie wgrały)
+  loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'loading-overlay';
+
+  // Koło
+  loadingCircle = document.createElement('div');
+  loadingCircle.className = 'loading-circle';
+
+  // Tekst procentowy
+  loadingText = document.createElement('div');
+  loadingText.className = 'loading-text';
+  loadingText.innerText = '0%';
+
+  loadingCircle.appendChild(loadingText);
+  loadingOverlay.appendChild(loadingCircle);
+  document.body.appendChild(loadingOverlay);
+}
+
+function setLoadingProgress(percent) {
+  loadingProgress = percent;
+  if (loadingText) loadingText.innerText = percent + '%';
+  if (percent >= 100 && !loadingFadeOut) {
+    loadingFadeOut = true;
+    loadingOverlay.style.opacity = '0';
+    setTimeout(() => {
+      if (loadingOverlay && loadingOverlay.parentNode) loadingOverlay.parentNode.removeChild(loadingOverlay);
+    }, 300);
+  }
+}
+
+showLoadingOverlay();
 
 const config = {
   type: Phaser.AUTO,
@@ -72,7 +111,19 @@ const config = {
 };
 
 async function startGame() {
-  worldData = await loadSVGPhaserWorld('assets/levels/scene_1.svg', worldH, 256);
+  // --- ŁADOWANIE Z POSTĘPEM ---
+  let svgPromise = loadSVGPhaserWorld('assets/levels/scene_1.svg', worldH, 256);
+  let fakeProgress = 0;
+  // Symulacja postępu (możesz podpiąć pod realne ładowanie assetów, jeśli masz callbacki)
+  let progressInterval = setInterval(() => {
+    if (fakeProgress < 90) {
+      fakeProgress++;
+      setLoadingProgress(fakeProgress);
+    }
+  }, 8);
+  worldData = await svgPromise;
+  setLoadingProgress(95);
+  clearInterval(progressInterval);
   new Phaser.Game(config);
 }
 
@@ -108,6 +159,10 @@ function create() {
     padding: { left: 8, right: 8, top: 4, bottom: 4 },
   }).setScrollFactor(0).setDepth(100);
   resetCarState(start);
+  // --- UKRYJ LOADER DOPIERO TERAZ ---
+  setTimeout(() => {
+    setLoadingProgress(100);
+  }, 0);
 }
 
 function resetCarState(start) {
@@ -354,4 +409,11 @@ function update(time, dt) {
     const fps = (1 / dt).toFixed(1);
     fpsText.setText('FPS: ' + fps);
   }
+}
+
+// --- REJESTRACJA SERVICE WORKERA DLA PWA ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js');
+  });
 }

@@ -263,6 +263,88 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   return { tiles, collisionTypeMap, getSurfaceTypeAt, obstaclePolys, startPos };
 }
 
+// ===================== MINIMAPA: generowanie tekstury z SVG =====================
+/**
+ * Tworzy minimapę na podstawie SVG i rejestruje ją jako teksturę Phaser.
+ * @param {Phaser.Scene} scene - scena Phaser, do której dodajemy teksturę
+ * @param {string} svgUrl - ścieżka do pliku SVG
+ * @param {number} outputSize - rozmiar minimapy (domyślnie 128)
+ * @returns {Promise<string>} - klucz tekstury Phaser
+ */
+export function createMinimapTextureFromSVG(scene, svgUrl, outputSize = 128) {
+  console.log('[MINIMAPA] Start generowania minimapy z SVG:', svgUrl);
+  return createMinimapFromSVG(svgUrl, outputSize).then(canvas => {
+    const key = 'minimap-' + Date.now();
+    scene.textures.addCanvas(key, canvas);
+    console.log('[MINIMAPA] Zarejestrowano teksturę minimapy:', key);
+    return key;
+  });
+}
+
+// Pomocnicza funkcja do generowania minimapy na canvasie (przeniesiona ze starej wersji)
+function createMinimapFromSVG(svgUrl, outputSize = 128) {
+  return new Promise((resolve, reject) => {
+    fetch(svgUrl)
+      .then(response => {
+        if (!response.ok) throw new Error(`Failed to load SVG: ${response.status}`);
+        return response.text();
+      })
+      .then(svgText => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const roadGroup = doc.querySelector('#ROAD');
+        if (!roadGroup) throw new Error('ROAD group not found in SVG');
+        const trackPaths = Array.from(roadGroup.querySelectorAll('path')).filter(pathElem => pathElem.id && pathElem.id.startsWith('TRACK_'));
+        if (!trackPaths.length) throw new Error('No TRACK_ path in ROAD group in SVG');
+
+        const canvas = document.createElement('canvas');
+        canvas.width = outputSize;
+        canvas.height = outputSize;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+        ctx.fillRect(0, 0, outputSize, outputSize);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0, 0, outputSize, outputSize);
+
+        let pathsSVG = '';
+        trackPaths.forEach(pathElem => {
+          pathsSVG += `<path d="${pathElem.getAttribute('d')}" fill="#111" stroke="none"/>`;
+        });
+        const scaledSVG = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+            ${pathsSVG}
+          </svg>
+        `;
+        const svgBlob = new Blob([scaledSVG], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(svgBlob);
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, outputSize, outputSize);
+          URL.revokeObjectURL(url);
+          console.log('[MINIMAPA] Canvas minimapy wygenerowany.');
+          resolve(canvas);
+        };
+        img.onerror = (e) => {
+          reject('Minimap image load error');
+        };
+        img.src = url;
+      })
+      .catch(error => {
+        console.error('Minimap creation failed:', error);
+        const fallback = document.createElement('canvas');
+        fallback.width = fallback.height = 128;
+        const ctx = fallback.getContext('2d');
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+        ctx.fillRect(0, 0, 128, 128);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.strokeRect(0, 0, 128, 128);
+        resolve(fallback);
+      });
+  });
+}
+// ===================== /MINIMAPA =====================
+
 // Pomocnicza: skalowanie ścieżki SVG (d) o podany mnożnik
 function scaleSvgPath(d, scale) {
   return d.replace(/([0-9.]+(?:e[\-+]?[0-9]+)?)/gi, (m) => parseFloat(m) * scale);

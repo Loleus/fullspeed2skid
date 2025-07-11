@@ -53,7 +53,7 @@ let trackTiles = [];
 let fpsText;
 let carWidth = CAR_WIDTH, carHeight = CAR_HEIGHT;
 let worldData = null;
-let carCollisionRadius = 0.36 * Math.sqrt(CAR_WIDTH * CAR_WIDTH + CAR_HEIGHT * CAR_HEIGHT);
+let carCollisionRadius = 0.39 * Math.sqrt(CAR_WIDTH * CAR_WIDTH + CAR_HEIGHT * CAR_HEIGHT);
 let steerInput = 0; // wygładzony sygnał sterowania
 
 // ===================== MINIMAPA: flaga włączająca minimapę =====================

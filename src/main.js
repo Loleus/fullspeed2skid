@@ -1,6 +1,8 @@
 // main.js
+import { loadSVGPhaserWorld, createMinimapTextureFromSVG } from './svgPhaserWorldLoader.js';
 
-import { loadSVGPhaserWorld } from './svgPhaserWorldLoader.js';
+console.log('[DEBUG] main.js startuje');
+console.log('[DEBUG] createMinimapTextureFromSVG:', createMinimapTextureFromSVG);
 
 const tileSize  = 256;
 const worldW    = 6144;
@@ -55,6 +57,19 @@ let carWidth = CAR_WIDTH, carHeight = CAR_HEIGHT;
 let worldData = null;
 let carCollisionRadius = 0.36 * Math.sqrt(CAR_WIDTH * CAR_WIDTH + CAR_HEIGHT * CAR_HEIGHT);
 let steerInput = 0; // wygładzony sygnał sterowania
+
+// ===================== MINIMAPA: flaga włączająca minimapę =====================
+let minimapa = true; // Ustaw na false, by wyłączyć minimapę
+// ===================== /MINIMAPA =====================
+
+// ===================== MINIMAPA: zmienne globalne =====================
+let minimapKey = null;
+let minimapImage = null;
+let minimapOverlay = null;
+const minimapSize = 128;
+const minimapMargin = 10;
+const minimapWorldSize = 1024; // Rozmiar świata SVG dla minimapy (dostosuj jeśli inny!)
+// ===================== /MINIMAPA =====================
 
 // --- EKRAN ŁADOWANIA ---
 let loadingOverlay, loadingCircle, loadingText;
@@ -140,7 +155,9 @@ function preload() {
   this.load.image('car', 'assets/images/car.png');
 }
 
-function create() {
+async function create() {
+  console.log('[DEBUG] Phaser create startuje');
+  console.log('[DEBUG] minimapa:', minimapa);
   const start = worldData.startPos;
   car = this.physics.add.sprite(start.x, start.y, 'car');
   car.setOrigin(0.5).setDepth(2);
@@ -159,10 +176,24 @@ function create() {
     padding: { left: 8, right: 8, top: 4, bottom: 4 },
   }).setScrollFactor(0).setDepth(100);
   resetCarState(start);
-  // --- UKRYJ LOADER DOPIERO TERAZ ---
   setTimeout(() => {
     setLoadingProgress(100);
   }, 0);
+
+  // ===================== MINIMAPA: inicjalizacja =====================
+  if (minimapa) {
+    createMinimapTextureFromSVG(this, 'assets/levels/scene_1.svg', minimapSize).then(key => {
+      minimapKey = key;
+      // Przesunięcie minimapy pod licznik FPS (np. 50px od góry)
+      const minimapOffsetX = minimapMargin;
+      const minimapOffsetY = minimapMargin + 50;
+      minimapImage = this.add.image(minimapOffsetX + minimapSize/2, minimapOffsetY + minimapSize/2, minimapKey)
+        .setScrollFactor(0)
+        .setDepth(100);
+      minimapOverlay = this.add.graphics().setScrollFactor(0).setDepth(101);
+    });
+  }
+  // ===================== /MINIMAPA =====================
 }
 
 function resetCarState(start) {
@@ -409,6 +440,23 @@ function update(time, dt) {
     const fps = (1 / dt).toFixed(1);
     fpsText.setText('FPS: ' + fps);
   }
+
+  // ===================== MINIMAPA: rysowanie pozycji gracza =====================
+  if (minimapa && minimapOverlay) {
+    minimapOverlay.clear();
+    // Skalowanie pozycji samochodu względem świata gry (6144x6144)
+    const px = Phaser.Math.Clamp(car.x, 0, worldW);
+    const py = Phaser.Math.Clamp(car.y, 0, worldH);
+    const minimapOffsetX = minimapMargin;
+    const minimapOffsetY = minimapMargin + 50;
+    const carX = minimapOffsetX + (px / worldW * minimapSize);
+    const carY = minimapOffsetY + (py / worldH * minimapSize);
+    minimapOverlay.fillStyle(0xff0000, 1);
+    minimapOverlay.fillCircle(carX, carY, 3);
+    minimapOverlay.lineStyle(1, 0xffffff, 1);
+    minimapOverlay.strokeCircle(carX, carY, 3);
+  }
+  // ===================== /MINIMAPA =====================
 }
 
 // --- REJESTRACJA SERVICE WORKERA DLA PWA ---

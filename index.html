@@ -23,6 +23,7 @@
 <body>
   <script type="module" src="src/main.js"></script>
   <script>
+    
   window.addEventListener('DOMContentLoaded', () => {
     // Phaser domyślnie tworzy <canvas> bez id, więc nadajemy mu id po utworzeniu gry
     const observer = new MutationObserver(() => {
@@ -34,6 +35,7 @@
     });
     observer.observe(document.body, { childList: true, subtree: true });
   });
+
   </script>
 </body>
 </html>

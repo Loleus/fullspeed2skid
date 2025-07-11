@@ -459,6 +459,6 @@ function update(time, dt) {
 // --- REJESTRACJA SERVICE WORKERA DLA PWA ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
+    navigator.serviceWorker.register('/service-worker.js');
   });
 }

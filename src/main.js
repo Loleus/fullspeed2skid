@@ -194,7 +194,23 @@ async function create() {
         .setScrollFactor(0)
         .setDepth(100);
       minimapOverlay = this.add.graphics().setScrollFactor(0).setDepth(101);
+
+      // --- DOPIERO TERAZ kamery i ignore! ---
+      const hudObjects = [fpsText, minimapImage, minimapOverlay];
+      this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+      this.cameras.main.ignore(hudObjects);
+      this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
+      this.hudCamera.setScroll(0, 0);
+      this.hudCamera.setRotation(0);
     });
+  } else {
+    // --- Bez minimapy: ignore po utworzeniu fpsText ---
+    const hudObjects = [fpsText];
+    this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+    this.cameras.main.ignore(hudObjects);
+    this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
+    this.hudCamera.setScroll(0, 0);
+    this.hudCamera.setRotation(0);
   }
   // ===================== /MINIMAPA =====================
 }
@@ -437,14 +453,16 @@ function update(time, dt) {
             .setOrigin(0)
             .setDepth(0);
           trackTiles.push(tile);
+          // --- IGNORUJ KAŻDY NOWY KAFEL NA HUD ---
+          if (this.hudCamera) this.hudCamera.ignore(tile);
         }
       }
     }
   }
-  // —— Licznik FPS
+  // —— Licznik FPS + info o zmianie kamery
   if (fpsText) {
     const fps = (1 / dt).toFixed(1);
-    fpsText.setText('FPS: ' + fps);
+    fpsText.setText(`FPS: ${fps}\nV - zmiana kamery`);
   }
 
   // ===================== MINIMAPA: rysowanie pozycji gracza =====================

@@ -6,6 +6,7 @@ const ASSETS = [
   '/fullspeed2skid/src/main.js',
   '/fullspeed2skid/src/phaser.js',
   '/fullspeed2skid/src/svgPhaserWorldLoader.js',
+  '/fullspeed2skid/src/fpvCamera.js',
   '/fullspeed2skid/assets/style/style.css',
   '/fullspeed2skid/assets/images/car.png',
   '/fullspeed2skid/assets/images/asphalt.jpg',

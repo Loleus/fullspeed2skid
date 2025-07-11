@@ -119,6 +119,10 @@ const config = {
     width: viewW,
     height: viewH
   },
+  render: {
+    pixelArt: true,
+    antialias: false
+  },
   physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false }},
   scene: { preload, create, update }
 };

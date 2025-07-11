@@ -1,9 +1,6 @@
 // main.js
 import { loadSVGPhaserWorld, createMinimapTextureFromSVG } from './svgPhaserWorldLoader.js';
 
-console.log('[DEBUG] main.js startuje');
-console.log('[DEBUG] createMinimapTextureFromSVG:', createMinimapTextureFromSVG);
-
 const tileSize  = 256;
 const worldW    = 6144;
 const worldH    = 6144;
@@ -462,6 +459,6 @@ function update(time, dt) {
 // --- REJESTRACJA SERVICE WORKERA DLA PWA ---
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js');
+    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
   });
 }

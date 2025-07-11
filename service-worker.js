@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v1';
+const CACHE_NAME = 'fullspeed2skid-v3';
 const ASSETS = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   '/src/main.js',
   '/src/phaser.js',
   '/src/svgPhaserWorldLoader.js',
+  '/src/fpvCamera.js',
   '/assets/style/style.css',
   '/assets/images/car.png',
   '/assets/images/asphalt.jpg',

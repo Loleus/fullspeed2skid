@@ -1,5 +1,6 @@
 // main.js
 import { loadSVGPhaserWorld, createMinimapTextureFromSVG } from './svgPhaserWorldLoader.js';
+import { FPVCamera } from './fpvCamera.js';
 
 const tileSize  = 256;
 const worldW    = 6144;
@@ -156,7 +157,9 @@ async function create() {
   console.log('[DEBUG] Phaser create startuje');
   console.log('[DEBUG] minimapa:', minimapa);
   const start = worldData.startPos;
-  car = this.physics.add.sprite(start.x, start.y, 'car');
+  // Przesunięcie startu auta w dół świata, by auto było 1/5 od dołu ekranu
+  const startYOffset = viewH * 3/10; // np. 3/10 wysokości ekranu (możesz zmienić)
+  car = this.physics.add.sprite(start.x, start.y + startYOffset, 'car');
   car.setOrigin(0.5).setDepth(2);
   car.body.allowRotation = false;
   car.setDisplaySize(CAR_WIDTH, CAR_HEIGHT);
@@ -166,6 +169,9 @@ async function create() {
   this.cameras.main.startFollow(car, true, 0.27, 0.27);
   this.cameras.main.centerOn(car.x, car.y);
   cursors = this.input.keyboard.createCursorKeys();
+  // Dodaj obsługę klawisza V do przełączania FPV
+  vKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.V);
+  fpvCamera = new FPVCamera(this, car);
   fpsText = this.add.text(10, 10, 'FPS: 0', {
     font: '20px monospace',
     fill: '#fff',
@@ -194,8 +200,9 @@ async function create() {
 }
 
 function resetCarState(start) {
+  const startYOffset = viewH * 3/10; // ten sam offset co wyżej
   carX = start.x;
-  carY = start.y;
+  carY = start.y + startYOffset;
   carAngle = -Math.PI / 2; // Przód auta do góry ekranu (oś Y)
   v_x = 0;
   v_y = 0;
@@ -290,8 +297,14 @@ function updateCarPhysics(dt, steerInput, throttle, params, surface) {
 
 let throttleLock = false; // blokada gazu po kolizji
 // let inertiaTimer = 0; // usunięte
+let fpvCamera = null;
+let vKey = null;
 function update(time, dt) {
   dt = dt / 1000;
+  // --- OBSŁUGA PRZEŁĄCZANIA FPV ---
+  if (vKey && Phaser.Input.Keyboard.JustDown(vKey)) {
+    fpvCamera.toggle();
+  }
   // --- 1) Napęd i tarcie ---
   let throttle = 0;
   if (!throttleLock) {
@@ -317,7 +330,6 @@ function update(time, dt) {
     steerReturnSpeed: steerReturnSpeed,
     accel: accel,
     maxSpeed: localMaxSpeed, // <-- tu!
-    // dragCoef: dragCoef, // już niepotrzebny, jeśli przechodzisz na nowy model
     wheelBase: wheelBase,
     grip: grip,
     carMass: carMass,
@@ -325,7 +337,6 @@ function update(time, dt) {
     carFrontalArea: carFrontalArea,
     airDensity: airDensity,
     rollingResistance: rollingResistance,
-    // inertiaTimer: inertiaTimer // przekazujemy timer do fizyki - usunięte
   };
 
   // --- Zapamiętaj pozycję auta przed ruchem ---
@@ -374,7 +385,6 @@ function update(time, dt) {
     car.x = carX;
     car.y = carY;
     throttleLock = true; // blokada gazu po kolizji z przeszkodą (jak po keyUp)
-    // inertiaTimer = 0.3; // po kolizji auto ślizga się swobodnie przez 0.3s - usunięte
   }
 
   // --- Kolizje z krawędziami świata po obrysie auta ---
@@ -402,7 +412,6 @@ function update(time, dt) {
     car.x = carX;
     car.y = carY;
     throttleLock = true; // blokada gazu po kolizji ze ścianą świata (jak po keyUp)
-    // inertiaTimer = 0.3; // po kolizji auto ślizga się swobodnie przez 0.3s - usunięte
   }
 
   // --- Dynamiczne dorysowywanie kafli świata (bez zmian) ---
@@ -454,11 +463,16 @@ function update(time, dt) {
     minimapOverlay.strokeCircle(carX, carY, 3);
   }
   // ===================== /MINIMAPA =====================
+
+  // --- AKTUALIZACJA FPV ---
+  if (fpvCamera && fpvCamera.isFPVActive()) {
+    fpvCamera.update(dt);
+  }
 }
 
 // --- REJESTRACJA SERVICE WORKERA DLA PWA ---
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js');
-  });
-}
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('/service-worker.js');
+//   });
+// }

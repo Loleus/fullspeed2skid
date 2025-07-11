@@ -1,21 +1,20 @@
-const CACHE_NAME = 'fullspeed2skid-v3';
+const CACHE_NAME = 'fullspeed2skid-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/src/main.js',
-  '/src/phaser.js',
-  '/src/svgPhaserWorldLoader.js',
-  '/src/fpvCamera.js',
-  '/assets/style/style.css',
-  '/assets/images/car.png',
-  '/assets/images/asphalt.jpg',
-  '/assets/images/grass.jpg',
-  '/assets/images/stone.jpg',
-  '/assets/images/water.jpg',
-  '/assets/images/cobblestone.jpg',
-  '/assets/images/fullspeed2skid.jpg',
-  '/assets/levels/scene_1.svg',
+  '/fullspeed2skid/',
+  '/fullspeed2skid/index.html',
+  '/fullspeed2skid/manifest.json',
+  '/fullspeed2skid/src/main.js',
+  '/fullspeed2skid/src/phaser.js',
+  '/fullspeed2skid/src/svgPhaserWorldLoader.js',
+  '/fullspeed2skid/assets/style/style.css',
+  '/fullspeed2skid/assets/images/car.png',
+  '/fullspeed2skid/assets/images/asphalt.jpg',
+  '/fullspeed2skid/assets/images/grass.jpg',
+  '/fullspeed2skid/assets/images/stone.jpg',
+  '/fullspeed2skid/assets/images/water.jpg',
+  '/fullspeed2skid/assets/images/cobblestone.jpg',
+  '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
+  '/fullspeed2skid/assets/levels/scene_1.svg',
   // Dodaj tu kolejne pliki jeśli będą potrzebne
 ];
 

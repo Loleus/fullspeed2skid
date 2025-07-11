@@ -377,9 +377,9 @@ function update(time, dt) {
   car.y = carY;
   car.rotation = carAngle + Math.PI / 2;
 
-  // --- Kolizje z przeszkodami (obstacle) – PO OKRĘGU ---
+  // --- Kolizje z przeszkodami (obstacle) – PO OKRĘGU + ŚRODEK ---
   let onObstacle = false;
-  const steps = 12;
+  const steps = 36; // więcej punktów na obwodzie
   for (let i = 0; i < steps; i++) {
     const angle = (Math.PI * 2 * i) / steps;
     const px = car.x + Math.cos(angle) * carCollisionRadius;
@@ -388,6 +388,10 @@ function update(time, dt) {
       onObstacle = true;
       break;
     }
+  }
+  // Dodaj sprawdzanie środka auta
+  if (!onObstacle && worldData.getSurfaceTypeAt(car.x, car.y) === 'obstacle') {
+    onObstacle = true;
   }
   if (onObstacle) {
     // Odbicie jak w modelu rowerowym:

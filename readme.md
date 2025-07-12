@@ -1,32 +1,30 @@
 # Full Speed 2 Skid
 
 ## Sterowanie
-- Strzałka w górę: przyspieszenie
-- Strzałka w dół: hamowanie / cofanie
-- Strzałka w lewo/prawo: skręt
+- **Strzałka w górę**: przyspieszenie
+- **Strzałka w dół**: hamowanie / cofanie
+- **Strzałka w lewo/prawo**: skręt
+- **V**: przełączanie między kamerą klasyczną a FPV
 
-## Główne cechy
-- Realistyczny model oporów: opór powietrza (aerodynamiczny), opór toczenia
-- Poślizgi i drift zależne od prędkości i skrętu
-- Różne nawierzchnie: asfalt, trawa, żwir, woda – każda z inną przyczepnością
-- Kolizje z przeszkodami i krawędziami świata
-- Dynamiczna kamera podążająca za autem
-- Łatwo modyfikowalne parametry auta i fizyki
+## Moduły w src/
 
-## Uruchomienie gry
-1. Otwórz plik `index.html` w przeglądarce (zalecany Chrome lub Firefox).
-2. Gra nie wymaga instalacji – wszystko działa lokalnie.
+### main.js
+Główny moduł gry - koordynuje wszystkie komponenty, obsługuje ładowanie, UI (FPS, loading screen), inicjalizację Phaser i główną pętlę gry.
 
-## Zmiana parametrów auta i fizyki
-W pliku `main.js` na początku znajdziesz sekcję z parametrami auta i fizyki, m.in.:
-- `carMass` – masa auta
-- `carDragCoefficient` – współczynnik oporu aerodynamicznego (Cx)
-- `carFrontalArea` – powierzchnia czołowa auta
-- `rollingResistance` – opór toczenia
-- `maxSpeed`, `accel` – maksymalna prędkość i przyspieszenie
-- `slipBase`, `sideFrictionMultiplier` – parametry poślizgu
+### car.js
+Moduł auta z fizyką - zawiera klasę `Car` z realistycznym modelem fizyki, sterowaniem, kolizjami (elipsa), driftem/poślizgiem, oporami aerodynamicznymi i toczenia. Parametry auta (masa, prędkość, skręt) są łatwo konfigurowalne.
 
-Możesz dowolnie je zmieniać i testować różne ustawienia.
+### world.js
+Moduł świata - klasa `World` zarządza ładowaniem SVG, dynamicznym rysowaniem kafli, minimapą, typami nawierzchni (asfalt, trawa, żwir, woda) i pozycją startową. Zawiera statyczną metodę `loadWorld()` do ładowania poziomów.
 
-## Autor
-Projekt edukacyjny – modyfikuj, baw się i testuj własne pomysły!
+### cameras.js
+Główny moduł kamer - klasa `CameraManager` zarządza przełączaniem między kamerami, inicjalizacją i aktualizacją. Centralne miejsce kontroli systemu kamer.
+
+### classicCamera.js
+Moduł kamery klasycznej - klasa `ClassicCamera` obsługuje tradycyjną kamerę podążającą za autem z konfigurowalnymi parametrami śledzenia i granicami świata.
+
+### fpvCamera.js
+Moduł kamery FPV - klasa `FPVCamera` implementuje kamerę pierwszej osoby z opóźnionym śledzeniem, rotacją i efektami helikoptera nad autem.
+
+### svgPhaserWorldLoader.js
+Moduł ładowania poziomów - parsuje pliki SVG, tworzy tekstury kafli, generuje minimapę i zwraca dane świata z informacjami o nawierzchni i przeszkodach.

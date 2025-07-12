@@ -34,6 +34,10 @@ export class Car {
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
     this.steerSpeed = Phaser.Math.DegToRad(this.STEER_SPEED_DEG);
     this.steerReturnSpeed = Phaser.Math.DegToRad(this.STEER_RETURN_SPEED_DEG);
+    // Prekalkulacja stałych do oporu powietrza
+    this._dragConst = 0.5 * this.carDragCoefficient * this.carFrontalArea * this.airDensity;
+    // Prekalkulacja progu poślizgu
+    this._slipSteerThreshold = this.SLIP_STEER_THRESHOLD_RATIO * this.maxSteer;
     
     // Stan auta
     this.v_x = 0; // prędkość wzdłuż auta (przód/tył)
@@ -91,31 +95,15 @@ export class Car {
     let grip = this.terrainGripMultiplier[surface] ?? 1.0;
     let localMaxSpeed = this.maxSpeed * grip;
     
-    // Parametry auta
-    let params = {
-      maxSteer: this.maxSteer,
-      steerSpeed: this.steerSpeed,
-      steerReturnSpeed: this.steerReturnSpeed,
-      accel: this.accel,
-      maxSpeed: localMaxSpeed,
-      wheelBase: this.wheelBase,
-      grip: grip,
-      carMass: this.carMass,
-      carDragCoefficient: this.carDragCoefficient,
-      carFrontalArea: this.carFrontalArea,
-      airDensity: this.airDensity,
-      rollingResistance: this.rollingResistance,
-    };
-    
     // Sterowanie skrętem
     if (Math.abs(steerInput) > 0.01) {
-      this.steerAngle += steerInput * params.steerSpeed * dt;
-      this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -params.maxSteer, params.maxSteer);
+      this.steerAngle += steerInput * this.steerSpeed * dt;
+      this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);
       if (speedAbs > 1) {
-        let factor = speedAbs / params.maxSpeed;
-        let steerReturn = params.steerReturnSpeed * factor;
+        let factor = speedAbs / localMaxSpeed;
+        let steerReturn = this.steerReturnSpeed * factor;
         if (this.steerAngle > 0) {
           this.steerAngle -= steerReturn * dt;
           if (this.steerAngle < 0) this.steerAngle = 0;
@@ -127,24 +115,23 @@ export class Car {
     }
     
     // Przyspieszenie i opory
-    let force = throttle * params.accel * grip;
+    let force = throttle * this.accel * grip;
     this.v_x += force * dt;
-    this.v_x = Phaser.Math.Clamp(this.v_x, -params.maxSpeed, params.maxSpeed);
+    this.v_x = Phaser.Math.Clamp(this.v_x, -localMaxSpeed, localMaxSpeed);
     
     // Model poślizgu: siła boczna (drift)
-    const SLIP_STEER_THRESHOLD = this.SLIP_STEER_THRESHOLD_RATIO * params.maxSteer;
     let steerAbs = Math.abs(this.steerAngle);
     let speedAbs = Math.abs(this.v_x);
     if (
       speedAbs > this.SLIP_START_SPEED &&
-      steerAbs > SLIP_STEER_THRESHOLD
+      steerAbs > this._slipSteerThreshold
     ) {
-      let slipSteerRatio = (steerAbs - SLIP_STEER_THRESHOLD) / (params.maxSteer - SLIP_STEER_THRESHOLD);
+      let slipSteerRatio = (steerAbs - this._slipSteerThreshold) / (this.maxSteer - this._slipSteerThreshold);
       slipSteerRatio = Phaser.Math.Clamp(slipSteerRatio, 0, 1);
       let slipSign = -Math.sign(this.steerAngle);
-      let slipStrength = this.slipBase * (speedAbs / params.maxSpeed) * slipSteerRatio * slipSign;
+      let slipStrength = this.slipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
       this.v_y += slipStrength * dt;
-      const maxVy = params.maxSpeed * 0.7;
+      const maxVy = localMaxSpeed * 0.7;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
     }
     
@@ -152,20 +139,21 @@ export class Car {
     this.v_y += -this.v_y * grip * this.sideFrictionMultiplier * dt;
     
     // Efekt skrętu: zmiana kierunku jazdy
-    let angularVel = (this.v_x / params.wheelBase) * Math.tan(this.steerAngle);
+    // Wylicz sin/cos tylko raz
+    let cosA = Math.cos(this.carAngle);
+    let sinA = Math.sin(this.carAngle);
+    let angularVel = (this.v_x / this.wheelBase) * Math.tan(this.steerAngle);
     this.carAngle += angularVel * dt;
     
     // Aktualizacja pozycji
-    let cosA = Math.cos(this.carAngle);
-    let sinA = Math.sin(this.carAngle);
     this.carX += (this.v_x * cosA - this.v_y * sinA) * dt;
     this.carY += (this.v_x * sinA + this.v_y * cosA) * dt;
     
     // Opory toczenia i aerodynamiczne
-    let F_drag = 0.5 * params.carDragCoefficient * params.carFrontalArea * params.airDensity * this.v_x * Math.abs(this.v_x);
-    let F_roll = params.rollingResistance * params.carMass * 9.81 * Math.sign(this.v_x);
+    let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
+    let F_roll = this.rollingResistance * this.carMass * 9.81 * Math.sign(this.v_x);
     let F_total = F_drag + F_roll;
-    this.v_x -= (F_total / params.carMass) * dt;
+    this.v_x -= (F_total / this.carMass) * dt;
     
     // Aktualizuj sprite
     this.carSprite.x = this.carX;

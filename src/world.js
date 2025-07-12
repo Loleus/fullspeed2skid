@@ -9,6 +9,7 @@ export class World {
     this.viewW = viewW;
     this.viewH = viewH;
     this.trackTiles = [];
+    this.tilePool = new Map(); // pooling kafli
     // Minimap-related
     this.minimapKey = null;
     this.minimapImage = null;
@@ -16,6 +17,7 @@ export class World {
     this.minimapSize = 128;
     this.minimapMargin = 10;
     this.minimapWorldSize = 1024;
+    this.minimapLastUpdate = 0; // znacznik czasu do throttlingu minimapy
   }
 
   // Ładowanie świata z SVG
@@ -25,13 +27,13 @@ export class World {
 
   // Dynamiczne rysowanie kafli świata wokół pozycji (cx, cy)
   drawTiles(cx, cy) {
-    for (const tile of this.trackTiles) tile.destroy();
-    this.trackTiles = [];
+    // Zbierz kafle, które powinny być widoczne
     const radius = 1.1 * 1.5 * Math.max(this.viewW, this.viewH) + this.tileSize;
     const minTileX = Math.floor((cx - radius) / this.tileSize) - 1;
     const maxTileX = Math.floor((cx + radius) / this.tileSize) + 1;
     const minTileY = Math.floor((cy - radius) / this.tileSize) - 1;
     const maxTileY = Math.floor((cy + radius) / this.tileSize) + 1;
+    const neededTiles = new Set();
     for (let tx = minTileX; tx <= maxTileX; tx++) {
       for (let ty = minTileY; ty <= maxTileY; ty++) {
         let x = tx * this.tileSize;
@@ -40,15 +42,29 @@ export class World {
         const dy = y + this.tileSize/2 - cy;
         if (dx*dx + dy*dy <= radius*radius) {
           const tileId = `tile_${tx}_${ty}`;
+          neededTiles.add(tileId);
           if (this.scene.textures.exists(tileId)) {
-            const tile = this.scene.add.image(x, y, tileId)
-              .setOrigin(0)
-              .setDepth(0);
-            this.trackTiles.push(tile);
-            // --- IGNORUJ KAŻDY NOWY KAFEL NA HUD ---
-            if (this.scene.hudCamera) this.scene.hudCamera.ignore(tile);
+            let tileObj = this.tilePool.get(tileId);
+            if (!tileObj) {
+              tileObj = this.scene.add.image(x, y, tileId)
+                .setOrigin(0)
+                .setDepth(0);
+              this.tilePool.set(tileId, tileObj);
+              // --- IGNORUJ KAŻDY NOWY KAFEL NA HUD ---
+              if (this.scene.hudCamera) this.scene.hudCamera.ignore(tileObj);
+            } else {
+              tileObj.setPosition(x, y);
+              tileObj.setVisible(true);
+            }
+            this.trackTiles.push(tileObj);
           }
         }
+      }
+    }
+    // Ukryj kafle, które nie są już potrzebne
+    for (const [tileId, tileObj] of this.tilePool.entries()) {
+      if (!neededTiles.has(tileId)) {
+        tileObj.setVisible(false);
       }
     }
   }
@@ -73,6 +89,10 @@ export class World {
 
   // Rysowanie pozycji auta na minimapie
   drawMinimap(carPos, worldW, worldH) {
+    // Ogranicz częstotliwość aktualizacji do 15 Hz
+    const now = performance.now();
+    if (now - this.minimapLastUpdate < 66) return;
+    this.minimapLastUpdate = now;
     if (!this.minimapOverlay) return;
     this.minimapOverlay.clear();
     const px = Phaser.Math.Clamp(carPos.x, 0, worldW);

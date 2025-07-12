@@ -75,27 +75,11 @@ export class FPVCamera {
     console.log('[FPV] Deaktywacja kamery FPV');
     this.isActive = false;
     
-    // Przywróć oryginalną konfigurację kamery
-    if (this.originalFollowTarget) {
-      this.originalCamera.startFollow(
-        this.originalFollowTarget, 
-        true, 
-        this.originalFollowConfig.lerpX, 
-        this.originalFollowConfig.lerpY
-      );
-    }
-    this.originalCamera.startFollow(this.car, true, 0.27, 0.27);
-    this.originalCamera.setRotation(0); // Resetuj rotację kamery po wyjściu z FPV
+    // Resetuj rotację kamery po wyjściu z FPV
+    this.originalCamera.setRotation(0);
   }
   
-  // Przełącz tryb kamery
-  toggle() {
-    if (this.isActive) {
-      this.deactivate();
-    } else {
-      this.activate();
-    }
-  }
+
   
   // Aktualizuj kamerę FPV
   update(dt) {
@@ -151,11 +135,6 @@ export class FPVCamera {
     cam.setRotation(-angle);
 
     // HUD zostaje przyklejony do ekranu (w main.js już jest setScrollFactor(0))
-    // Lekkie logi co 0,5s
-    if (!this.lastLogTime || now - this.lastLogTime > 0.5) {
-      console.log(`[FPV] car=(${this.car.x.toFixed(1)},${this.car.y.toFixed(1)}) cam=(${this.fpvX.toFixed(1)},${this.fpvY.toFixed(1)}) camAngle=${(this.cameraAngle*180/Math.PI).toFixed(1)}°`);
-      this.lastLogTime = now;
-    }
   }
   
   // Pobierz lerpowaną pozycję kamery

@@ -9,8 +9,8 @@ export class FPVCamera {
     
     // Parametry kamery FPV
     this.height = 300; // Wysokość kamery nad autem
-    this.followSpeed = 0.05; // mocniejsze opóźnienie
-    this.rotationSpeed = 0.05; // opóźnienie na rotacji
+    this.followSpeed = 0.03; // mocniejsze opóźnienie
+    this.rotationSpeed = 0.07; // opóźnienie na rotacji
     
     // Pozycja kamery FPV
     this.fpvX = 0;

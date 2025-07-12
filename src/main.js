@@ -314,23 +314,23 @@ function updateCarPhysics(dt, steerInput, throttle, params, surface) {
   return {carX, carY, carAngle, v_x, v_y, steerAngle};
 }
 
-// --- NOWA FUNKCJA: detekcja kolizji po elipsie z adaptacyjnym buforem ---
+// --- NOWA FUNKCJA: detekcja kolizji po elipsie z precyzyjnym buforem ---
 function checkEllipseCollision(carX, carY, carAngle, carWidth, carHeight, v_x, v_y) {
   // Oblicz prędkość całkowitą
   const speedMagnitude = Math.sqrt(v_x * v_x + v_y * v_y);
   
-  // Adaptacyjny bufor bezpieczeństwa
-  let safetyMargin = 1; // minimalny bufor
+  // Precyzyjny bufor bezpieczeństwa
+  let safetyMargin = 0; // brak bufora jako domyślne
   
-  if (speedMagnitude > 20) {
-    // Przy większych prędkościach - mały bufor
+  if (speedMagnitude > 30) {
+    // Przy wysokich prędkościach - mały bufor
+    safetyMargin = 2;
+  } else if (speedMagnitude > 10) {
+    // Przy średnich prędkościach - minimalny bufor
     safetyMargin = 1;
-  } else if (speedMagnitude > 5) {
-    // Przy średnich prędkościach - bardzo mały bufor
-    safetyMargin = 0;
   } else {
-    // Przy małych prędkościach - minimalny bufor
-    safetyMargin = 1;
+    // Przy małych prędkościach - brak bufora (może otrzeć się o przeszkodę)
+    safetyMargin = 0;
   }
   
   // Półosie elipsy (połowa szerokości i wysokości)

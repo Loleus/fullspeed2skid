@@ -297,10 +297,10 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
         canvas.width = outputSize;
         canvas.height = outputSize;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+        ctx.fillStyle = 'rgba(231, 231, 231, 1)';
         ctx.fillRect(0, 0, outputSize, outputSize);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(100, 100, 100, 1)';
+        ctx.lineWidth = 10;
         ctx.strokeRect(0, 0, outputSize, outputSize);
 
         let pathsSVG = '';
@@ -329,9 +329,9 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
         const fallback = document.createElement('canvas');
         fallback.width = fallback.height = 128;
         const ctx = fallback.getContext('2d');
-        ctx.fillStyle = 'rgba(200, 200, 200, 0.7)';
+        ctx.fillStyle = 'rgba(231, 231, 231, 1)';
         ctx.fillRect(0, 0, 128, 128);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.strokeStyle = 'rgba(100, 100, 100, 1)';
         ctx.strokeRect(0, 0, 128, 128);
         resolve(fallback);
       });

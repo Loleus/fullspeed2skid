@@ -14,15 +14,15 @@ let CAR_WIDTH = 60;
 let CAR_HEIGHT = 112;
 let wheelBase = 104; // rozstaw osi (px)
 let carMass = 1200; // masa auta w kg
-let carDragCoefficient = 0.32; // współczynnik oporu aerodynamicznego (Cx)
+let carDragCoefficient = 0.42; // współczynnik oporu aerodynamicznego (Cx)
 let carFrontalArea = 2.2; // powierzchnia czołowa auta w m^2
 let airDensity = 1.225; // gęstość powietrza (kg/m^3)
 let rollingResistance = 5; // współczynnik oporu toczenia
 
 //   PARAMETRY JAZDY
 
-let MAX_STEER_DEG   = 21; // maksymalny kąt skrętu kół (stopnie)
-let STEER_SPEED_DEG = 44; // szybkość skręcania kół (stopnie/sek)
+let MAX_STEER_DEG   = 23; // maksymalny kąt skrętu kół (stopnie)
+let STEER_SPEED_DEG = 38; // szybkość skręcania kół (stopnie/sek)
 let STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
 let accel           = 1000; // przyspieszenie
 let maxSpeed        = 800; // maksymalna prędkość
@@ -33,7 +33,7 @@ let slipBase = 700; // bazowa siła poślizgu
 let SLIP_START_SPEED = 0.6 * maxSpeed; // próg prędkości, od której zaczyna się poślizg
 let SLIP_STEER_THRESHOLD_RATIO = 0.3; // próg skrętu (procent maxSteer)
 let sideFrictionMultiplier = 3; // SIŁA tłumienia bocznego driftu (im większa, tym szybciej znika poślizg)
-let obstacleBounce = 0.25; // SIŁA odbicia od przeszkody/ściany (0 = brak odbicia, 1 = pełne odbicie)
+let obstacleBounce = 0.3; // SIŁA odbicia od przeszkody/ściany (0 = brak odbicia, 1 = pełne odbicie)
 const terrainGripMultiplier = { 'asphalt': 1.0, 'grass': 0.85, 'gravel': 0.6, 'water': 0.2 };
 
 
@@ -53,7 +53,6 @@ let trackTiles = [];
 let fpsText;
 let carWidth = CAR_WIDTH, carHeight = CAR_HEIGHT;
 let worldData = null;
-let carCollisionRadius = 0.36 * Math.sqrt(CAR_WIDTH * CAR_WIDTH + CAR_HEIGHT * CAR_HEIGHT);
 let steerInput = 0; // wygładzony sygnał sterowania
 
 // ===================== MINIMAPA: flaga włączająca minimapę =====================
@@ -315,10 +314,57 @@ function updateCarPhysics(dt, steerInput, throttle, params, surface) {
   return {carX, carY, carAngle, v_x, v_y, steerAngle};
 }
 
+// --- NOWA FUNKCJA: detekcja kolizji po elipsie z adaptacyjnym buforem ---
+function checkEllipseCollision(carX, carY, carAngle, carWidth, carHeight, v_x, v_y) {
+  // Oblicz prędkość całkowitą
+  const speedMagnitude = Math.sqrt(v_x * v_x + v_y * v_y);
+  
+  // Adaptacyjny bufor bezpieczeństwa
+  let safetyMargin = 1; // minimalny bufor
+  
+  if (speedMagnitude > 20) {
+    // Przy większych prędkościach - mały bufor
+    safetyMargin = 1;
+  } else if (speedMagnitude > 5) {
+    // Przy średnich prędkościach - bardzo mały bufor
+    safetyMargin = 0;
+  } else {
+    // Przy małych prędkościach - minimalny bufor
+    safetyMargin = 1;
+  }
+  
+  // Półosie elipsy (połowa szerokości i wysokości)
+  const a = carWidth / 2 + safetyMargin;  // półos pozioma
+  const b = carHeight / 2 + safetyMargin; // półos pionowa
+  
+  // Sprawdź środek auta
+  if (worldData.getSurfaceTypeAt(carX, carY) === 'obstacle') {
+    return true;
+  }
+  
+  // Sprawdź punkty na elipsie
+  const steps = 32;
+  for (let i = 0; i < steps; i++) {
+    const angle = (Math.PI * 2 * i) / steps;
+    // Parametryczne równanie elipsy
+    const px = carX + a * Math.cos(angle) * Math.cos(carAngle) - b * Math.sin(angle) * Math.sin(carAngle);
+    const py = carY + a * Math.cos(angle) * Math.sin(carAngle) + b * Math.sin(angle) * Math.cos(carAngle);
+    
+    if (worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 let throttleLock = false; // blokada gazu po kolizji
 // let inertiaTimer = 0; // usunięte
 let fpvCamera = null;
 let vKey = null;
+let collisionCount = 0; // licznik kolizji w jednej klatce
+const MAX_COLLISIONS_PER_FRAME = 3; // maksymalna liczba kolizji na klatkę
+
 function update(time, dt) {
   dt = dt / 1000;
   // --- OBSŁUGA PRZEŁĄCZANIA FPV ---
@@ -377,30 +423,26 @@ function update(time, dt) {
   car.y = carY;
   car.rotation = carAngle + Math.PI / 2;
 
-  // --- Kolizje z przeszkodami (obstacle) – PO OKRĘGU + ŚRODEK ---
-  let onObstacle = false;
-  const steps = 36; // więcej punktów na obwodzie
-  for (let i = 0; i < steps; i++) {
-    const angle = (Math.PI * 2 * i) / steps;
-    const px = car.x + Math.cos(angle) * carCollisionRadius;
-    const py = car.y + Math.sin(angle) * carCollisionRadius;
-    if (worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
-      onObstacle = true;
-      break;
-    }
-  }
-  // Dodaj sprawdzanie środka auta
-  if (!onObstacle && worldData.getSurfaceTypeAt(car.x, car.y) === 'obstacle') {
-    onObstacle = true;
-  }
-  if (onObstacle) {
+  // --- Reset licznika kolizji na początku klatki ---
+  collisionCount = 0;
+
+  // --- Kolizje z przeszkodami (obstacle) – PO ELIPSIE Z ADAPTACYJNYM BUFOREM ---
+  let onObstacle = checkEllipseCollision(car.x, car.y, carAngle, carWidth, carHeight, v_x, v_y);
+  
+  if (onObstacle && collisionCount < MAX_COLLISIONS_PER_FRAME) {
+    collisionCount++;
     // Odbicie jak w modelu rowerowym:
     let cosA = Math.cos(carAngle);
     let sinA = Math.sin(carAngle);
     let v_global_x = v_x * cosA - v_y * sinA;
     let v_global_y = v_x * sinA + v_y * cosA;
-    v_global_x = -v_global_x * obstacleBounce;
-    v_global_y = -v_global_y * obstacleBounce;
+    
+    // Słabsze odbicie przy małych prędkościach
+    const speedMagnitude = Math.sqrt(v_global_x * v_global_x + v_global_y * v_global_y);
+    const bounceStrength = speedMagnitude < 50 ? 0.1 : obstacleBounce;
+    
+    v_global_x = -v_global_x * bounceStrength;
+    v_global_y = -v_global_y * bounceStrength;
     v_x = v_global_x * cosA + v_global_y * sinA;
     v_y = -v_global_x * sinA + v_global_y * cosA;
     // Cofnij auto do pozycji sprzed ruchu
@@ -420,7 +462,8 @@ function update(time, dt) {
       break;
     }
   }
-  if (worldEdgeCollision) {
+  if (worldEdgeCollision && collisionCount < MAX_COLLISIONS_PER_FRAME) {
+    collisionCount++;
     // Odbicie jak w modelu rowerowym:
     let cosA = Math.cos(carAngle);
     let sinA = Math.sin(carAngle);

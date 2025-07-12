@@ -242,48 +242,40 @@ export class Car {
   }
   
   // Aktualizuj sterowanie
-  updateInput(cursors) {
+  updateInput(control) {
     // Reset licznika kolizji
     this.collisionCount = 0;
-    
     // Gas
     let throttle = 0;
     if (!this.throttleLock) {
-      throttle = cursors.up.isDown ? 1 : cursors.down.isDown ? -1 : 0;
+      throttle = control.up ? 1 : control.down ? -1 : 0;
     } else {
-      if (!cursors.up.isDown && !cursors.down.isDown) {
+      if (!control.up && !control.down) {
         this.throttleLock = false;
       }
     }
-    
     // Skręt
-    const steerRaw = cursors.left.isDown ? -1 : cursors.right.isDown ? 1 : 0;
+    const steerRaw = control.left ? -1 : control.right ? 1 : 0;
     const steerSmooth = 0.5;
     this.steerInput = this.steerInput * steerSmooth + steerRaw * (1 - steerSmooth);
-    
     return { throttle, steerInput: this.steerInput };
   }
   
   // Główna aktualizacja
-  update(dt, cursors, worldW, worldH) {
+  update(dt, control, worldW, worldH) {
     // Pobierz sterowanie
-    const { throttle, steerInput } = this.updateInput(cursors);
-    
+    const { throttle, steerInput } = this.updateInput(control);
     // Pobierz typ nawierzchni
     let surface = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
-    
     // Zapamiętaj pozycję przed ruchem
     let prevCarX = this.carX;
     let prevCarY = this.carY;
-    
     // Aktualizuj fizykę
     this.updatePhysics(dt, steerInput, throttle, surface);
-    
     // Sprawdź kolizje z przeszkodami
     if (this.checkEllipseCollision()) {
       this.handleCollision(prevCarX, prevCarY, worldW, worldH);
     }
-    
     // Sprawdź kolizje z krawędziami świata
     if (this.checkWorldEdgeCollision(worldW, worldH)) {
       this.handleCollision(prevCarX, prevCarY, worldW, worldH);

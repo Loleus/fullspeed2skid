@@ -70,6 +70,12 @@ export class CameraManager {
     }
   }
   
+  reset() {
+    if (this.currentCamera && this.currentCamera.reset) {
+      this.currentCamera.reset();
+    }
+  }
+  
   getCurrentCamera() {
     return this.currentCamera;
   }

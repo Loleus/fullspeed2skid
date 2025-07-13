@@ -50,6 +50,13 @@ export class ClassicCamera {
     // Phaser automatycznie aktualizuje śledzenie
   }
   
+  reset() {
+    if (this.isActive) {
+      // Wycentruj kamerę na aucie
+      this.scene.cameras.main.centerOn(this.car.x, this.car.y);
+    }
+  }
+  
   isClassicActive() {
     return this.isActive;
   }

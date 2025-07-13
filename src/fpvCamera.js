@@ -151,4 +151,26 @@ export class FPVCamera {
   isFPVActive() {
     return this.isActive;
   }
+  
+  reset() {
+    if (this.isActive) {
+      // Resetuj pozycję kamery do pozycji auta
+      this.fpvX = this.car.x;
+      this.fpvY = this.car.y;
+      this.cameraAngle = this.car.carAngle !== undefined ? this.car.carAngle : this.car.rotation;
+      
+      // Wyczyść historię
+      this.history = [];
+      
+      // Ustaw kamerę na pozycję auta
+      const cam = this.originalCamera;
+      const w = cam.width;
+      const h = cam.height;
+      const screenOffsetY = h/2 - h*4/5;
+      const worldOffsetX = -screenOffsetY * Math.sin(this.cameraAngle);
+      const worldOffsetY = screenOffsetY * Math.cos(this.cameraAngle);
+      cam.setScroll(this.fpvX - w/2 + worldOffsetX, this.fpvY - h/2 + worldOffsetY);
+      cam.setRotation(-this.cameraAngle);
+    }
+  }
 } 

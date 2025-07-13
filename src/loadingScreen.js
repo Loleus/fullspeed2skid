@@ -6,8 +6,9 @@ let loadingFadeOut = false;
 export function showLoadingOverlay() {
   loadingOverlay = document.createElement('div');
   loadingOverlay.className = 'loading-overlay';
+  loadingOverlay.style.backgroundImage = "url('assets/images/asphalt.jpg')";
   loadingCircle = document.createElement('div');
-  loadingCircle.className = 'loading-circle';
+  loadingCircle.className = 'loading-circle loading-circle-bg';
   loadingText = document.createElement('div');
   loadingText.className = 'loading-text';
   loadingText.innerText = '0%';

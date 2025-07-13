@@ -6,9 +6,9 @@ export class Car {
     this.worldData = worldData;
     
     // Parametry auta
-    this.CAR_WIDTH = 52;
+    this.CAR_WIDTH = 56;
     this.CAR_HEIGHT = 96;
-    this.wheelBase = 104; // rozstaw osi (px)
+    this.wheelBase = 72; // rozstaw osi (px)
     this.carMass = 1200; // masa auta w kg
     this.carDragCoefficient = 0.42; // współczynnik oporu aerodynamicznego (Cx)
     this.carFrontalArea = 2.2; // powierzchnia czołowa auta w m^2
@@ -27,7 +27,7 @@ export class Car {
     this.SLIP_START_SPEED = 0.6 * this.maxSpeed; // próg prędkości, od której zaczyna się poślizg
     this.SLIP_STEER_THRESHOLD_RATIO = 0.3; // próg skrętu (procent maxSteer)
     this.sideFrictionMultiplier = 3; // SIŁA tłumienia bocznego driftu
-    this.obstacleBounce = 0.3; // SIŁA odbicia od przeszkody/ściany
+    this.obstacleBounce = 0.35; // SIŁA odbicia od przeszkody/ściany
     this.terrainGripMultiplier = { 'asphalt': 1.0, 'grass': 0.85, 'gravel': 0.6, 'water': 0.2 };
     
     // Przeliczone parametry
@@ -38,6 +38,31 @@ export class Car {
     this._dragConst = 0.5 * this.carDragCoefficient * this.carFrontalArea * this.airDensity;
     // Prekalkulacja progu poślizgu
     this._slipSteerThreshold = this.SLIP_STEER_THRESHOLD_RATIO * this.maxSteer;
+    
+    // Prekalkulowane parametry kolizji
+    this.COLLISION_WIDTH = this.CAR_WIDTH * 0.8;  // 44.8
+    this.COLLISION_HEIGHT = this.CAR_HEIGHT * 0.8; // 76.8
+    this.COLLISION_HALF_WIDTH = this.COLLISION_WIDTH / 2;  // 22.4
+    this.COLLISION_HALF_HEIGHT = this.COLLISION_HEIGHT / 2; // 38.4
+
+    // Prekalkulowane parametry elipsy kolizji
+    this.collisionSteps = 16;
+    this.collisionAngleStep = (Math.PI * 2) / this.collisionSteps;
+
+    // Prekalkulowane safety margins
+    this.safetyMarginFast = 0.5;
+    this.safetyMarginSlow = 0.2;
+    this.speedThresholdFast = 50;
+    this.speedThresholdSlow = 20;
+
+    // Prekalkulowane stałe fizyczne
+    this.maxVyRatio = 0.7;  // maxVy = localMaxSpeed * 0.7
+    this.steerSmoothFactor = 0.5;
+    this.steerInputThreshold = 0.01;
+    this.speedThresholdForSteerReturn = 1;
+    this.bounceSpeedThreshold = 50;
+    this.bounceStrengthWeak = 0.1;
+    this.gravity = 9.81;
     
     // Stan auta
     this.v_x = 0; // prędkość wzdłuż auta (przód/tył)
@@ -96,12 +121,12 @@ export class Car {
     let localMaxSpeed = this.maxSpeed * grip;
     
     // Sterowanie skrętem
-    if (Math.abs(steerInput) > 0.01) {
+    if (Math.abs(steerInput) > this.steerInputThreshold) {
       this.steerAngle += steerInput * this.steerSpeed * dt;
       this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);
-      if (speedAbs > 1) {
+      if (speedAbs > this.speedThresholdForSteerReturn) {
         let factor = speedAbs / localMaxSpeed;
         let steerReturn = this.steerReturnSpeed * factor;
         if (this.steerAngle > 0) {
@@ -131,7 +156,7 @@ export class Car {
       let slipSign = -Math.sign(this.steerAngle);
       let slipStrength = this.slipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
       this.v_y += slipStrength * dt;
-      const maxVy = localMaxSpeed * 0.7;
+      const maxVy = localMaxSpeed * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
     }
     
@@ -151,7 +176,7 @@ export class Car {
     
     // Opory toczenia i aerodynamiczne
     let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
-    let F_roll = this.rollingResistance * this.carMass * 9.81 * Math.sign(this.v_x);
+    let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
     let F_total = F_drag + F_roll;
     this.v_x -= (F_total / this.carMass) * dt;
     
@@ -166,17 +191,17 @@ export class Car {
   checkEllipseCollision() {
     const speedMagnitude = Math.sqrt(this.v_x * this.v_x + this.v_y * this.v_y);
     
-    // Precyzyjny bufor bezpieczeństwa
+    // Safety margin
     let safetyMargin = 0;
-    if (speedMagnitude > 30) {
-      safetyMargin = 2;
-    } else if (speedMagnitude > 10) {
-      safetyMargin = 1;
+    if (speedMagnitude > this.speedThresholdFast) {
+      safetyMargin = this.safetyMarginFast;
+    } else if (speedMagnitude > this.speedThresholdSlow) {
+      safetyMargin = this.safetyMarginSlow;
     }
     
-    // Półosie elipsy
-    const a = this.CAR_WIDTH / 2 + safetyMargin;
-    const b = this.CAR_HEIGHT / 2 + safetyMargin;
+    // Półosie elipsy - używaj prekalkulowanych
+    const a = this.COLLISION_HALF_WIDTH + safetyMargin;
+    const b = this.COLLISION_HALF_HEIGHT + safetyMargin;
     
     // Sprawdź środek auta
     if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
@@ -184,9 +209,8 @@ export class Car {
     }
     
     // Sprawdź punkty na elipsie
-    const steps = 32;
-    for (let i = 0; i < steps; i++) {
-      const angle = (Math.PI * 2 * i) / steps;
+    for (let i = 0; i < this.collisionSteps; i++) {
+      const angle = this.collisionAngleStep * i;
       const px = this.carX + a * Math.cos(angle) * Math.cos(this.carAngle) - b * Math.sin(angle) * Math.sin(this.carAngle);
       const py = this.carY + a * Math.cos(angle) * Math.sin(this.carAngle) + b * Math.sin(angle) * Math.cos(this.carAngle);
       
@@ -225,7 +249,7 @@ export class Car {
     
     // Słabsze odbicie przy małych prędkościach
     const speedMagnitude = Math.sqrt(v_global_x * v_global_x + v_global_y * v_global_y);
-    const bounceStrength = speedMagnitude < 50 ? 0.1 : this.obstacleBounce;
+    const bounceStrength = speedMagnitude < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
     
     v_global_x = -v_global_x * bounceStrength;
     v_global_y = -v_global_y * bounceStrength;
@@ -256,8 +280,7 @@ export class Car {
     }
     // Skręt
     const steerRaw = control.left ? -1 : control.right ? 1 : 0;
-    const steerSmooth = 0.5;
-    this.steerInput = this.steerInput * steerSmooth + steerRaw * (1 - steerSmooth);
+    this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
     return { throttle, steerInput: this.steerInput };
   }
   

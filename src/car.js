@@ -77,6 +77,7 @@ export class Car {
     this.throttleLock = false; // blokada gazu po kolizji
     this.collisionCount = 0; // licznik kolizji w jednej klatce
     this.MAX_COLLISIONS_PER_FRAME = 3; // maksymalna liczba kolizji na klatkę
+    this.collisionImmunity = 0; // sekundy nieczułości na kolizje po odbiciu
     
     // Ustaw rozmiar sprite'a
     this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
@@ -251,31 +252,51 @@ export class Car {
     if (this.collisionCount >= this.MAX_COLLISIONS_PER_FRAME) {
       return;
     }
-    
     this.collisionCount++;
-    
+
     // Odbicie
     let cosA = Math.cos(this.carAngle);
     let sinA = Math.sin(this.carAngle);
     let v_global_x = this.v_x * cosA - this.v_y * sinA;
     let v_global_y = this.v_x * sinA + this.v_y * cosA;
-    
-    // Słabsze odbicie przy małych prędkościach
+
+    // Odbicie z minimalną siłą
     const speedMagnitude = Math.sqrt(v_global_x * v_global_x + v_global_y * v_global_y);
     const bounceStrength = speedMagnitude < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
-    
-    v_global_x = -v_global_x * bounceStrength;
-    v_global_y = -v_global_y * bounceStrength;
-    this.v_x = v_global_x * cosA + v_global_y * sinA;
-    this.v_y = -v_global_x * sinA + v_global_y * cosA;
-    
+    let minBounce = 80; // minimalna prędkość odbicia
+    let bounceVecX = -v_global_x * bounceStrength;
+    let bounceVecY = -v_global_y * bounceStrength;
+    let bounceMag = Math.sqrt(bounceVecX * bounceVecX + bounceVecY * bounceVecY);
+    let angle = Math.atan2(bounceVecY, bounceVecX);
+    if (bounceMag < minBounce) {
+      bounceVecX = Math.cos(angle) * minBounce;
+      bounceVecY = Math.sin(angle) * minBounce;
+    }
+
+    this.v_x = bounceVecX * cosA + bounceVecY * sinA;
+    this.v_y = -bounceVecX * sinA + bounceVecY * cosA;
+
     // Cofnij auto do pozycji sprzed ruchu
     this.carX = prevX;
     this.carY = prevY;
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;
-    
+
+    // Minimalny ruch odpychający, jeśli nadal w kolizji
+    for (let i = 0; i < 5; i++) {
+      if (!this.checkEllipseCollision()) break;
+      this.carX += Math.cos(angle) * 2;
+      this.carY += Math.sin(angle) * 2;
+      this.carSprite.x = this.carX;
+      this.carSprite.y = this.carY;
+    }
+
+    // Reset prędkości bocznej
+    this.v_y = 0;
+
+    // Krótka nieczułość na kolizje
     this.throttleLock = true;
+    this.collisionImmunity = 0.2; // sekundy
   }
   
   // Aktualizuj sterowanie
@@ -315,12 +336,18 @@ export class Car {
     // Aktualizuj fizykę
     this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
     // Sprawdź kolizje z przeszkodami
-    if (this.checkEllipseCollision()) {
-      this.handleCollision(prevCarX, prevCarY, worldW, worldH);
+    if (this.collisionImmunity > 0) {
+      this.collisionImmunity -= dt;
+      if (this.collisionImmunity < 0) this.collisionImmunity = 0;
     }
-    // Sprawdź kolizje z krawędziami świata
-    if (this.checkWorldEdgeCollision(worldW, worldH)) {
-      this.handleCollision(prevCarX, prevCarY, worldW, worldH);
+    if (this.collisionImmunity <= 0) {
+      if (this.checkEllipseCollision()) {
+        this.handleCollision(prevCarX, prevCarY, worldW, worldH);
+      }
+      // Sprawdź kolizje z krawędziami świata
+      if (this.checkWorldEdgeCollision(worldW, worldH)) {
+        this.handleCollision(prevCarX, prevCarY, worldW, worldH);
+      }
     }
   }
   

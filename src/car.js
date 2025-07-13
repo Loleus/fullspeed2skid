@@ -80,6 +80,15 @@ export class Car {
     
     // Ustaw rozmiar sprite'a
     this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
+    this.lastSurfaceType = null;
+    this.lastSurfaceCheckX = null;
+    this.lastSurfaceCheckY = null;
+    this.surfaceCheckThreshold = 1; // px
+    // Precaching sin/cos do elipsy kolizji
+    this.collisionCircle = Array(this.collisionSteps).fill().map((_, i) => {
+      const angle = this.collisionAngleStep * i;
+      return { cos: Math.cos(angle), sin: Math.sin(angle) };
+    });
   }
   
   // Resetuj stan auta
@@ -162,18 +171,6 @@ export class Car {
       this.v_y += slipStrength * dt;
       const maxVy = localMaxSpeed * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
-      // Debug: zapisz informacje o poślizgu
-      this.lastSlipInfo = {
-        speedAbs,
-        slipStartSpeed: localSlipStartSpeed,
-        steerAbs,
-        slipThreshold: this._slipSteerThreshold,
-        slipSteerRatio,
-        slipStrength,
-        v_y: this.v_y
-      };
-    } else {
-      this.lastSlipInfo = null;
     }
     
     // Tłumienie boczne
@@ -226,9 +223,9 @@ export class Car {
     
     // Sprawdź punkty na elipsie
     for (let i = 0; i < this.collisionSteps; i++) {
-      const angle = this.collisionAngleStep * i;
-      const px = this.carX + a * Math.cos(angle) * Math.cos(this.carAngle) - b * Math.sin(angle) * Math.sin(this.carAngle);
-      const py = this.carY + a * Math.cos(angle) * Math.sin(this.carAngle) + b * Math.sin(angle) * Math.cos(this.carAngle);
+      const { cos, sin } = this.collisionCircle[i];
+      const px = this.carX + a * cos * Math.cos(this.carAngle) - b * sin * Math.sin(this.carAngle);
+      const py = this.carY + a * cos * Math.sin(this.carAngle) + b * sin * Math.cos(this.carAngle);
       
       if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
         return true;
@@ -304,13 +301,19 @@ export class Car {
   update(dt, control, worldW, worldH) {
     // Pobierz sterowanie
     const { throttle, steerInput } = this.updateInput(control);
-    // Pobierz typ nawierzchni
-    let surface = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
+    // --- CACHE NAWIERZCHNI ---
+    let dx = Math.abs((this.carX - (this.lastSurfaceCheckX ?? this.carX)));
+    let dy = Math.abs((this.carY - (this.lastSurfaceCheckY ?? this.carY)));
+    if (dx > this.surfaceCheckThreshold || dy > this.surfaceCheckThreshold || this.lastSurfaceType === null) {
+      this.lastSurfaceType = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
+      this.lastSurfaceCheckX = this.carX;
+      this.lastSurfaceCheckY = this.carY;
+    }
     // Zapamiętaj pozycję przed ruchem
     let prevCarX = this.carX;
     let prevCarY = this.carY;
     // Aktualizuj fizykę
-    this.updatePhysics(dt, steerInput, throttle, surface);
+    this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
     // Sprawdź kolizje z przeszkodami
     if (this.checkEllipseCollision()) {
       this.handleCollision(prevCarX, prevCarY, worldW, worldH);

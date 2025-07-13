@@ -6,9 +6,9 @@ export class Car {
     this.worldData = worldData;
     
     // Parametry auta
-    this.CAR_WIDTH = 52;
+    this.CAR_WIDTH = 56;
     this.CAR_HEIGHT = 96;
-    this.wheelBase = 104; // rozstaw osi (px)
+    this.wheelBase = 72; // rozstaw osi (px)
     this.carMass = 1200; // masa auta w kg
     this.carDragCoefficient = 0.42; // współczynnik oporu aerodynamicznego (Cx)
     this.carFrontalArea = 2.2; // powierzchnia czołowa auta w m^2
@@ -16,19 +16,17 @@ export class Car {
     this.rollingResistance = 5; // współczynnik oporu toczenia
     
     // Parametry jazdy
-    this.MAX_STEER_DEG = 28; // maksymalny kąt skrętu kół (stopnie)
-    this.STEER_SPEED_DEG = 38; // szybkość skręcania kół (stopnie/sek)
+    this.MAX_STEER_DEG = 23; // maksymalny kąt skrętu kół (stopnie)
+    this.STEER_SPEED_DEG = 35; // szybkość skręcania kół (stopnie/sek)
     this.STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
     this.accel = 1000; // przyspieszenie
     this.maxSpeed = 800; // maksymalna prędkość
     
     // Parametry driftu / poślizgu
     this.slipBase = 700; // bazowa siła poślizgu
-    this.SLIP_START_SPEED = 0.6 * this.maxSpeed; // próg prędkości, od której zaczyna się poślizg
+    this.SLIP_START_SPEED_RATIO = 0.6; // próg prędkości jako procent maxSpeed
     this.SLIP_STEER_THRESHOLD_RATIO = 0.3; // próg skrętu (procent maxSteer)
-    this.sideFrictionMultiplier = 3; // SIŁA tłumienia bocznego driftu
-    this.obstacleBounce = 0.3; // SIŁA odbicia od przeszkody/ściany
-    this.terrainGripMultiplier = { 'asphalt': 1.0, 'grass': 0.85, 'gravel': 0.6, 'water': 0.2 };
+    this.obstacleBounce = 0.35; // SIŁA odbicia od przeszkody/ściany
     
     // Przeliczone parametry
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
@@ -38,6 +36,33 @@ export class Car {
     this._dragConst = 0.5 * this.carDragCoefficient * this.carFrontalArea * this.airDensity;
     // Prekalkulacja progu poślizgu
     this._slipSteerThreshold = this.SLIP_STEER_THRESHOLD_RATIO * this.maxSteer;
+    // Prekalkulacja progu prędkości poślizgu
+    this._slipStartSpeed = this.SLIP_START_SPEED_RATIO * this.maxSpeed;
+    
+    // Prekalkulowane parametry kolizji
+    this.COLLISION_WIDTH = this.CAR_WIDTH * 0.8;  // 44.8
+    this.COLLISION_HEIGHT = this.CAR_HEIGHT * 0.8; // 76.8
+    this.COLLISION_HALF_WIDTH = this.COLLISION_WIDTH / 2;  // 22.4
+    this.COLLISION_HALF_HEIGHT = this.COLLISION_HEIGHT / 2; // 38.4
+
+    // Prekalkulowane parametry elipsy kolizji
+    this.collisionSteps = 16;
+    this.collisionAngleStep = (Math.PI * 2) / this.collisionSteps;
+
+    // Prekalkulowane safety margins
+    this.safetyMarginFast = 0.5;
+    this.safetyMarginSlow = 0.2;
+    this.speedThresholdFast = 50;
+    this.speedThresholdSlow = 20;
+
+    // Prekalkulowane stałe fizyczne
+    this.maxVyRatio = 0.7;  // maxVy = localMaxSpeed * 0.7
+    this.steerSmoothFactor = 0.5;
+    this.steerInputThreshold = 0.01;
+    this.speedThresholdForSteerReturn = 1;
+    this.bounceSpeedThreshold = 50;
+    this.bounceStrengthWeak = 0.1;
+    this.gravity = 9.81;
     
     // Stan auta
     this.v_x = 0; // prędkość wzdłuż auta (przód/tył)
@@ -55,6 +80,15 @@ export class Car {
     
     // Ustaw rozmiar sprite'a
     this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
+    this.lastSurfaceType = null;
+    this.lastSurfaceCheckX = null;
+    this.lastSurfaceCheckY = null;
+    this.surfaceCheckThreshold = 1; // px
+    // Precaching sin/cos do elipsy kolizji
+    this.collisionCircle = Array(this.collisionSteps).fill().map((_, i) => {
+      const angle = this.collisionAngleStep * i;
+      return { cos: Math.cos(angle), sin: Math.sin(angle) };
+    });
   }
   
   // Resetuj stan auta
@@ -92,16 +126,20 @@ export class Car {
   // Aktualizuj fizykę auta
   updatePhysics(dt, steerInput, throttle, surface) {
     // Pobierz parametry nawierzchni
-    let grip = this.terrainGripMultiplier[surface] ?? 1.0;
+    let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
     let localMaxSpeed = this.maxSpeed * grip;
+    let localSlipStartSpeed = this.SLIP_START_SPEED_RATIO * localMaxSpeed; // Próg poślizgu zależny od localMaxSpeed
+    let localSlipBase = this.slipBase; // Siła poślizgu NIE zależy od gripu
+    // Dynamiczne tłumienie boczne: na bardzo śliskich nawierzchniach (grip < 0.5) auto praktycznie nie trzyma się drogi
+    this.sideFrictionMultiplier = grip < 0.5 ? 0.2 : 3;
     
     // Sterowanie skrętem
-    if (Math.abs(steerInput) > 0.01) {
+    if (Math.abs(steerInput) > this.steerInputThreshold) {
       this.steerAngle += steerInput * this.steerSpeed * dt;
       this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);
-      if (speedAbs > 1) {
+      if (speedAbs > this.speedThresholdForSteerReturn) {
         let factor = speedAbs / localMaxSpeed;
         let steerReturn = this.steerReturnSpeed * factor;
         if (this.steerAngle > 0) {
@@ -115,7 +153,7 @@ export class Car {
     }
     
     // Przyspieszenie i opory
-    let force = throttle * this.accel * grip;
+    let force = throttle * this.accel;
     this.v_x += force * dt;
     this.v_x = Phaser.Math.Clamp(this.v_x, -localMaxSpeed, localMaxSpeed);
     
@@ -123,20 +161,20 @@ export class Car {
     let steerAbs = Math.abs(this.steerAngle);
     let speedAbs = Math.abs(this.v_x);
     if (
-      speedAbs > this.SLIP_START_SPEED &&
+      speedAbs > localSlipStartSpeed &&
       steerAbs > this._slipSteerThreshold
     ) {
       let slipSteerRatio = (steerAbs - this._slipSteerThreshold) / (this.maxSteer - this._slipSteerThreshold);
       slipSteerRatio = Phaser.Math.Clamp(slipSteerRatio, 0, 1);
       let slipSign = -Math.sign(this.steerAngle);
-      let slipStrength = this.slipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
+      let slipStrength = localSlipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
       this.v_y += slipStrength * dt;
-      const maxVy = localMaxSpeed * 0.7;
+      const maxVy = localMaxSpeed * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
     }
     
     // Tłumienie boczne
-    this.v_y += -this.v_y * grip * this.sideFrictionMultiplier * dt;
+    this.v_y += -this.v_y * this.sideFrictionMultiplier * dt;
     
     // Efekt skrętu: zmiana kierunku jazdy
     // Wylicz sin/cos tylko raz
@@ -151,7 +189,7 @@ export class Car {
     
     // Opory toczenia i aerodynamiczne
     let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
-    let F_roll = this.rollingResistance * this.carMass * 9.81 * Math.sign(this.v_x);
+    let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
     let F_total = F_drag + F_roll;
     this.v_x -= (F_total / this.carMass) * dt;
     
@@ -166,17 +204,17 @@ export class Car {
   checkEllipseCollision() {
     const speedMagnitude = Math.sqrt(this.v_x * this.v_x + this.v_y * this.v_y);
     
-    // Precyzyjny bufor bezpieczeństwa
+    // Safety margin
     let safetyMargin = 0;
-    if (speedMagnitude > 30) {
-      safetyMargin = 2;
-    } else if (speedMagnitude > 10) {
-      safetyMargin = 1;
+    if (speedMagnitude > this.speedThresholdFast) {
+      safetyMargin = this.safetyMarginFast;
+    } else if (speedMagnitude > this.speedThresholdSlow) {
+      safetyMargin = this.safetyMarginSlow;
     }
     
-    // Półosie elipsy
-    const a = this.CAR_WIDTH / 2 + safetyMargin;
-    const b = this.CAR_HEIGHT / 2 + safetyMargin;
+    // Półosie elipsy - używaj prekalkulowanych
+    const a = this.COLLISION_HALF_WIDTH + safetyMargin;
+    const b = this.COLLISION_HALF_HEIGHT + safetyMargin;
     
     // Sprawdź środek auta
     if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
@@ -184,11 +222,10 @@ export class Car {
     }
     
     // Sprawdź punkty na elipsie
-    const steps = 32;
-    for (let i = 0; i < steps; i++) {
-      const angle = (Math.PI * 2 * i) / steps;
-      const px = this.carX + a * Math.cos(angle) * Math.cos(this.carAngle) - b * Math.sin(angle) * Math.sin(this.carAngle);
-      const py = this.carY + a * Math.cos(angle) * Math.sin(this.carAngle) + b * Math.sin(angle) * Math.cos(this.carAngle);
+    for (let i = 0; i < this.collisionSteps; i++) {
+      const { cos, sin } = this.collisionCircle[i];
+      const px = this.carX + a * cos * Math.cos(this.carAngle) - b * sin * Math.sin(this.carAngle);
+      const py = this.carY + a * cos * Math.sin(this.carAngle) + b * sin * Math.cos(this.carAngle);
       
       if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
         return true;
@@ -225,7 +262,7 @@ export class Car {
     
     // Słabsze odbicie przy małych prędkościach
     const speedMagnitude = Math.sqrt(v_global_x * v_global_x + v_global_y * v_global_y);
-    const bounceStrength = speedMagnitude < 50 ? 0.1 : this.obstacleBounce;
+    const bounceStrength = speedMagnitude < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
     
     v_global_x = -v_global_x * bounceStrength;
     v_global_y = -v_global_y * bounceStrength;
@@ -256,8 +293,7 @@ export class Car {
     }
     // Skręt
     const steerRaw = control.left ? -1 : control.right ? 1 : 0;
-    const steerSmooth = 0.5;
-    this.steerInput = this.steerInput * steerSmooth + steerRaw * (1 - steerSmooth);
+    this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
     return { throttle, steerInput: this.steerInput };
   }
   
@@ -265,13 +301,19 @@ export class Car {
   update(dt, control, worldW, worldH) {
     // Pobierz sterowanie
     const { throttle, steerInput } = this.updateInput(control);
-    // Pobierz typ nawierzchni
-    let surface = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
+    // --- CACHE NAWIERZCHNI ---
+    let dx = Math.abs((this.carX - (this.lastSurfaceCheckX ?? this.carX)));
+    let dy = Math.abs((this.carY - (this.lastSurfaceCheckY ?? this.carY)));
+    if (dx > this.surfaceCheckThreshold || dy > this.surfaceCheckThreshold || this.lastSurfaceType === null) {
+      this.lastSurfaceType = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
+      this.lastSurfaceCheckX = this.carX;
+      this.lastSurfaceCheckY = this.carY;
+    }
     // Zapamiętaj pozycję przed ruchem
     let prevCarX = this.carX;
     let prevCarY = this.carY;
     // Aktualizuj fizykę
-    this.updatePhysics(dt, steerInput, throttle, surface);
+    this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
     // Sprawdź kolizje z przeszkodami
     if (this.checkEllipseCollision()) {
       this.handleCollision(prevCarX, prevCarY, worldW, worldH);

@@ -1,5 +1,5 @@
 // main.js
-import { showLoadingOverlay, setLoadingProgress } from './loadingScreen.js';
+import { showLoadingOverlay, hideLoadingOverlay } from './loadingScreen.js';
 import { showMenuOverlay } from './menu.js';
 import { startGame } from './game.js';
 import { World } from './world.js';
@@ -14,14 +14,14 @@ async function main() {
   let progressInterval = setInterval(() => {
     if (fakeProgress < 90) {
       fakeProgress++;
-      setLoadingProgress(fakeProgress);
     }
   }, 8);
   const worldData = await World.loadWorld('assets/levels/scene_1.svg', worldH, tileSize);
-  setLoadingProgress(95);
   clearInterval(progressInterval);
-  setTimeout(() => setLoadingProgress(100), 0);
   startGame(worldData);
+  window.addEventListener('game-ready', () => {
+    hideLoadingOverlay();
+  }, { once: true });
 }
 
 if ('serviceWorker' in navigator) {

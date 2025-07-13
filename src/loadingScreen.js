@@ -1,30 +1,25 @@
 // Ekran ładowania
-let loadingOverlay, loadingCircle, loadingText;
-let loadingProgress = 0;
-let loadingFadeOut = false;
+let loadingOverlay, loadingText;
 
 export function showLoadingOverlay() {
   loadingOverlay = document.createElement('div');
   loadingOverlay.className = 'loading-overlay';
   loadingOverlay.style.backgroundImage = "url('assets/images/asphalt.jpg')";
-  loadingCircle = document.createElement('div');
-  loadingCircle.className = 'loading-circle loading-circle-bg';
   loadingText = document.createElement('div');
-  loadingText.className = 'loading-text';
-  loadingText.innerText = '0%';
-  loadingCircle.appendChild(loadingText);
-  loadingOverlay.appendChild(loadingCircle);
+  loadingText.className = 'menu-btn';
+  loadingText.innerText = 'LOADING...';
+  loadingOverlay.appendChild(loadingText);
   document.body.appendChild(loadingOverlay);
 }
 
-export function setLoadingProgress(percent) {
-  loadingProgress = percent;
-  if (loadingText) loadingText.innerText = percent + '%';
-  if (percent >= 100 && !loadingFadeOut) {
-    loadingFadeOut = true;
+export function hideLoadingOverlay() {
+  if (loadingOverlay && loadingOverlay.parentNode) {
     loadingOverlay.style.opacity = '0';
     setTimeout(() => {
-      if (loadingOverlay && loadingOverlay.parentNode) loadingOverlay.parentNode.removeChild(loadingOverlay);
+      if (loadingOverlay && loadingOverlay.parentNode) {
+        loadingOverlay.parentNode.removeChild(loadingOverlay);
+        loadingOverlay = null;
+      }
     }, 300);
   }
 } 

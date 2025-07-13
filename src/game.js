@@ -96,6 +96,8 @@ async function create() {
   // Dodaj obsługę klawisza X
   const xKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
   this.xKey = xKey;
+  // Emituj event po pełnym wyrenderowaniu świata
+  window.dispatchEvent(new Event('game-ready'));
 }
 
 function getControlState() {

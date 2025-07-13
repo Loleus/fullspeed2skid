@@ -3,17 +3,20 @@ import { Car } from './car.js';
 import { World } from './world.js';
 
 const tileSize  = 256;
-const worldW    = 6144;
-const worldH    = 6144;
 const viewW     = 1280;
 const viewH     = 720;
 
 let car, carController, cursors, wasdKeys;
 let fpsText;
 let world = null;
+let worldSize = null;
 let cameraManager = null;
 let vKey = null;
 let minimapa = true;
+let fpsHistory = [];
+const FPS_SMOOTH = 10;
+let targetFps = 60;
+let fpsSwitchCooldown = 0;
 
 export function startGame(worldData) {
   const config = {
@@ -34,7 +37,8 @@ export function startGame(worldData) {
     scene: { preload, create, update }
   };
   window._worldData = worldData; // debug
-  new Phaser.Game(config);
+  worldSize = worldData.worldSize || 6144;
+  window._phaserGame = new Phaser.Game(config);
 }
 
 function preload() {
@@ -66,7 +70,7 @@ async function create() {
     left: Phaser.Input.Keyboard.KeyCodes.A,
     right: Phaser.Input.Keyboard.KeyCodes.D
   });
-  cameraManager = new CameraManager(this, car);
+  cameraManager = new CameraManager(this, car, worldSize);
   
   // Stwórz jeden tekst HUD z trzema liniami
   fpsText = this.add.text(10, 10, 'FPS: 0\nV - zmiana kamery\nR - reset\nX - exit', {
@@ -77,6 +81,9 @@ async function create() {
   }).setScrollFactor(0).setDepth(100);
   
   world = new World(this, worldData, tileSize, viewW, viewH);
+  if (worldData.worldSize) {
+    worldSize = worldData.worldSize;
+  }
   if (minimapa) {
     this.cameras.main.ignore([fpsText]);
     await world.initMinimap('assets/levels/scene_1.svg', fpsText);
@@ -183,15 +190,32 @@ function update(time, dt) {
     exitToMenu();
   }
   const control = getControlState();
-  carController.update(dt, control, worldW, worldH);
+  carController.update(dt, control, worldSize, worldSize);
   const carPos = carController.getPosition();
   world.drawTiles(carPos.x, carPos.y);
   if (fpsText) {
-    const fps = (1 / dt).toFixed(1);
-    fpsText.setText(`FPS: ${fps}\nV - zmiana kamery\nR - reset\nX - exit`);
+    const fpsNow = 1 / dt;
+    fpsHistory.push(fpsNow);
+    if (fpsHistory.length > FPS_SMOOTH) fpsHistory.shift();
+    const fpsAvg = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+    const fpsStable = Math.round(fpsAvg);
+    fpsText.setText(`FPS: ${fpsStable}\nV - zmiana kamery\nR - reset\nX - exit`);
+    // --- Automatyczne przełączanie FPS ---
+    if (fpsSwitchCooldown > 0) fpsSwitchCooldown--;
+    else if (window._phaserGame && window._phaserGame.loop) {
+      if (targetFps === 60 && fpsAvg < 50) {
+        window._phaserGame.loop.targetFps = 30;
+        targetFps = 30;
+        fpsSwitchCooldown = 120; // 2 sekundy
+      } else if (targetFps === 30 && fpsAvg > 55) {
+        window._phaserGame.loop.targetFps = 60;
+        targetFps = 60;
+        fpsSwitchCooldown = 120;
+      }
+    }
   }
   if (minimapa && world) {
-    world.drawMinimap(carPos, worldW, worldH);
+    world.drawMinimap(carPos, worldSize, worldSize);
   }
   if (cameraManager) {
     cameraManager.update(dt);

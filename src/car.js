@@ -6,9 +6,9 @@ export class Car {
     this.worldData = worldData;
     
     // Parametry auta
-    this.CAR_WIDTH = 56;
-    this.CAR_HEIGHT = 96;
-    this.wheelBase = 72; // rozstaw osi (px)
+    this.CAR_WIDTH = 48;
+    this.CAR_HEIGHT = 88;
+    this.wheelBase = 75; // rozstaw osi (px)
     this.carMass = 1200; // masa auta w kg
     this.carDragCoefficient = 0.42; // współczynnik oporu aerodynamicznego (Cx)
     this.carFrontalArea = 2.2; // powierzchnia czołowa auta w m^2

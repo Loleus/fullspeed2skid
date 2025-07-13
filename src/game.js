@@ -67,14 +67,18 @@ async function create() {
     right: Phaser.Input.Keyboard.KeyCodes.D
   });
   cameraManager = new CameraManager(this, car);
-  fpsText = this.add.text(10, 10, 'FPS: 0', {
+  
+  // Stwórz jeden tekst HUD z trzema liniami
+  fpsText = this.add.text(10, 10, 'FPS: 0\nV - zmiana kamery\nR - reset\nX - exit', {
     font: '20px monospace',
     fill: '#fff',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgb(31, 31, 31)',
     padding: { left: 8, right: 8, top: 4, bottom: 4 },
   }).setScrollFactor(0).setDepth(100);
+  
   world = new World(this, worldData, tileSize, viewW, viewH);
   if (minimapa) {
+    this.cameras.main.ignore([fpsText]);
     await world.initMinimap('assets/levels/scene_1.svg', fpsText);
   } else {
     const hudObjects = [fpsText];
@@ -84,6 +88,14 @@ async function create() {
     this.hudCamera.setScroll(0, 0);
     this.hudCamera.setRotation(0);
   }
+  
+  // Dodaj obsługę klawisza R
+  const rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
+  this.rKey = rKey;
+  
+  // Dodaj obsługę klawisza X
+  const xKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
+  this.xKey = xKey;
 }
 
 function getControlState() {
@@ -122,10 +134,51 @@ function getControlState() {
   return { up, down, left, right };
 }
 
+function resetGame() {
+  const worldData = window._worldData;
+  const start = worldData.startPos;
+  const startYOffset = viewH * 3/10;
+  
+  // Reset pozycji auta
+  carController.resetState(start.x, start.y + startYOffset);
+  
+  // Wyczyść kafle świata
+  if (world) {
+    world.trackTiles = [];
+    for (const [tileId, tileObj] of world.tilePool.entries()) {
+      tileObj.setVisible(false);
+    }
+  }
+  
+  // Reset kamery
+  if (cameraManager) {
+    cameraManager.reset();
+  }
+}
+
+function exitToMenu() {
+  // Ukryj grę
+  const canvas = document.querySelector('#phaser-canvas');
+  if (canvas) {
+    canvas.style.display = 'none';
+  }
+  
+  // Wróć do menu
+  import('./menu.js').then(module => {
+    module.showMenuOverlay();
+  });
+}
+
 function update(time, dt) {
   dt = dt / 1000;
   if (vKey && Phaser.Input.Keyboard.JustDown(vKey)) {
     cameraManager.toggle();
+  }
+  if (this.rKey && Phaser.Input.Keyboard.JustDown(this.rKey)) {
+    resetGame();
+  }
+  if (this.xKey && Phaser.Input.Keyboard.JustDown(this.xKey)) {
+    exitToMenu();
   }
   const control = getControlState();
   carController.update(dt, control, worldW, worldH);
@@ -133,7 +186,7 @@ function update(time, dt) {
   world.drawTiles(carPos.x, carPos.y);
   if (fpsText) {
     const fps = (1 / dt).toFixed(1);
-    fpsText.setText(`FPS: ${fps}\nV - zmiana kamery`);
+    fpsText.setText(`FPS: ${fps}\nV - zmiana kamery\nR - reset\nX - exit`);
   }
   if (minimapa && world) {
     world.drawMinimap(carPos, worldW, worldH);

@@ -73,8 +73,8 @@ export class World {
   async initMinimap(svgPath, fpsText) {
     const key = await createMinimapTextureFromSVG(this.scene, svgPath, this.minimapSize);
     this.minimapKey = key;
-    const minimapOffsetX = this.minimapMargin;
-    const minimapOffsetY = this.minimapMargin + 50;
+    const minimapOffsetX = this.viewW - this.minimapSize - this.minimapMargin;
+    const minimapOffsetY = this.minimapMargin;
     this.minimapImage = this.scene.add.image(minimapOffsetX + this.minimapSize/2, minimapOffsetY + this.minimapSize/2, this.minimapKey)
       .setScrollFactor(0)
       .setDepth(100);
@@ -97,8 +97,8 @@ export class World {
     this.minimapOverlay.clear();
     const px = Phaser.Math.Clamp(carPos.x, 0, worldW);
     const py = Phaser.Math.Clamp(carPos.y, 0, worldH);
-    const minimapOffsetX = this.minimapMargin;
-    const minimapOffsetY = this.minimapMargin + 50;
+    const minimapOffsetX = this.viewW - this.minimapSize - this.minimapMargin;
+    const minimapOffsetY = this.minimapMargin;
     const carX = minimapOffsetX + (px / worldW * this.minimapSize);
     const carY = minimapOffsetY + (py / worldH * this.minimapSize);
     this.minimapOverlay.fillStyle(0xff0000, 1);

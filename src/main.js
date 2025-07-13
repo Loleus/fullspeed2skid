@@ -1,12 +1,13 @@
 // main.js
 import { showLoadingOverlay, setLoadingProgress } from './loadingScreen.js';
+import { showMenuOverlay } from './menu.js';
 import { startGame } from './game.js';
 import { World } from './world.js';
 
 const tileSize  = 256;
 const worldH    = 6144;
 
-showLoadingOverlay();
+showMenuOverlay();
 
 async function main() {
   let fakeProgress = 0;
@@ -23,10 +24,10 @@ async function main() {
   startGame(worldData);
 }
 
-main();
-
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
   });
 }
+
+export { main };

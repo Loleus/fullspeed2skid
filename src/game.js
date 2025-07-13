@@ -69,7 +69,7 @@ async function create() {
   cameraManager = new CameraManager(this, car);
   
   // Stwórz jeden tekst HUD z trzema liniami
-  fpsText = this.add.text(10, 10, 'FPS: 0\nV - zmiana kamery\nR - reset\nX - exit', {
+  fpsText = this.add.text(10, 10, 'FPS: 0\nV - zmiana kamery\nR - reset\nX - exit\nSpeed: 0\nSteer: 0\nSlip: OFF', {
     font: '20px monospace',
     fill: '#fff',
     backgroundColor: 'rgb(31, 31, 31)',
@@ -186,7 +186,24 @@ function update(time, dt) {
   world.drawTiles(carPos.x, carPos.y);
   if (fpsText) {
     const fps = (1 / dt).toFixed(1);
-    fpsText.setText(`FPS: ${fps}\nV - zmiana kamery\nR - reset\nX - exit`);
+    const velocity = carController.getVelocity();
+    const speed = Math.sqrt(velocity.v_x * velocity.v_x + velocity.v_y * velocity.v_y);
+    const steerAngle = carController.getSteerAngle();
+    const steerDeg = Phaser.Math.RadToDeg(steerAngle);
+    const maxSteerDeg = carController.MAX_STEER_DEG;
+    const slipThreshold = carController._slipSteerThreshold;
+    const slipThresholdDeg = Phaser.Math.RadToDeg(slipThreshold);
+    const isSlip = Math.abs(steerAngle) > slipThreshold;
+    
+    let slipDebug = '';
+    if (carController.lastSlipInfo) {
+      const info = carController.lastSlipInfo;
+      slipDebug = `\nSlip: ON\n  Speed: ${info.speedAbs.toFixed(1)}/${info.slipStartSpeed.toFixed(1)}\n  Steer: ${Phaser.Math.RadToDeg(info.steerAbs).toFixed(1)}°/${Phaser.Math.RadToDeg(info.slipThreshold).toFixed(1)}°\n  Ratio: ${info.slipSteerRatio.toFixed(2)}\n  Force: ${info.slipStrength.toFixed(1)}\n  v_y: ${info.v_y.toFixed(1)}`;
+    } else {
+      slipDebug = `\nSlip: OFF`;
+    }
+    
+    fpsText.setText(`FPS: ${fps}\nV - zmiana kamery\nR - reset\nX - exit\nSpeed: ${speed.toFixed(1)}\nSteer: ${steerDeg.toFixed(1)}°/${maxSteerDeg}°${slipDebug}`);
   }
   if (minimapa && world) {
     world.drawMinimap(carPos, worldW, worldH);

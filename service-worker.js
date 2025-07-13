@@ -23,7 +23,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/images/cobblestone.jpg',
   '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
   '/fullspeed2skid/assets/levels/scene_1.svg',
-  // Dodaj tu kolejne pliki jeśli będą potrzebne
+  '/fullspeed2skid/assets/levels/scene_2.svg',
 ];
 
 // Instalacja service workera

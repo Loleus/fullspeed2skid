@@ -39,12 +39,54 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   });
 
   // 3. Załaduj wszystkie obrazy przed rasteryzacją
-  const [bgImg, asphaltImg, cobblestoneImg] = await Promise.all([
-    loadImage(`assets/images/${bgTexture}.jpg`).catch(() => null),
-    loadImage('assets/images/asphalt.jpg').catch(() => null),
-    loadImage('assets/images/cobblestone.jpg').catch(() => null)
-  ]);
+  // Zbierz wszystkie surfaceType z ROAD
+  let surfaceTypes = new Set(['asphalt']);
+  if (roadGroup) {
+    const tracks = roadGroup.querySelectorAll('path');
+    for (const track of tracks) {
+      if (track.id) {
+        const match = track.id.match(/_([a-zA-Z0-9]+)$/);
+        if (match) surfaceTypes.add(match[1].toLowerCase());
+      }
+    }
+  }
+  // Dodaj typ tła
+  surfaceTypes.add(bgTexture);
+  // Przygotuj mapę Promise'ów tekstur
+  const texturePromises = {};
+  for (const type of surfaceTypes) {
+    texturePromises[type] = loadImage(`assets/images/${type}.jpg`).catch(() => null);
+  }
+  // Załaduj wszystkie tekstury
+  const textureImgs = await Promise.all(Object.values(texturePromises));
+  const textureMap = {};
+  let i = 0;
+  for (const type of Object.keys(texturePromises)) {
+    textureMap[type] = textureImgs[i++];
+  }
+  // Tło
+  const bgImg = textureMap[bgTexture] || null;
+  // Przeszkody: przygotuj mapę Promise'ów na podstawie id przeszkód
+  let obstacleTypes = new Set(['obstacle']);
+  if (obstaclesGroup) {
+    const obstacles = obstaclesGroup.querySelectorAll('path');
+    for (const obs of obstacles) {
+      if (obs.id) {
+        const parts = obs.id.split('_');
+        if (parts.length > 1) obstacleTypes.add(parts[parts.length - 1].toLowerCase());
+      }
+    }
+  }
+  const obstacleTexturePromises = {};
+  for (const type of obstacleTypes) {
+    obstacleTexturePromises[type] = loadImage(`assets/images/${type}.jpg`).catch(() => null);
+  }
+  const obstacleImgs = await Promise.all(Object.values(obstacleTexturePromises));
   const obstacleTextureCache = {};
+  i = 0;
+  for (const type of Object.keys(obstacleTexturePromises)) {
+    obstacleTextureCache[type] = obstacleImgs[i++];
+  }
   // console.log('[SVG LOADER] Załadowano tekstury:', { bgImg, asphaltImg, cobblestoneImg });
 
   // 4. Przygotuj canvas świata i kafle
@@ -74,27 +116,23 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
     for (const track of tracks) {
       const d = track.getAttribute('d');
       if (!d) continue;
+      // Rozpoznaj typ nawierzchni po sufiksie id
+      let surfaceType = 'asphalt';
+      if (track.id) {
+        const match = track.id.match(/_([a-zA-Z0-9]+)$/);
+        if (match) surfaceType = match[1].toLowerCase();
+      }
+      let textureImg = textureMap[surfaceType] || textureMap['asphalt'];
       const path2d = new Path2D(scaleSvgPath(d, scale));
       worldCtx.save();
       worldCtx.clip(path2d);
-      if (track.id && track.id.includes('COBBLESTONE')) {
-        if (cobblestoneImg) {
-          const pattern = worldCtx.createPattern(cobblestoneImg, 'repeat');
-          worldCtx.fillStyle = pattern;
-          worldCtx.fillRect(0, 0, worldSize, worldSize);
-        } else {
-          worldCtx.fillStyle = '#888';
-          worldCtx.fillRect(0, 0, worldSize, worldSize);
-        }
+      if (textureImg) {
+        const pattern = worldCtx.createPattern(textureImg, 'repeat');
+        worldCtx.fillStyle = pattern;
+        worldCtx.fillRect(0, 0, worldSize, worldSize);
       } else {
-        if (asphaltImg) {
-          const pattern = worldCtx.createPattern(asphaltImg, 'repeat');
-          worldCtx.fillStyle = pattern;
-          worldCtx.fillRect(0, 0, worldSize, worldSize);
-        } else {
-          worldCtx.fillStyle = '#222';
-          worldCtx.fillRect(0, 0, worldSize, worldSize);
-        }
+        worldCtx.fillStyle = '#222';
+        worldCtx.fillRect(0, 0, worldSize, worldSize);
       }
       worldCtx.restore();
     }
@@ -112,15 +150,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
         const parts = obs.id.split('_');
         if (parts.length > 1) texName = parts[parts.length - 1].toLowerCase();
       }
-      let texImg = obstacleTextureCache[texName];
-      if (!texImg) {
-        try {
-          texImg = await loadImage(`assets/images/${texName}.jpg`);
-          obstacleTextureCache[texName] = texImg;
-        } catch {
-          texImg = null;
-        }
-      }
+      let texImg = obstacleTextureCache[texName] || obstacleTextureCache['obstacle'];
       // Rasteryzuj przeszkodę w pętli po tile'ach
       for (let x = 0; x < worldSize; x += tileSize) {
         for (let y = 0; y < worldSize; y += tileSize) {
@@ -184,16 +214,47 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
       collisionCtx.restore();
     }
   }
-  // 4c. Generuj collisionTypeMap na podstawie kolorów
-  const collisionTypeMap = new Array(collisionMapSize * collisionMapSize).fill('grass');
-  const imgData = collisionCtx.getImageData(0, 0, collisionMapSize, collisionMapSize).data;
-  for (let i = 0; i < imgData.length; i += 4) {
-    const r = imgData[i], g = imgData[i+1], b = imgData[i+2];
-    const idx = i / 4;
-    if (r === 255 && g === 255 && b === 255) collisionTypeMap[idx] = 'obstacle';
-    else if (r === 136 && g === 136 && b === 136) collisionTypeMap[idx] = 'cobblestone';
-    else if (r === 34 && g === 34 && b === 34) collisionTypeMap[idx] = 'asphalt';
-    else collisionTypeMap[idx] = 'grass';
+  // 4c. Generuj surfaceAreaMap na podstawie id pathów
+  const surfaceAreaMap = new Array(collisionMapSize * collisionMapSize).fill('grass');
+  if (roadGroup) {
+    const tracks = roadGroup.querySelectorAll('path');
+    for (const track of tracks) {
+      const d = track.getAttribute('d');
+      if (!d) continue;
+      // Rozpoznaj typ nawierzchni po sufiksie id
+      let surfaceType = 'asphalt';
+      if (track.id) {
+        const match = track.id.match(/_([a-zA-Z0-9]+)$/);
+        if (match) {
+          surfaceType = match[1].toLowerCase();
+        }
+      }
+      const path2d = new Path2D(scaleSvgPath(d, collisionMapSize / 1024));
+      // Dla każdego piksela na collisionMapSize x collisionMapSize sprawdź, czy jest w path2d
+      for (let y = 0; y < collisionMapSize; y++) {
+        for (let x = 0; x < collisionMapSize; x++) {
+          if (collisionCtx.isPointInPath(path2d, x, y)) {
+            surfaceAreaMap[x + y * collisionMapSize] = surfaceType;
+          }
+        }
+      }
+    }
+  }
+  // Przeszkody
+  if (obstaclesGroup) {
+    const obstacles = obstaclesGroup.querySelectorAll('path');
+    for (const obs of obstacles) {
+      const d = obs.getAttribute('d');
+      if (!d) continue;
+      const path2d = new Path2D(scaleSvgPath(d, collisionMapSize / 1024));
+      for (let y = 0; y < collisionMapSize; y++) {
+        for (let x = 0; x < collisionMapSize; x++) {
+          if (collisionCtx.isPointInPath(path2d, x, y)) {
+            surfaceAreaMap[x + y * collisionMapSize] = 'obstacle';
+          }
+        }
+      }
+    }
   }
   // 4d. Podziel worldCanvas na kafle
   const tiles = [];
@@ -250,15 +311,24 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
     });
   }
 
+  // Domyślne parametry nawierzchni (możesz je potem edytować globalnie)
+  const surfaceParams = {
+    asphalt: { grip: 1.0 },
+    cobblestone: { grip: 0.9 }, // przykładowa wartość
+    gravel: { grip: 0.8 },
+    grass: { grip: 0.6 },
+    water: { grip: 0.3 },
+  };
+
   // Funkcja do szybkiego sprawdzania typu powierzchni
   function getSurfaceTypeAt(x, y) {
     const ix = Math.floor(x * collisionMapSize / worldSize);
     const iy = Math.floor(y * collisionMapSize / worldSize);
     if (ix < 0 || iy < 0 || ix >= collisionMapSize || iy >= collisionMapSize) return 'grass';
-    return collisionTypeMap[ix + iy * collisionMapSize];
+    return surfaceAreaMap[ix + iy * collisionMapSize];
   }
 
-  return { tiles, collisionTypeMap, getSurfaceTypeAt, obstaclePolys, startPos };
+  return { tiles, getSurfaceTypeAt, obstaclePolys, startPos, surfaceParams };
 }
 
 // ===================== MINIMAPA: generowanie tekstury z SVG =====================

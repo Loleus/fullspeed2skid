@@ -16,19 +16,17 @@ export class Car {
     this.rollingResistance = 5; // współczynnik oporu toczenia
     
     // Parametry jazdy
-    this.MAX_STEER_DEG = 28; // maksymalny kąt skrętu kół (stopnie)
-    this.STEER_SPEED_DEG = 38; // szybkość skręcania kół (stopnie/sek)
+    this.MAX_STEER_DEG = 23; // maksymalny kąt skrętu kół (stopnie)
+    this.STEER_SPEED_DEG = 35; // szybkość skręcania kół (stopnie/sek)
     this.STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
     this.accel = 1000; // przyspieszenie
     this.maxSpeed = 800; // maksymalna prędkość
     
     // Parametry driftu / poślizgu
     this.slipBase = 700; // bazowa siła poślizgu
-    this.SLIP_START_SPEED = 0.6 * this.maxSpeed; // próg prędkości, od której zaczyna się poślizg
+    this.SLIP_START_SPEED_RATIO = 0.6; // próg prędkości jako procent maxSpeed
     this.SLIP_STEER_THRESHOLD_RATIO = 0.3; // próg skrętu (procent maxSteer)
-    this.sideFrictionMultiplier = 3; // SIŁA tłumienia bocznego driftu
     this.obstacleBounce = 0.35; // SIŁA odbicia od przeszkody/ściany
-    this.terrainGripMultiplier = { 'asphalt': 1.0, 'grass': 0.85, 'gravel': 0.6, 'water': 0.2 };
     
     // Przeliczone parametry
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
@@ -38,6 +36,8 @@ export class Car {
     this._dragConst = 0.5 * this.carDragCoefficient * this.carFrontalArea * this.airDensity;
     // Prekalkulacja progu poślizgu
     this._slipSteerThreshold = this.SLIP_STEER_THRESHOLD_RATIO * this.maxSteer;
+    // Prekalkulacja progu prędkości poślizgu
+    this._slipStartSpeed = this.SLIP_START_SPEED_RATIO * this.maxSpeed;
     
     // Prekalkulowane parametry kolizji
     this.COLLISION_WIDTH = this.CAR_WIDTH * 0.8;  // 44.8
@@ -117,8 +117,12 @@ export class Car {
   // Aktualizuj fizykę auta
   updatePhysics(dt, steerInput, throttle, surface) {
     // Pobierz parametry nawierzchni
-    let grip = this.terrainGripMultiplier[surface] ?? 1.0;
+    let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
     let localMaxSpeed = this.maxSpeed * grip;
+    let localSlipStartSpeed = this.SLIP_START_SPEED_RATIO * localMaxSpeed; // Próg poślizgu zależny od localMaxSpeed
+    let localSlipBase = this.slipBase; // Siła poślizgu NIE zależy od gripu
+    // Dynamiczne tłumienie boczne: na bardzo śliskich nawierzchniach (grip < 0.5) auto praktycznie nie trzyma się drogi
+    this.sideFrictionMultiplier = grip < 0.5 ? 0.2 : 3;
     
     // Sterowanie skrętem
     if (Math.abs(steerInput) > this.steerInputThreshold) {
@@ -140,7 +144,7 @@ export class Car {
     }
     
     // Przyspieszenie i opory
-    let force = throttle * this.accel * grip;
+    let force = throttle * this.accel;
     this.v_x += force * dt;
     this.v_x = Phaser.Math.Clamp(this.v_x, -localMaxSpeed, localMaxSpeed);
     
@@ -148,20 +152,32 @@ export class Car {
     let steerAbs = Math.abs(this.steerAngle);
     let speedAbs = Math.abs(this.v_x);
     if (
-      speedAbs > this.SLIP_START_SPEED &&
+      speedAbs > localSlipStartSpeed &&
       steerAbs > this._slipSteerThreshold
     ) {
       let slipSteerRatio = (steerAbs - this._slipSteerThreshold) / (this.maxSteer - this._slipSteerThreshold);
       slipSteerRatio = Phaser.Math.Clamp(slipSteerRatio, 0, 1);
       let slipSign = -Math.sign(this.steerAngle);
-      let slipStrength = this.slipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
+      let slipStrength = localSlipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
       this.v_y += slipStrength * dt;
       const maxVy = localMaxSpeed * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
+      // Debug: zapisz informacje o poślizgu
+      this.lastSlipInfo = {
+        speedAbs,
+        slipStartSpeed: localSlipStartSpeed,
+        steerAbs,
+        slipThreshold: this._slipSteerThreshold,
+        slipSteerRatio,
+        slipStrength,
+        v_y: this.v_y
+      };
+    } else {
+      this.lastSlipInfo = null;
     }
     
     // Tłumienie boczne
-    this.v_y += -this.v_y * grip * this.sideFrictionMultiplier * dt;
+    this.v_y += -this.v_y * this.sideFrictionMultiplier * dt;
     
     // Efekt skrętu: zmiana kierunku jazdy
     // Wylicz sin/cos tylko raz

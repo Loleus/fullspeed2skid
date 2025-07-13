@@ -328,7 +328,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
     return surfaceAreaMap[ix + iy * collisionMapSize];
   }
 
-  return { tiles, getSurfaceTypeAt, obstaclePolys, startPos, surfaceParams };
+  return { tiles, getSurfaceTypeAt, obstaclePolys, startPos, surfaceParams, worldSize };
 }
 
 // ===================== MINIMAPA: generowanie tekstury z SVG =====================

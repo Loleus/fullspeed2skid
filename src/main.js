@@ -5,7 +5,7 @@ import { startGame } from './game.js';
 import { World } from './world.js';
 
 const tileSize  = 256;
-const worldH    = 6144;
+const worldH    = 4096;
 
 showMenuOverlay();
 

@@ -3,7 +3,7 @@ import { FPVCamera } from './fpvCamera.js';
 import { ClassicCamera } from './classicCamera.js';
 
 export class CameraManager {
-  constructor(scene, car) {
+  constructor(scene, car, worldSize) {
     this.scene = scene;
     this.car = car;
     this.currentCamera = null;
@@ -13,7 +13,7 @@ export class CameraManager {
     this.cameraParams = {
       classic: {
         followOffset: { x: 0.27, y: 0.27 },
-        bounds: { x: 0, y: 0, width: 6144, height: 6144 }
+        bounds: { x: 0, y: 0, width: worldSize, height: worldSize }
       },
       fpv: {
         // parametry FPV będą w module fpvCamera.js

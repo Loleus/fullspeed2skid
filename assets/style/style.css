@@ -1,32 +1,5 @@
-@font-face {
-  font-family: 'Stormfaze';
-  src: url('../fonts/Stormfaze.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'punk kid';
-  src: url('../fonts/punk kid.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'fullspeed2';
-  src: url('../fonts/fullspeed2.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'skid';
-  src: url('../fonts/skid.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 body, html, canvas, * {
-  font-family: 'punk kid', 'Stormfaze', 'fullspeed2', 'skid' Arial, sans-serif !important;
+  font-family: 'punk kid', 'Stormfaze', 'skid' Arial, sans-serif !important;
 }
 
 html, body {

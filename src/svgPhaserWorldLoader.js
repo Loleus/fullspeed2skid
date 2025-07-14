@@ -67,7 +67,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   // Tło
   const bgImg = textureMap[bgTexture] || null;
   // Przeszkody: przygotuj mapę Promise'ów na podstawie id przeszkód
-  let obstacleTypes = new Set(['obstacle']);
+  let obstacleTypes = new Set();
   if (obstaclesGroup) {
     const obstacles = obstaclesGroup.querySelectorAll('path');
     for (const obs of obstacles) {

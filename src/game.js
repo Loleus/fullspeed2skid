@@ -1,8 +1,8 @@
 import { CameraManager } from './cameras.js';
 import { Car } from './car.js';
 import { World } from './world.js';
+import { tileSize } from './main.js';
 
-const tileSize  = 256;
 const viewW     = 1280;
 const viewH     = 720;
 
@@ -18,206 +18,194 @@ const FPS_SMOOTH = 10;
 let targetFps = 60;
 let fpsSwitchCooldown = 0;
 
-export function startGame(worldData) {
-  const config = {
-    type: Phaser.AUTO,
-    width: viewW,
-    height: viewH,
-    scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: viewW,
-      height: viewH
-    },
-    render: {
-      pixelArt: true,
-      antialias: false
-    },
-    physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false }},
-    scene: { preload, create, update }
-  };
-  window._worldData = worldData; // debug
-  worldSize = worldData.worldSize || 6144;
-  window._phaserGame = new Phaser.Game(config);
-}
+// Usuwam funkcję startGame i tworzę GameScene jako klasę Phaser.Scene
 
-function preload() {
-  for (const tile of window._worldData.tiles) {
-    const cropped = document.createElement('canvas');
-    cropped.width = tileSize;
-    cropped.height = tileSize;
-    cropped.getContext('2d').drawImage(tile.canvas, 0, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
-    this.textures.addCanvas(tile.id, cropped);
+export class GameScene extends window.Phaser.Scene {
+  constructor() {
+    super({ key: 'GameScene' });
   }
-  this.load.image('car', 'assets/images/car.png');
-}
 
-async function create() {
-  const worldData = window._worldData;
-  const start = worldData.startPos;
-  const startYOffset = viewH * 3/10;
-  car = this.physics.add.sprite(start.x, start.y + startYOffset, 'car');
-  car.setOrigin(0.5).setDepth(2);
-  car.body.allowRotation = false;
-  carController = new Car(this, car, worldData);
-  carController.resetState(start.x, start.y + startYOffset);
-  cursors = this.input.keyboard.createCursorKeys();
-  vKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.V);
-  // Dodaj obsługę WSAD
-  wasdKeys = this.input.keyboard.addKeys({
-    up: Phaser.Input.Keyboard.KeyCodes.W,
-    down: Phaser.Input.Keyboard.KeyCodes.S,
-    left: Phaser.Input.Keyboard.KeyCodes.A,
-    right: Phaser.Input.Keyboard.KeyCodes.D
-  });
-  cameraManager = new CameraManager(this, car, worldSize);
-  
-  // Stwórz jeden tekst HUD z trzema liniami
-  fpsText = this.add.text(10, 10, 'FPS: 0\nV - zmiana kamery\nR - reset\nX - exit', {
-    font: '20px monospace',
-    fill: '#fff',
-    backgroundColor: 'rgb(31, 31, 31)',
-    padding: { left: 8, right: 8, top: 4, bottom: 4 },
-  }).setScrollFactor(0).setDepth(100);
-  
-  world = new World(this, worldData, tileSize, viewW, viewH);
-  if (worldData.worldSize) {
-    worldSize = worldData.worldSize;
+  init(data) {
+    // Przechowuj worldData globalnie i lokalnie w scenie
+    this.worldData = data.worldData;
+    window._worldData = data.worldData;
   }
-  if (minimapa) {
-    this.cameras.main.ignore([fpsText]);
-    await world.initMinimap('assets/levels/scene_1.svg', fpsText);
-  } else {
-    const hudObjects = [fpsText];
-    this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
-    this.cameras.main.ignore(hudObjects);
-    this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
-    this.hudCamera.setScroll(0, 0);
-    this.hudCamera.setRotation(0);
-  }
-  
-  // Dodaj obsługę klawisza R
-  const rKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R);
-  this.rKey = rKey;
-  
-  // Dodaj obsługę klawisza X
-  const xKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.X);
-  this.xKey = xKey;
-  // Emituj event po pełnym wyrenderowaniu świata
-  window.dispatchEvent(new Event('game-ready'));
-}
 
-function getControlState() {
-  // Zbierz stany klawiszy
-  const upPressed    = (cursors.up.isDown    || wasdKeys.up.isDown);
-  const downPressed  = (cursors.down.isDown  || wasdKeys.down.isDown);
-  const leftPressed  = (cursors.left.isDown  || wasdKeys.left.isDown);
-  const rightPressed = (cursors.right.isDown || wasdKeys.right.isDown);
-  // Zabezpieczenie: nie pozwól na jednoczesne przeciwne kierunki
-  let up = false, down = false, left = false, right = false;
-  if (upPressed && !downPressed) up = true;
-  else if (downPressed && !upPressed) down = true;
-  if (leftPressed && !rightPressed) left = true;
-  else if (rightPressed && !leftPressed) right = true;
-  // Priorytet: jeśli oba zestawy mają ten sam kierunek, rejestruj tylko pierwszy wciśnięty
-  if (up) {
-    if (cursors.up.isDown && wasdKeys.up.isDown) {
-      up = cursors.up.timeDown < wasdKeys.up.timeDown;
-    }
-  }
-  if (down) {
-    if (cursors.down.isDown && wasdKeys.down.isDown) {
-      down = cursors.down.timeDown < wasdKeys.down.timeDown;
-    }
-  }
-  if (left) {
-    if (cursors.left.isDown && wasdKeys.left.isDown) {
-      left = cursors.left.timeDown < wasdKeys.left.timeDown;
-    }
-  }
-  if (right) {
-    if (cursors.right.isDown && wasdKeys.right.isDown) {
-      right = cursors.right.timeDown < wasdKeys.right.timeDown;
-    }
-  }
-  return { up, down, left, right };
-}
-
-function resetGame() {
-  const worldData = window._worldData;
-  const start = worldData.startPos;
-  const startYOffset = viewH * 3/10;
-  
-  // Reset pozycji auta
-  carController.resetState(start.x, start.y + startYOffset);
-  
-  // Wyczyść kafle świata
-  if (world) {
-    world.trackTiles = [];
-    for (const [tileId, tileObj] of world.tilePool.entries()) {
-      tileObj.setVisible(false);
-    }
-  }
-  
-  // Reset kamery
-  if (cameraManager) {
-    cameraManager.reset();
-  }
-}
-
-function exitToMenu() {
-  // Ukryj grę
-  const canvas = document.querySelector('#phaser-canvas');
-  if (canvas) {
-    canvas.style.display = 'none';
-  }
-  
-  // Wróć do menu
-  import('./menu.js').then(module => {
-    module.showMenuOverlay();
-  });
-}
-
-function update(time, dt) {
-  dt = dt / 1000;
-  if (vKey && Phaser.Input.Keyboard.JustDown(vKey)) {
-    cameraManager.toggle();
-  }
-  if (this.rKey && Phaser.Input.Keyboard.JustDown(this.rKey)) {
-    resetGame();
-  }
-  if (this.xKey && Phaser.Input.Keyboard.JustDown(this.xKey)) {
-    exitToMenu();
-  }
-  const control = getControlState();
-  carController.update(dt, control, worldSize, worldSize);
-  const carPos = carController.getPosition();
-  world.drawTiles(carPos.x, carPos.y);
-  if (fpsText) {
-    const fpsNow = 1 / dt;
-    fpsHistory.push(fpsNow);
-    if (fpsHistory.length > FPS_SMOOTH) fpsHistory.shift();
-    const fpsAvg = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
-    const fpsStable = Math.round(fpsAvg);
-    fpsText.setText(`FPS: ${fpsStable}\nV - zmiana kamery\nR - reset\nX - exit`);
-    // --- Automatyczne przełączanie FPS ---
-    if (fpsSwitchCooldown > 0) fpsSwitchCooldown--;
-    else if (window._phaserGame && window._phaserGame.loop) {
-      if (targetFps === 60 && fpsAvg < 50) {
-        window._phaserGame.loop.targetFps = 30;
-        targetFps = 30;
-        fpsSwitchCooldown = 120; // 2 sekundy
-      } else if (targetFps === 30 && fpsAvg > 55) {
-        window._phaserGame.loop.targetFps = 60;
-        targetFps = 60;
-        fpsSwitchCooldown = 120;
+  preload() {
+    // Wyczyść stare tekstury kafli, jeśli istnieją
+    if (window._worldData && window._worldData.tiles) {
+      for (const tile of window._worldData.tiles) {
+        if (this.textures.exists(tile.id)) {
+          this.textures.remove(tile.id);
+        }
+      }
+      for (const tile of window._worldData.tiles) {
+        const cropped = document.createElement('canvas');
+        cropped.width = tileSize;
+        cropped.height = tileSize;
+        cropped.getContext('2d').drawImage(tile.canvas, 0, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
+        this.textures.addCanvas(tile.id, cropped);
       }
     }
+    this.load.image('car', 'assets/images/car.png');
   }
-  if (minimapa && world) {
-    world.drawMinimap(carPos, worldSize, worldSize);
+
+  async create() {
+    const worldData = this.worldData || window._worldData;
+    const viewW = 1280;
+    const viewH = 720;
+    const start = worldData.startPos;
+    const startYOffset = viewH * 3/10;
+    this.car = this.physics.add.sprite(start.x, start.y + startYOffset, 'car');
+    this.car.setOrigin(0.5).setDepth(2);
+    this.car.body.allowRotation = false;
+    this.carController = new Car(this, this.car, worldData);
+    this.carController.resetState(start.x, start.y + startYOffset);
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.vKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.V);
+    this.wasdKeys = this.input.keyboard.addKeys({
+      up: window.Phaser.Input.Keyboard.KeyCodes.W,
+      down: window.Phaser.Input.Keyboard.KeyCodes.S,
+      left: window.Phaser.Input.Keyboard.KeyCodes.A,
+      right: window.Phaser.Input.Keyboard.KeyCodes.D
+    });
+    this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
+    this.fpsText = this.add.text(10, 10, 'FPS: 0\nV - zmiana kamery\nR - reset\nX - exit', {
+      fontFamily: 'Stormfaze',
+      font: '20px Stormfaze',
+      fill: '#fff',
+      backgroundColor: 'rgb(31, 31, 31)',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 },
+    }).setScrollFactor(0).setDepth(100);
+    this.world = new World(this, worldData, tileSize, viewW, viewH);
+    if (worldData.worldSize) {
+      this.worldSize = worldData.worldSize;
+    }
+    if (minimapa) {
+      this.cameras.main.ignore([this.fpsText]);
+      await this.world.initMinimap('assets/levels/scene_1.svg', this.fpsText);
+    } else {
+      const hudObjects = [this.fpsText];
+      this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+      this.cameras.main.ignore(hudObjects);
+      this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
+      this.hudCamera.setScroll(0, 0);
+      this.hudCamera.setRotation(0);
+    }
+    
+    // Dodaj obsługę klawisza R
+    this.rKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.R);
+    
+    // Dodaj obsługę klawisza X
+    this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
+    window.dispatchEvent(new Event('game-ready'));
   }
-  if (cameraManager) {
-    cameraManager.update(dt);
+
+  update(time, dt) {
+    dt = dt / 1000;
+    if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) {
+      this.cameraManager.toggle();
+    }
+    if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) {
+      this.resetGame();
+    }
+    if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) {
+      this.exitToMenu();
+    }
+    const control = this.getControlState();
+    this.carController.update(dt, control, this.worldSize, this.worldSize);
+    const carPos = this.carController.getPosition();
+    this.world.drawTiles(carPos.x, carPos.y);
+    if (this.fpsText) {
+      const fpsNow = 1 / dt;
+      fpsHistory.push(fpsNow);
+      if (fpsHistory.length > FPS_SMOOTH) fpsHistory.shift();
+      const fpsAvg = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+      const fpsStable = Math.round(fpsAvg);
+      this.fpsText.setText(`FPS: ${fpsStable}\nV - zmiana kamery\nR - reset\nX - exit`);
+      // --- Automatyczne przełączanie FPS ---
+      if (fpsSwitchCooldown > 0) fpsSwitchCooldown--;
+      else if (window._phaserGame && window._phaserGame.loop) {
+        if (targetFps === 60 && fpsAvg < 50) {
+          window._phaserGame.loop.targetFps = 30;
+          targetFps = 30;
+          fpsSwitchCooldown = 120; // 2 sekundy
+        } else if (targetFps === 30 && fpsAvg > 55) {
+          window._phaserGame.loop.targetFps = 60;
+          targetFps = 60;
+          fpsSwitchCooldown = 120;
+        }
+      }
+    }
+    if (minimapa && this.world) {
+      this.world.drawMinimap(carPos, this.worldSize, this.worldSize);
+    }
+    if (this.cameraManager) {
+      this.cameraManager.update(dt);
+    }
+  }
+
+  getControlState() {
+    // Zbierz stany klawiszy
+    const upPressed    = (this.cursors.up.isDown    || this.wasdKeys.up.isDown);
+    const downPressed  = (this.cursors.down.isDown  || this.wasdKeys.down.isDown);
+    const leftPressed  = (this.cursors.left.isDown  || this.wasdKeys.left.isDown);
+    const rightPressed = (this.cursors.right.isDown || this.wasdKeys.right.isDown);
+    // Zabezpieczenie: nie pozwól na jednoczesne przeciwne kierunki
+    let up = false, down = false, left = false, right = false;
+    if (upPressed && !downPressed) up = true;
+    else if (downPressed && !upPressed) down = true;
+    if (leftPressed && !rightPressed) left = true;
+    else if (rightPressed && !leftPressed) right = true;
+    // Priorytet: jeśli oba zestawy mają ten sam kierunek, rejestruj tylko pierwszy wciśnięty
+    if (up) {
+      if (this.cursors.up.isDown && this.wasdKeys.up.isDown) {
+        up = this.cursors.up.timeDown < this.wasdKeys.up.timeDown;
+      }
+    }
+    if (down) {
+      if (this.cursors.down.isDown && this.wasdKeys.down.isDown) {
+        down = this.cursors.down.timeDown < this.wasdKeys.down.timeDown;
+      }
+    }
+    if (left) {
+      if (this.cursors.left.isDown && this.wasdKeys.left.isDown) {
+        left = this.cursors.left.timeDown < this.wasdKeys.left.timeDown;
+      }
+    }
+    if (right) {
+      if (this.cursors.right.isDown && this.wasdKeys.right.isDown) {
+        right = this.cursors.right.timeDown < this.wasdKeys.right.timeDown;
+      }
+    }
+    return { up, down, left, right };
+  }
+
+  resetGame() {
+    const worldData = this.worldData || window._worldData;
+    const viewH = 720;
+    const start = worldData.startPos;
+    const startYOffset = viewH * 3/10;
+    
+    // Reset pozycji auta
+    this.carController.resetState(start.x, start.y + startYOffset);
+    
+    // Wyczyść kafle świata
+    if (this.world) {
+      this.world.trackTiles = [];
+      for (const [tileId, tileObj] of this.world.tilePool.entries()) {
+        tileObj.setVisible(false);
+      }
+    }
+    
+    // Reset kamery
+    if (this.cameraManager) {
+      this.cameraManager.reset();
+    }
+  }
+
+  exitToMenu() {
+    // Przełącz na MenuScene
+    this.scene.start('MenuScene');
   }
 } 

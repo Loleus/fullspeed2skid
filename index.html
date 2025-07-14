@@ -21,21 +21,24 @@
   <link rel="stylesheet" href="assets/style/style.css">
 </head>
 <body>
-  <script type="module" src="src/main.js"></script>
   <script>
-    
-  window.addEventListener('DOMContentLoaded', () => {
-    // Phaser domyślnie tworzy <canvas> bez id, więc nadajemy mu id po utworzeniu gry
-    const observer = new MutationObserver(() => {
-      const c = document.querySelector('canvas');
-      if (c && !c.id) {
-        c.id = 'phaser-canvas';
-        observer.disconnect();
-      }
+    window.addEventListener('DOMContentLoaded', () => {
+      // Phaser domyślnie tworzy <canvas> bez id, więc nadajemy mu id po utworzeniu gry
+      const observer = new MutationObserver(() => {
+        document.querySelectorAll('canvas').forEach(c => {
+          if (!c.id || c.id !== 'phaser-canvas') {
+            c.id = 'phaser-canvas';
+          }
+        });
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      // Start gry po observerze
+      const script = document.createElement('script');
+      script.type = 'module';
+      script.src = 'src/main.js';
+      document.body.appendChild(script);
     });
-    observer.observe(document.body, { childList: true, subtree: true });
-  });
-
   </script>
+  
 </body>
 </html>

@@ -44,14 +44,16 @@ export class MenuScene extends window.Phaser.Scene {
     const margin = 10;
     const padding = 8;
     const totalHeight = buttons.length * btnHeight + (buttons.length - 1) * margin;
-    let y = height / 2 - totalHeight / 2;
+    // --- PRZESUNIĘCIE MENU W DÓŁ ---
+    const menuOffsetY = 100; // większy margines od loga
+    let y = height / 2 - totalHeight / 2 + menuOffsetY;
 
     buttons.forEach((btn, i) => {
       const bg = this.add.rectangle(width / 2, y + btnHeight / 2, btnWidth, btnHeight, 0x444444, btn.disabled ? 0.5 : 1)
         .setStrokeStyle(2, 0x222222)
         .setOrigin(0.5);
       const text = this.add.text(width / 2, y + btnHeight / 2, btn.label, {
-        fontFamily: 'Stormfaze',
+        fontFamily: 'punk kid',
         fontSize: '24px',
         color: btn.disabled ? '#666' : '#ccc',
         align: 'center',
@@ -68,6 +70,28 @@ export class MenuScene extends window.Phaser.Scene {
       this.menuButtons.push({ bg, text, key: btn.key });
       y += btnHeight + margin;
     });
+
+    // --- NAPIS NAD MENU (jeden wiersz, dwa fonty) ---
+    const titleY = height / 2 - totalHeight / 2 - 70;
+    const text1 = this.add.text(0, 0, 'Full Speed 2', {
+      fontFamily: 'skid',
+      fontSize: '40px',
+      color: '#f00',
+      align: 'center',
+    });
+    const text2 = this.add.text(0, 0, 'Skid', {
+      fontFamily: 'punk kid',
+      fontSize: '50px',
+      color: '#ffd',
+      align: 'center',
+    });
+    // Oblicz szerokość całości i wyśrodkuj
+    const totalTitleWidth = text1.width + text2.width;
+    const startX = width / 2 - totalTitleWidth / 2;
+    text1.setPosition(startX, titleY).setOrigin(0, 0.5);
+    const verticalOffset = -80; // Korekta pionowa dla Skid
+    const horizontalOffset = 20; // Korekta pozioma dla 2 Skid
+    text2.setPosition(startX + text1.width + horizontalOffset, titleY + (text1.height - text2.height) / 2 + verticalOffset).setOrigin(0, 0.5);
   }
 
   async fetchTracks() {

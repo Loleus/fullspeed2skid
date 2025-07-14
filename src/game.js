@@ -1,8 +1,8 @@
 import { CameraManager } from './cameras.js';
 import { Car } from './car.js';
 import { World } from './world.js';
+import { tileSize } from './main.js';
 
-const tileSize  = 256;
 const viewW     = 1280;
 const viewH     = 720;
 
@@ -41,9 +41,9 @@ export class GameScene extends window.Phaser.Scene {
       }
       for (const tile of window._worldData.tiles) {
         const cropped = document.createElement('canvas');
-        cropped.width = 256;
-        cropped.height = 256;
-        cropped.getContext('2d').drawImage(tile.canvas, 0, 0, 256, 256, 0, 0, 256, 256);
+        cropped.width = tileSize;
+        cropped.height = tileSize;
+        cropped.getContext('2d').drawImage(tile.canvas, 0, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
         this.textures.addCanvas(tile.id, cropped);
       }
     }
@@ -71,12 +71,13 @@ export class GameScene extends window.Phaser.Scene {
     });
     this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
     this.fpsText = this.add.text(10, 10, 'FPS: 0\nV - zmiana kamery\nR - reset\nX - exit', {
-      font: '20px monospace',
+      fontFamily: 'Stormfaze',
+      font: '20px Stormfaze',
       fill: '#fff',
       backgroundColor: 'rgb(31, 31, 31)',
       padding: { left: 8, right: 8, top: 4, bottom: 4 },
     }).setScrollFactor(0).setDepth(100);
-    this.world = new World(this, worldData, 256, viewW, viewH);
+    this.world = new World(this, worldData, tileSize, viewW, viewH);
     if (worldData.worldSize) {
       this.worldSize = worldData.worldSize;
     }

@@ -13,7 +13,7 @@ export class MenuScene extends window.Phaser.Scene {
   async create() {
     console.log('MenuScene create', Date.now());
     const { width, height } = this.sys.game.canvas;
-    this.cameras.main.setBackgroundColor('#888');
+    this.cameras.main.setBackgroundColor('#000');
 
     // Pobierz dynamicznie listę torów z assets/levels
     if (!this.tracks || this.tracks.length === 0) {
@@ -42,7 +42,7 @@ export class MenuScene extends window.Phaser.Scene {
     const btnWidth = 300;
     const btnHeight = 60;
     const margin = 10;
-    const padding = 5;
+    const padding = 8;
     const totalHeight = buttons.length * btnHeight + (buttons.length - 1) * margin;
     let y = height / 2 - totalHeight / 2;
 
@@ -51,9 +51,9 @@ export class MenuScene extends window.Phaser.Scene {
         .setStrokeStyle(2, 0x222222)
         .setOrigin(0.5);
       const text = this.add.text(width / 2, y + btnHeight / 2, btn.label, {
-        fontFamily: 'Arial',
-        fontSize: '32px',
-        color: btn.disabled ? '#888' : '#fff',
+        fontFamily: 'Stormfaze',
+        fontSize: '24px',
+        color: btn.disabled ? '#666' : '#ccc',
         align: 'center',
         padding: { left: padding, right: padding, top: padding, bottom: padding },
       }).setOrigin(0.5);

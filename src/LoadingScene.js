@@ -1,5 +1,6 @@
 // import Phaser from './phaser.js';
 import { World } from './world.js';
+import { tileSize, worldH } from './main.js';
 // import { startGame } from './game.js';
 
 export class LoadingScene extends window.Phaser.Scene {
@@ -14,7 +15,7 @@ export class LoadingScene extends window.Phaser.Scene {
 
   async create(data) {
     const { width, height } = this.sys.game.canvas;
-    this.cameras.main.setBackgroundColor('#888');
+    this.cameras.main.setBackgroundColor('#000');
     const btnWidth = 300;
     const btnHeight = 60;
     const padding = 5;
@@ -23,9 +24,9 @@ export class LoadingScene extends window.Phaser.Scene {
       .setStrokeStyle(2, 0x222222)
       .setOrigin(0.5);
     // Tekst
-    const loadingText = this.add.text(width / 2, height / 2, 'LOADING...', {
-      fontFamily: 'Arial',
-      fontSize: '32px',
+    const loadingText = this.add.text(width / 2, height / 2, 'loading...', {
+      fontFamily: 'Stormfaze',
+      fontSize: '21px',
       color: '#fff',
       align: 'center',
       padding: { left: padding, right: padding, top: padding, bottom: padding },
@@ -37,8 +38,6 @@ export class LoadingScene extends window.Phaser.Scene {
     // Jeśli przekazano plik toru, ładuj SVG i uruchom grę
     if (data && data.trackFile) {
       loadingText.setText('LOADING TRACK...');
-      const tileSize = 256;
-      const worldH = 6144;
       const svgPath = `assets/levels/${data.trackFile}`;
       const worldData = await World.loadWorld(svgPath, worldH, tileSize);
       // startGame(worldData);
@@ -53,8 +52,7 @@ export class LoadingScene extends window.Phaser.Scene {
 
   createWorldTemplate() {
     // Parametry świata
-    const worldSize = 6144;
-    const tileSize = 256;
+    const worldSize = worldH;
     // Stwórz canvas
     const canvas = document.createElement('canvas');
     canvas.width = worldSize;

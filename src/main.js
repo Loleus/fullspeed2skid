@@ -28,27 +28,10 @@ const config = {
 
 window._phaserGame = new Phaser.Game(config);
 
-// Dalej logika ładowania świata i startu gry będzie wywoływana przez sceny
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
+//   });
+// }
 
-async function main() {
-  let fakeProgress = 0;
-  let progressInterval = setInterval(() => {
-    if (fakeProgress < 90) {
-      fakeProgress++;
-    }
-  }, 8);
-  const worldData = await World.loadWorld('assets/levels/scene_1.svg', worldH, tileSize);
-  clearInterval(progressInterval);
-  // startGame(worldData); // This line is removed as per the edit hint
-  window.addEventListener('game-ready', () => {
-    // hideLoadingOverlay(); // This line is removed as per the edit hint
-  }, { once: true });
-}
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
-  });
-}
-
-export { main };
+export { tileSize, worldH };

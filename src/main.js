@@ -23,6 +23,7 @@ const config = {
   },
   physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
   scene: [LoadingScene, MenuScene, GameScene],
+  // USUWAM canvas: niech Phaser sam utworzy element
 };
 
 window._phaserGame = new Phaser.Game(config);

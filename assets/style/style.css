@@ -6,24 +6,28 @@ html, body {
     overflow: hidden;
     background: #000;
   }
-  body {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100vw;
-    height: 100vh;
-  }
-  #phaser-canvas {
-    display: block;
-    margin: 0 auto;
-    width: 1280px;
-    height: 720px;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    box-shadow: 0 0 32px #000a;
-    background: #000;
-    transition: width 0.2s, height 0.2s;
-  }
+  /* Wyśrodkowanie canvasa na ekranie */
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background: #222;
+}
+
+#phaser-canvas, canvas {
+  display: block;
+  margin: 0 auto;
+  width: 1280px;
+  height: 720px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  box-shadow: 0 0 32px #000a;
+  background: #000;
+  border: none;
+  padding: 0;
+}
   /* Fullscreen: canvas wypełnia cały ekran */
   @media (min-width: 1281px) and (min-height: 721px) {
     body:fullscreen #phaser-canvas,

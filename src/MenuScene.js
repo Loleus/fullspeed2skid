@@ -3,20 +3,33 @@
 export class MenuScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
-    this.tracks = [];
-    this.selectedTrack = 0;
+    // Przenoszę tracks i selectedTrack do window, by zachować stan
+    if (!window._tracks) window._tracks = [];
+    if (typeof window._selectedTrack !== 'number') window._selectedTrack = 0;
+    this.tracks = window._tracks;
+    this.selectedTrack = window._selectedTrack;
   }
 
   async create() {
+    console.log('MenuScene create', Date.now());
     const { width, height } = this.sys.game.canvas;
     this.cameras.main.setBackgroundColor('#888');
 
     // Pobierz dynamicznie listę torów z assets/levels
-    this.tracks = await this.fetchTracks();
+    if (!this.tracks || this.tracks.length === 0) {
+      this.tracks = await this.fetchTracks();
+      // NIE ograniczaj liczby torów
+      window._tracks = this.tracks;
+    }
     if (this.tracks.length === 0) {
       this.tracks = [{ label: 'TRACK 1', file: 'scene_1.svg' }];
+      window._tracks = this.tracks;
     }
-    this.selectedTrack = 0;
+    // Nie resetuj selectedTrack jeśli już istnieje
+    if (typeof this.selectedTrack !== 'number' || this.selectedTrack < 0 || this.selectedTrack >= this.tracks.length) {
+      this.selectedTrack = 0;
+      window._selectedTrack = 0;
+    }
 
     // Dane przycisków
     const buttons = [
@@ -49,10 +62,8 @@ export class MenuScene extends window.Phaser.Scene {
         bg.on('pointerdown', () => this.handleButton(btn.key));
         bg.on('pointerover', () => bg.setFillStyle(0x666666, 1));
         bg.on('pointerout', () => bg.setFillStyle(0x444444, 1));
-        text.setInteractive({ useHandCursor: true });
-        text.on('pointerdown', () => this.handleButton(btn.key));
-        text.on('pointerover', () => bg.setFillStyle(0x666666, 1));
-        text.on('pointerout', () => bg.setFillStyle(0x444444, 1));
+        // NIE ustawiaj interaktywności na text!
+        // NIE dodawaj eventów na text!
       }
       this.menuButtons.push({ bg, text, key: btn.key });
       y += btnHeight + margin;
@@ -66,10 +77,15 @@ export class MenuScene extends window.Phaser.Scene {
       const text = await response.text();
       // Wyciągnij nazwy plików SVG
       const matches = [...text.matchAll(/scene_(\d+)\.svg/g)];
-      return matches.map(m => ({
+      console.log('Wykryte tory:', matches.map(m => m[0]));
+      let tracks = matches.map(m => ({
         label: `TRACK ${m[1]}`,
         file: `scene_${m[1]}.svg`
       }));
+      // Usuń duplikaty po file
+      tracks = tracks.filter((t, i, arr) => arr.findIndex(x => x.file === t.file) === i);
+      // NIE ograniczaj liczby torów
+      return tracks;
     } catch (e) {
       // Fallback: dwa tory
       return [
@@ -80,6 +96,7 @@ export class MenuScene extends window.Phaser.Scene {
   }
 
   handleButton(key) {
+    console.log('Klik:', key, 'selectedTrack:', this.selectedTrack);
     if (key === 'start') {
       this.scene.start('LoadingScene', { trackFile: this.tracks[this.selectedTrack].file });
     } else if (key === 'fullscreen') {
@@ -90,6 +107,8 @@ export class MenuScene extends window.Phaser.Scene {
       }
     } else if (key === 'track') {
       this.selectedTrack = (this.selectedTrack + 1) % this.tracks.length;
+      window._selectedTrack = this.selectedTrack;
+      console.log('Nowy selectedTrack:', this.selectedTrack);
       const trackBtn = this.menuButtons.find(btn => btn.key === 'track');
       if (trackBtn) {
         trackBtn.text.setText(this.tracks[this.selectedTrack].label);

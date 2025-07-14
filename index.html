@@ -19,8 +19,45 @@
   <title>Full Speed 2 Skid</title>
   <script src="src/phaser.js"></script>
   <link rel="stylesheet" href="assets/style/style.css">
+  <link rel="preload" href="assets/fonts/fullspeed2.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/skid.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/punk kid.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/Stormfaze.otf" as="font" type="font/otf" crossorigin>
+  <style>
+    @font-face {
+      font-family: 'fullspeed2';
+      src: url('assets/fonts/fullspeed2.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'skid';
+      src: url('assets/fonts/skid.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'punk kid';
+      src: url('assets/fonts/punk kid.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Stormfaze';
+      src: url('assets/fonts/Stormfaze.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+    }
+    #font-preload {
+      position: absolute;
+      left: -9999px;
+      visibility: hidden;
+      font-family: 'fullspeed2', 'skid', 'punk kid', 'Stormfaze', Arial, sans-serif;
+    }
+  </style>
 </head>
 <body>
+  <span id="font-preload">Font preload</span>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       // Phaser domyślnie tworzy <canvas> bez id, więc nadajemy mu id po utworzeniu gry

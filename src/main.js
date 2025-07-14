@@ -28,10 +28,10 @@ const config = {
 
 window._phaserGame = new Phaser.Game(config);
 
-// if ('serviceWorker' in navigator) {
-//   window.addEventListener('load', () => {
-//     navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
-//   });
-// }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
+  });
+}
 
 export { tileSize, worldH };

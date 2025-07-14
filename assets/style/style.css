@@ -1,12 +1,5 @@
-@font-face {
-  font-family: 'Stormfaze';
-  src: url('../fonts/Stormfaze.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 body, html, canvas, * {
-  font-family: 'Stormfaze', Arial, sans-serif !important;
+  font-family: 'punk kid', 'Stormfaze', 'skid' Arial, sans-serif !important;
 }
 
 html, body {

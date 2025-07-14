@@ -16,6 +16,8 @@ const ASSETS = [
   '/fullspeed2skid/src/fpvCamera.js',
   '/fullspeed2skid/assets/style/style.css',
   '/fullspeed2skid/assets/fonts/Stormfaze.otf',
+  '/fullspeed2skid/assets/fonts/skid.ttf',
+  '/fullspeed2skid/assets/fonts/punk kid.ttf',
   '/fullspeed2skid/assets/images/car.png',
   '/fullspeed2skid/assets/images/asphalt.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',

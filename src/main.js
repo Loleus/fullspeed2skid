@@ -1,13 +1,33 @@
 // main.js
-import { showLoadingOverlay, hideLoadingOverlay } from './loadingScreen.js';
-import { showMenuOverlay } from './menu.js';
-import { startGame } from './game.js';
-import { World } from './world.js';
+import { MenuScene } from './MenuScene.js';
+import { LoadingScene } from './LoadingScene.js';
+import { GameScene } from './game.js';
 
 const tileSize  = 256;
 const worldH    = 6144;
 
-showMenuOverlay();
+// Inicjalizacja Phasera z LoadingScene i MenuScene
+const config = {
+  type: Phaser.AUTO,
+  width: 1280,
+  height: 720,
+  scale: {
+    mode: Phaser.Scale.FIT,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 1280,
+    height: 720
+  },
+  render: {
+    pixelArt: true,
+    antialias: false
+  },
+  physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
+  scene: [LoadingScene, MenuScene, GameScene],
+};
+
+window._phaserGame = new Phaser.Game(config);
+
+// Dalej logika ładowania świata i startu gry będzie wywoływana przez sceny
 
 async function main() {
   let fakeProgress = 0;
@@ -18,9 +38,9 @@ async function main() {
   }, 8);
   const worldData = await World.loadWorld('assets/levels/scene_1.svg', worldH, tileSize);
   clearInterval(progressInterval);
-  startGame(worldData);
+  // startGame(worldData); // This line is removed as per the edit hint
   window.addEventListener('game-ready', () => {
-    hideLoadingOverlay();
+    // hideLoadingOverlay(); // This line is removed as per the edit hint
   }, { once: true });
 }
 

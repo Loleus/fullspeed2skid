@@ -53,7 +53,7 @@ export class MenuScene extends window.Phaser.Scene {
         .setStrokeStyle(2, 0x222222)
         .setOrigin(0.5);
       const text = this.add.text(width / 2, y + btnHeight / 2, btn.label, {
-        fontFamily: 'punk_kid',
+        fontFamily: 'Stormfaze',
         fontSize: '24px',
         color: btn.disabled ? '#666' : '#ccc',
         align: 'center',
@@ -81,7 +81,7 @@ export class MenuScene extends window.Phaser.Scene {
     });
     const text2 = this.add.text(0, 0, 'Skid', {
       fontFamily: 'punk_kid',
-      fontSize: '50px',
+      fontSize: '70px',
       color: '#ffd',
       align: 'center',
     });
@@ -89,8 +89,8 @@ export class MenuScene extends window.Phaser.Scene {
     const totalTitleWidth = text1.width + text2.width;
     const startX = width / 2 - totalTitleWidth / 2;
     text1.setPosition(startX, titleY).setOrigin(0, 0.5);
-    const verticalOffset = -80; // Korekta pionowa dla Skid
-    const horizontalOffset = 20; // Korekta pozioma dla 2 Skid
+    const verticalOffset = -60; // Korekta pionowa dla Skid
+    const horizontalOffset = 30; // Korekta pozioma dla 2 Skid
     text2.setPosition(startX + text1.width + horizontalOffset, titleY + (text1.height - text2.height) / 2 + verticalOffset).setOrigin(0, 0.5);
   }
 

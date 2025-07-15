@@ -19,7 +19,8 @@ const config = {
   },
   render: {
     pixelArt: true,
-    antialias: false
+    antialias: false,
+    disableContextMenu: true
   },
   physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
   scene: [LoadingScene, MenuScene, GameScene],

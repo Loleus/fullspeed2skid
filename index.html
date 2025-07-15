@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Full Speed 2 Skid - online racing project. Author: LxO (@loleus), email: loleus@gmail.com">
+  <meta name="description"
+    content="Full Speed 2 Skid - online racing project. Author: LxO (@loleus), email: loleus@gmail.com">
   <meta name="robots" content="index, follow">
   <meta name="theme-color" content="#222222">
   <meta name="author" content="LxO">
@@ -23,33 +25,36 @@
   <link rel="preload" href="assets/fonts/punk_kid.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/fonts/Stormfaze.otf" as="font" type="font/otf" crossorigin>
   <style>
-
     @font-face {
       font-family: 'skid';
       src: url('assets/fonts/skid.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
     }
+
     @font-face {
       font-family: 'punk_kid';
       src: url('assets/fonts/punk_kid.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
     }
+
     @font-face {
       font-family: 'Stormfaze';
       src: url('assets/fonts/Stormfaze.otf') format('opentype');
       font-weight: normal;
       font-style: normal;
     }
+
     #font-preload {
       position: absolute;
       left: -9999px;
       visibility: hidden;
-      font-family: 'fullspeed2', 'skid', 'punk kid', 'Stormfaze', Arial, sans-serif;
+      font-family: 'skid', 'punk kid', 'Stormfaze', Arial, sans-serif;
     }
   </style>
 </head>
+
 <body>
   <span id="font-preload">Font preload</span>
   <script>
@@ -70,6 +75,9 @@
           if (!c.id || c.id !== 'phaser-canvas') {
             c.id = 'phaser-canvas';
           }
+          c.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+          });
         });
       });
       observer.observe(document.body, { childList: true, subtree: true });
@@ -80,6 +88,7 @@
       document.body.appendChild(script);
     });
   </script>
-  
+
 </body>
+
 </html>

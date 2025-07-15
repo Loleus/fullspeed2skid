@@ -19,17 +19,11 @@
   <title>Full Speed 2 Skid</title>
   <script src="src/phaser.js"></script>
   <link rel="stylesheet" href="assets/style/style.css">
-  <link rel="preload" href="assets/fonts/fullspeed2.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/fonts/skid.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="preload" href="assets/fonts/punk kid.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="assets/fonts/punk_kid.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/fonts/Stormfaze.otf" as="font" type="font/otf" crossorigin>
   <style>
-    @font-face {
-      font-family: 'fullspeed2';
-      src: url('assets/fonts/fullspeed2.ttf') format('truetype');
-      font-weight: normal;
-      font-style: normal;
-    }
+
     @font-face {
       font-family: 'skid';
       src: url('assets/fonts/skid.ttf') format('truetype');
@@ -37,8 +31,8 @@
       font-style: normal;
     }
     @font-face {
-      font-family: 'punk kid';
-      src: url('assets/fonts/punk kid.ttf') format('truetype');
+      font-family: 'punk_kid';
+      src: url('assets/fonts/punk_kid.ttf') format('truetype');
       font-weight: normal;
       font-style: normal;
     }
@@ -59,7 +53,17 @@
 <body>
   <span id="font-preload">Font preload</span>
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
+    async function waitForFonts() {
+      if (document.fonts) {
+        await document.fonts.load('24px "punk_kid"');
+        await document.fonts.load('40px skid');
+        await document.fonts.load('50px Stormfaze');
+        await document.fonts.ready;
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      await waitForFonts();
       // Phaser domyślnie tworzy <canvas> bez id, więc nadajemy mu id po utworzeniu gry
       const observer = new MutationObserver(() => {
         document.querySelectorAll('canvas').forEach(c => {

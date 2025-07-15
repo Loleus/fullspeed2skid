@@ -53,7 +53,7 @@ export class MenuScene extends window.Phaser.Scene {
         .setStrokeStyle(2, 0x222222)
         .setOrigin(0.5);
       const text = this.add.text(width / 2, y + btnHeight / 2, btn.label, {
-        fontFamily: 'punk kid',
+        fontFamily: 'punk_kid',
         fontSize: '24px',
         color: btn.disabled ? '#666' : '#ccc',
         align: 'center',
@@ -80,7 +80,7 @@ export class MenuScene extends window.Phaser.Scene {
       align: 'center',
     });
     const text2 = this.add.text(0, 0, 'Skid', {
-      fontFamily: 'punk kid',
+      fontFamily: 'punk_kid',
       fontSize: '50px',
       color: '#ffd',
       align: 'center',
@@ -95,21 +95,11 @@ export class MenuScene extends window.Phaser.Scene {
   }
 
   async fetchTracks() {
-    // Pobierz listę plików z assets/levels przez zapytanie do katalogu (działa lokalnie na serwerze lub na github.io z indexem)
     try {
-      const response = await fetch('assets/levels/');
-      const text = await response.text();
-      // Wyciągnij nazwy plików SVG
-      const matches = [...text.matchAll(/scene_(\d+)\.svg/g)];
-      console.log('Wykryte tory:', matches.map(m => m[0]));
-      let tracks = matches.map(m => ({
-        label: `TRACK ${m[1]}`,
-        file: `scene_${m[1]}.svg`
-      }));
-      // Usuń duplikaty po file
-      tracks = tracks.filter((t, i, arr) => arr.findIndex(x => x.file === t.file) === i);
-      // NIE ograniczaj liczby torów
-      return tracks;
+      const response = await fetch('assets/levels/tracks.json');
+      const tracks = await response.json();
+      // Usuwanie duplikatów po file (opcjonalnie)
+      return tracks.filter((t, i, arr) => arr.findIndex(x => x.file === t.file) === i);
     } catch (e) {
       // Fallback: dwa tory
       return [

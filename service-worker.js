@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v6';
+const CACHE_NAME = 'fullspeed2skid-v7';
 const ASSETS = [
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
@@ -17,7 +17,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/style/style.css',
   '/fullspeed2skid/assets/fonts/Stormfaze.otf',
   '/fullspeed2skid/assets/fonts/skid.ttf',
-  '/fullspeed2skid/assets/fonts/punk kid.ttf',
+  '/fullspeed2skid/assets/fonts/punk_kid.ttf',
   '/fullspeed2skid/assets/images/car.png',
   '/fullspeed2skid/assets/images/asphalt.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',

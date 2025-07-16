@@ -83,7 +83,8 @@ export class GameScene extends window.Phaser.Scene {
     }
     if (minimapa) {
       this.cameras.main.ignore([this.fpsText]);
-      await this.world.initMinimap('assets/levels/scene_1.svg', this.fpsText);
+      // Użyj ścieżki SVG z worldData, zamiast na sztywno
+      await this.world.initMinimap(worldData.svgPath, this.fpsText);
     } else {
       const hudObjects = [this.fpsText];
       this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');

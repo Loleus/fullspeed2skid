@@ -16,17 +16,19 @@ export class Car {
     this.rollingResistance = 5; // współczynnik oporu toczenia
     
     // Parametry jazdy
-    this.MAX_STEER_DEG = 23; // maksymalny kąt skrętu kół (stopnie)
-    this.STEER_SPEED_DEG = 23; // szybkość skręcania kół (stopnie/sek)
+    this.MAX_STEER_DEG = 18; // maksymalny kąt skrętu kół (stopnie)
+    this.STEER_SPEED_DEG = 55; // szybkość skręcania kół (stopnie/sek)
     this.STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
-    this.accel = 500; // przyspieszenie
-    this.maxSpeed = 800; // maksymalna prędkość
+    this.accel = 550; // przyspieszenie
+    this.maxSpeed = 650; // maksymalna prędkość
+    this.maxRevSpeed = this.maxSpeed * 0.7; // maksymalna prędkość wstecz (30% mniej)
+    this.revAccel = this.accel * 0.9; // przyspieszenie wstecz (10% mniej)
     
     // Parametry driftu / poślizgu
     this.slipBase = 800; // bazowa siła poślizgu
-    this.SLIP_START_SPEED_RATIO = 0.8; // próg prędkości jako procent maxSpeed
-    this.SLIP_STEER_THRESHOLD_RATIO = 0.8; // próg skrętu (procent maxSteer)
-    this.obstacleBounce = 0.4; // SIŁA odbicia od przeszkody/ściany
+    this.SLIP_START_SPEED_RATIO = 0.90; // próg prędkości jako procent maxSpeed
+    this.SLIP_STEER_THRESHOLD_RATIO = 0.90; // próg skrętu (procent maxSteer)
+    this.obstacleBounce = 0.3; // SIŁA odbicia od przeszkody/ściany
     
     // Przeliczone parametry
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
@@ -46,18 +48,18 @@ export class Car {
     this.COLLISION_HALF_HEIGHT = this.COLLISION_HEIGHT / 2; // 38.4
 
     // Prekalkulowane parametry elipsy kolizji
-    this.collisionSteps = 16;
+    this.collisionSteps = 64;
     this.collisionAngleStep = (Math.PI * 2) / this.collisionSteps;
 
     // Prekalkulowane safety margins
-    this.safetyMarginFast = 0.5;
-    this.safetyMarginSlow = 0.2;
+    this.safetyMarginFast = 1;
+    this.safetyMarginSlow = 0.5;
     this.speedThresholdFast = 50;
     this.speedThresholdSlow = 20;
 
     // Prekalkulowane stałe fizyczne
     this.maxVyRatio = 0.7;  // maxVy = localMaxSpeed * 0.7
-    this.steerSmoothFactor = 0.5;
+    this.steerSmoothFactor = 0.1;
     this.steerInputThreshold = 0.01;
     this.speedThresholdForSteerReturn = 1;
     this.bounceSpeedThreshold = 50;
@@ -129,6 +131,7 @@ export class Car {
     // Pobierz parametry nawierzchni
     let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
     let localMaxSpeed = this.maxSpeed * grip;
+    let localMaxRevSpeed = this.maxRevSpeed * grip;
     let localSlipStartSpeed = this.SLIP_START_SPEED_RATIO * localMaxSpeed; // Próg poślizgu zależny od localMaxSpeed
     let localSlipBase = this.slipBase; // Siła poślizgu NIE zależy od gripu
     // Dynamiczne tłumienie boczne: na bardzo śliskich nawierzchniach (grip < 0.5) auto praktycznie nie trzyma się drogi
@@ -154,9 +157,19 @@ export class Car {
     }
     
     // Przyspieszenie i opory
-    let force = throttle * this.accel;
+    let force;
+    if (throttle >= 0) {
+      force = throttle * this.accel;
+    } else {
+      force = throttle * this.revAccel;
+    }
     this.v_x += force * dt;
-    this.v_x = Phaser.Math.Clamp(this.v_x, -localMaxSpeed, localMaxSpeed);
+    // Ograniczanie prędkości zależnie od kierunku
+    if (this.v_x >= 0) {
+      this.v_x = Phaser.Math.Clamp(this.v_x, 0, localMaxSpeed);
+    } else {
+      this.v_x = Phaser.Math.Clamp(this.v_x, -localMaxRevSpeed, 0);
+    }
     
     // Model poślizgu: siła boczna (drift)
     let steerAbs = Math.abs(this.steerAngle);

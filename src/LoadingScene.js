@@ -40,6 +40,8 @@ export class LoadingScene extends window.Phaser.Scene {
       loadingText.setText('LOADING TRACK...');
       const svgPath = `assets/levels/${data.trackFile}`;
       const worldData = await World.loadWorld(svgPath, worldH, tileSize);
+      // Dodaj pole svgPath do worldData
+      worldData.svgPath = svgPath;
       // startGame(worldData);
       this.scene.start('GameScene', { worldData });
     } else {

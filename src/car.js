@@ -46,8 +46,8 @@ export class Car {
     this.collisionSteps = 64;
     this.collisionAngleStep = (Math.PI * 2) / this.collisionSteps;
     // Prekalkulowane safety margins
-    this.safetyMarginFast = 1;
-    this.safetyMarginSlow = 0.5;
+    this.safetyMarginFast = 1.5;
+    this.safetyMarginSlow = 1;
     this.speedThresholdFast = 50;
     this.speedThresholdSlow = 20;
     // Prekalkulowane stałe fizyczne
@@ -71,7 +71,7 @@ export class Car {
     // Kolizje
     this.throttleLock = false; // blokada gazu po kolizji
     this.collisionCount = 0; // licznik kolizji w jednej klatce
-    this.MAX_COLLISIONS_PER_FRAME = 3; // maksymalna liczba kolizji na klatkę
+    this.MAX_COLLISIONS_PER_FRAME = 1; // maksymalna liczba kolizji na klatkę
     this.collisionImmunity = 0; // sekundy nieczułości na kolizje po odbiciu
     
     // Ustaw rozmiar sprite'a

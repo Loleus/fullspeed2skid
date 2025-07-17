@@ -14,22 +14,19 @@ export class Car {
     this.carFrontalArea = 2.2; // powierzchnia czołowa auta w m^2
     this.airDensity = 1.225; // gęstość powietrza (kg/m^3)
     this.rollingResistance = 5; // współczynnik oporu toczenia
-    
     // Parametry jazdy
     this.MAX_STEER_DEG = 18; // maksymalny kąt skrętu kół (stopnie)
     this.STEER_SPEED_DEG = 55; // szybkość skręcania kół (stopnie/sek)
     this.STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
-    this.accel = 550; // przyspieszenie
-    this.maxSpeed = 650; // maksymalna prędkość
+    this.accel = 600; // przyspieszenie
+    this.maxSpeed = 700; // maksymalna prędkość
     this.maxRevSpeed = this.maxSpeed * 0.7; // maksymalna prędkość wstecz (30% mniej)
     this.revAccel = this.accel * 0.9; // przyspieszenie wstecz (10% mniej)
-    
     // Parametry driftu / poślizgu
     this.slipBase = 800; // bazowa siła poślizgu
     this.SLIP_START_SPEED_RATIO = 0.90; // próg prędkości jako procent maxSpeed
     this.SLIP_STEER_THRESHOLD_RATIO = 0.90; // próg skrętu (procent maxSteer)
-    this.obstacleBounce = 0.3; // SIŁA odbicia od przeszkody/ściany
-    
+    this.obstacleBounce = 0.5; // SIŁA odbicia od przeszkody/ściany
     // Przeliczone parametry
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
     this.steerSpeed = Phaser.Math.DegToRad(this.STEER_SPEED_DEG);
@@ -40,23 +37,19 @@ export class Car {
     this._slipSteerThreshold = this.SLIP_STEER_THRESHOLD_RATIO * this.maxSteer;
     // Prekalkulacja progu prędkości poślizgu
     this._slipStartSpeed = this.SLIP_START_SPEED_RATIO * this.maxSpeed;
-    
     // Prekalkulowane parametry kolizji
     this.COLLISION_WIDTH = this.CAR_WIDTH * 0.8;  // 44.8
     this.COLLISION_HEIGHT = this.CAR_HEIGHT * 0.8; // 76.8
     this.COLLISION_HALF_WIDTH = this.COLLISION_WIDTH / 2;  // 22.4
     this.COLLISION_HALF_HEIGHT = this.COLLISION_HEIGHT / 2; // 38.4
-
     // Prekalkulowane parametry elipsy kolizji
     this.collisionSteps = 64;
     this.collisionAngleStep = (Math.PI * 2) / this.collisionSteps;
-
     // Prekalkulowane safety margins
     this.safetyMarginFast = 1;
     this.safetyMarginSlow = 0.5;
     this.speedThresholdFast = 50;
     this.speedThresholdSlow = 20;
-
     // Prekalkulowane stałe fizyczne
     this.maxVyRatio = 0.7;  // maxVy = localMaxSpeed * 0.7
     this.steerSmoothFactor = 0.1;

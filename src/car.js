@@ -6,7 +6,7 @@ export class Car {
     this.worldData = worldData;
     
     // Parametry auta
-    this.CAR_WIDTH = 48;
+    this.CAR_WIDTH = 48; // przywrócony oryginalny rozmiar auta
     this.CAR_HEIGHT = 88;
     this.wheelBase = 75; // rozstaw osi (px)
     this.carMass = 1200; // masa auta w kg
@@ -376,5 +376,35 @@ export class Car {
   
   getSprite() {
     return this.carSprite;
+  }
+
+  // Zwraca pozycję środka koła (0: FL, 1: FR, 2: RL, 3: RR)
+  getWheelWorldPosition(i) {
+    // Szerokość auta to oś Y (przód-tył), długość auta to oś X (lewo-prawo)
+    const halfW = this.CAR_WIDTH / 2;   // 24
+    const halfH = this.CAR_HEIGHT / 2;  // 44
+    // Korekta: koła cofnięte do środka auta
+    const xOff = halfH - 8;
+    const yOff = halfW - 4;
+    // 0: FL, 1: FR, 2: RL, 3: RR
+    const offsets = [
+      { x: -xOff, y: -yOff }, // FL (lewy przód)
+      { x:  xOff, y: -yOff }, // FR (prawy przód)
+      { x: -xOff, y:  yOff }, // RL (lewy tył)
+      { x:  xOff, y:  yOff }, // RR (prawy tył)
+    ];
+    const off = offsets[i];
+    const cosA = Math.cos(this.carAngle);
+    const sinA = Math.sin(this.carAngle);
+    return {
+      x: this.carX + off.x * cosA - off.y * sinA,
+      y: this.carY + off.x * sinA + off.y * cosA
+    };
+  }
+
+  // Zwraca siłę poślizgu dla koła (na razie uproszczona: v_y dla wszystkich)
+  getWheelSlip(i) {
+    // Można rozbudować o indywidualne koła, na razie v_y jako proxy poślizgu
+    return Math.min(1, Math.abs(this.v_y) / 200); // normalizacja do 0-1
   }
 } 

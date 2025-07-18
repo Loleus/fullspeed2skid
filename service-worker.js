@@ -1,10 +1,11 @@
-const CACHE_NAME = 'fullspeed2skid-v8';
+const CACHE_NAME = 'fullspeed2skid-v8a';
 const ASSETS = [
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
   '/fullspeed2skid/manifest.json',
   '/fullspeed2skid/src/main.js',
   '/fullspeed2skid/src/game.js',
+  '/fullspeed2skid/src/skidMarks.js',
   '/fullspeed2skid/src/MenuScene.js',
   '/fullspeed2skid/src/LoadingScene.js',
   '/fullspeed2skid/src/phaser.js',

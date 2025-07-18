@@ -100,15 +100,25 @@ export class GameScene extends window.Phaser.Scene {
       this.exitToMenu();
     }
     const control = this.getControlState();
+    const { throttle } = this.carController.updateInput(control);
     this.carController.update(dt, control, this.worldSize, this.worldSize);
     const carPos = this.carController.getPosition();
     this.world.drawTiles(carPos.x, carPos.y);
     if (skidMarks && skidMarks.enabled) {
       const steerAngle = this.carController.getSteerAngle();
+      const velocity = this.carController.getVelocity();
+      const carMass = this.carController.carMass;
+      if (!this._lastWheelLog) this._lastWheelLog = [0, 0, 0, 0];
+      const now = performance.now();
       for (let i = 0; i < 4; i++) {
         const slip = this.carController.getWheelSlip(i);
         const curr = this.carController.getWheelWorldPosition(i);
-        skidMarks.update(i, curr, slip, steerAngle, this.world.tilePool, tileSize);
+        // Pobierz grip dla pozycji koła
+        const surfaceType = this.world.getSurfaceTypeAt(curr.x, curr.y);
+        const grip = this.world.worldData.surfaceParams?.[surfaceType]?.grip ?? 1.0;
+        const maxSpeed = this.carController.maxSpeed;
+        skidMarks.update(i, curr, slip, steerAngle, this.world.tilePool, tileSize, this.carController.getLocalSpeed(), grip, carMass, throttle, maxSpeed);
+        // Usuwam logi pozycji kół
       }
     }
     if (this.fpsText) {

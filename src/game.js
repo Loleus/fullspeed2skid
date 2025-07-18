@@ -2,37 +2,27 @@ import { CameraManager } from './cameras.js';
 import { Car } from './car.js';
 import { World } from './world.js';
 import { tileSize } from './main.js';
+import { SkidMarks } from './skidMarks.js';
 
-const viewW     = 1280;
-const viewH     = 720;
-
-let car, carController, cursors, wasdKeys;
-let fpsText;
-let world = null;
-let worldSize = null;
-let cameraManager = null;
-let vKey = null;
-let minimapa = true;
-let fpsHistory = [];
 const FPS_SMOOTH = 10;
+let fpsHistory = [];
 let targetFps = 60;
 let fpsSwitchCooldown = 0;
-
-// Usuwam funkcję startGame i tworzę GameScene jako klasę Phaser.Scene
+let skidMarks = null;
+let skidMarksEnabled = true; // Możesz sterować flagą
 
 export class GameScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
+    this.minimapa = true;
   }
 
   init(data) {
-    // Przechowuj worldData globalnie i lokalnie w scenie
     this.worldData = data.worldData;
     window._worldData = data.worldData;
   }
 
   preload() {
-    // Wyczyść stare tekstury kafli, jeśli istnieją
     if (window._worldData && window._worldData.tiles) {
       for (const tile of window._worldData.tiles) {
         if (this.textures.exists(tile.id)) {
@@ -52,8 +42,8 @@ export class GameScene extends window.Phaser.Scene {
 
   async create() {
     const worldData = this.worldData || window._worldData;
-    const viewW = 1280;
-    const viewH = 720;
+    const viewW = this.sys.game.config.width;
+    const viewH = this.sys.game.config.height;
     const start = worldData.startPos;
     const startYOffset = viewH * 3/10;
     this.car = this.physics.add.sprite(start.x, start.y + startYOffset, 'car');
@@ -81,9 +71,8 @@ export class GameScene extends window.Phaser.Scene {
     if (worldData.worldSize) {
       this.worldSize = worldData.worldSize;
     }
-    if (minimapa) {
+    if (this.minimapa) {
       this.cameras.main.ignore([this.fpsText]);
-      // Użyj ścieżki SVG z worldData, zamiast na sztywno
       await this.world.initMinimap(worldData.svgPath, this.fpsText);
     } else {
       const hudObjects = [this.fpsText];
@@ -93,13 +82,10 @@ export class GameScene extends window.Phaser.Scene {
       this.hudCamera.setScroll(0, 0);
       this.hudCamera.setRotation(0);
     }
-    
-    // Dodaj obsługę klawisza R
     this.rKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.R);
-    
-    // Dodaj obsługę klawisza X
     this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
     window.dispatchEvent(new Event('game-ready'));
+    skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
   }
 
   update(time, dt) {
@@ -117,6 +103,14 @@ export class GameScene extends window.Phaser.Scene {
     this.carController.update(dt, control, this.worldSize, this.worldSize);
     const carPos = this.carController.getPosition();
     this.world.drawTiles(carPos.x, carPos.y);
+    if (skidMarks && skidMarks.enabled) {
+      const steerAngle = this.carController.getSteerAngle();
+      for (let i = 0; i < 4; i++) {
+        const slip = this.carController.getWheelSlip(i);
+        const curr = this.carController.getWheelWorldPosition(i);
+        skidMarks.update(i, curr, slip, steerAngle, this.world.tilePool, tileSize);
+      }
+    }
     if (this.fpsText) {
       const fpsNow = 1 / dt;
       fpsHistory.push(fpsNow);
@@ -124,13 +118,12 @@ export class GameScene extends window.Phaser.Scene {
       const fpsAvg = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
       const fpsStable = Math.round(fpsAvg);
       this.fpsText.setText(`FPS: ${fpsStable}\nV - zmiana kamery\nR - reset\nX - exit`);
-      // --- Automatyczne przełączanie FPS ---
       if (fpsSwitchCooldown > 0) fpsSwitchCooldown--;
       else if (window._phaserGame && window._phaserGame.loop) {
         if (targetFps === 60 && fpsAvg < 50) {
           window._phaserGame.loop.targetFps = 30;
           targetFps = 30;
-          fpsSwitchCooldown = 120; // 2 sekundy
+          fpsSwitchCooldown = 120;
         } else if (targetFps === 30 && fpsAvg > 55) {
           window._phaserGame.loop.targetFps = 60;
           targetFps = 60;
@@ -138,7 +131,7 @@ export class GameScene extends window.Phaser.Scene {
         }
       }
     }
-    if (minimapa && this.world) {
+    if (this.minimapa && this.world) {
       this.world.drawMinimap(carPos, this.worldSize, this.worldSize);
     }
     if (this.cameraManager) {
@@ -147,18 +140,15 @@ export class GameScene extends window.Phaser.Scene {
   }
 
   getControlState() {
-    // Zbierz stany klawiszy
     const upPressed    = (this.cursors.up.isDown    || this.wasdKeys.up.isDown);
     const downPressed  = (this.cursors.down.isDown  || this.wasdKeys.down.isDown);
     const leftPressed  = (this.cursors.left.isDown  || this.wasdKeys.left.isDown);
     const rightPressed = (this.cursors.right.isDown || this.wasdKeys.right.isDown);
-    // Zabezpieczenie: nie pozwól na jednoczesne przeciwne kierunki
     let up = false, down = false, left = false, right = false;
     if (upPressed && !downPressed) up = true;
     else if (downPressed && !upPressed) down = true;
     if (leftPressed && !rightPressed) left = true;
     else if (rightPressed && !leftPressed) right = true;
-    // Priorytet: jeśli oba zestawy mają ten sam kierunek, rejestruj tylko pierwszy wciśnięty
     if (up) {
       if (this.cursors.up.isDown && this.wasdKeys.up.isDown) {
         up = this.cursors.up.timeDown < this.wasdKeys.up.timeDown;
@@ -184,29 +174,23 @@ export class GameScene extends window.Phaser.Scene {
 
   resetGame() {
     const worldData = this.worldData || window._worldData;
-    const viewH = 720;
+    const viewH = this.sys.game.config.height;
     const start = worldData.startPos;
     const startYOffset = viewH * 3/10;
-    
-    // Reset pozycji auta
     this.carController.resetState(start.x, start.y + startYOffset);
-    
-    // Wyczyść kafle świata
     if (this.world) {
       this.world.trackTiles = [];
       for (const [tileId, tileObj] of this.world.tilePool.entries()) {
         tileObj.setVisible(false);
       }
     }
-    
-    // Reset kamery
     if (this.cameraManager) {
       this.cameraManager.reset();
     }
+    if (skidMarks) skidMarks.clear();
   }
 
   exitToMenu() {
-    // Przełącz na MenuScene
     this.scene.start('MenuScene');
   }
 } 

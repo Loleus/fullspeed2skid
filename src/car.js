@@ -407,4 +407,9 @@ export class Car {
     // Można rozbudować o indywidualne koła, na razie v_y jako proxy poślizgu
     return Math.min(1, Math.abs(this.v_y) / 200); // normalizacja do 0-1
   }
+
+  getLocalSpeed() {
+    // Zwraca prędkość wzdłużną auta względem osi przód-tył (v_x)
+    return this.v_x;
+  }
 } 

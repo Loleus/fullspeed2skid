@@ -2,5 +2,6 @@
   { "label": "TRACK 1", "file": "scene_1.svg" },
   { "label": "TRACK 2", "file": "scene_2.svg" },
   { "label": "TRACK 3", "file": "scene_3.svg" },
-  { "label": "TRACK 4", "file": "scene_4.svg" }
+  { "label": "TRACK 4", "file": "scene_4.svg" },
+  { "label": "TRACK 5", "file": "scene_5.svg" }
 ] 

@@ -30,6 +30,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/levels/scene_2.svg',
   '/fullspeed2skid/assets/levels/scene_3.svg',
   '/fullspeed2skid/assets/levels/scene_4.svg',
+  '/fullspeed2skid/assets/levels/scene_5.svg',
 ];
 
 // Instalacja service workera

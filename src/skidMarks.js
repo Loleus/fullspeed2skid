@@ -16,7 +16,7 @@ export class SkidMarks {
   }
   update(i, curr, slip, steerAngle, tilePool, tileSize, localSpeed, grip = 1, mass = 1200, throttle = 0, maxSpeed = 700) {
     // --- ORYGINALNA LOGIKA POŚLIZGÓW BOCZNYCH (NIE ZMIENIAM!) ---
-    if (slip > 0.1 && Math.abs(steerAngle) > 0.05) {
+    if (slip > 0.3 && Math.abs(steerAngle) > 0.1) {
       const prev = this.lastWheelPos[i];
       if (prev) {
         const dx = curr.x - prev.x;

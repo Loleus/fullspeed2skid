@@ -1,11 +1,10 @@
-const CACHE_NAME = 'fullspeed2skid-v8a';
+const CACHE_NAME = 'fullspeed2skid-v9';
 const ASSETS = [
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
   '/fullspeed2skid/manifest.json',
   '/fullspeed2skid/src/main.js',
   '/fullspeed2skid/src/game.js',
-  '/fullspeed2skid/src/skidMarks.js',
   '/fullspeed2skid/src/MenuScene.js',
   '/fullspeed2skid/src/LoadingScene.js',
   '/fullspeed2skid/src/phaser.js',
@@ -15,6 +14,7 @@ const ASSETS = [
   '/fullspeed2skid/src/cameras.js',
   '/fullspeed2skid/src/classicCamera.js',
   '/fullspeed2skid/src/fpvCamera.js',
+  '/fullspeed2skid/src/skidMarks.js',
   '/fullspeed2skid/assets/style/style.css',
   '/fullspeed2skid/assets/fonts/Stormfaze.otf',
   '/fullspeed2skid/assets/fonts/skid.ttf',

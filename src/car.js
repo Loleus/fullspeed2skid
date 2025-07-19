@@ -385,7 +385,7 @@ export class Car {
     const halfH = this.CAR_HEIGHT / 2;  // 44
     // Korekta: koła cofnięte do środka auta
     const xOff = halfH - 8;
-    const yOff = halfW - 4;
+    const yOff = halfW - 8;
     // 0: FL, 1: FR, 2: RL, 3: RR
     const offsets = [
       { x: -xOff, y: -yOff }, // FL (lewy przód)

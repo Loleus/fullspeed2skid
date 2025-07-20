@@ -16,16 +16,16 @@ export class Car {
     this.rollingResistance = 5; // współczynnik oporu toczenia
     // Parametry jazdy
     this.MAX_STEER_DEG = 17; // maksymalny kąt skrętu kół (stopnie)
-    this.STEER_SPEED_DEG = 29 ; // szybkość skręcania kół (stopnie/sek)
-    this.STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
+    this.STEER_SPEED_DEG = 28 ; // szybkość skręcania kół (stopnie/sek)
+    this.STEER_RETURN_SPEED_DEG = 80; // szybkość powrotu kół do zera (stopnie/sek)
     this.accel = 550; // przyspieszenie
     this.maxSpeed = 720; // maksymalna prędkość
     this.maxRevSpeed = this.maxSpeed * 0.7; // maksymalna prędkość wstecz (30% mniej)
     this.revAccel = this.accel * 0.9; // przyspieszenie wstecz (10% mniej)
     // Parametry driftu / poślizgu
     this.slipBase = 800; // bazowa siła poślizgu
-    this.SLIP_START_SPEED_RATIO = 0.9; // próg prędkości jako procent maxSpeed
-    this.SLIP_STEER_THRESHOLD_RATIO = 0.9; // próg skrętu (procent maxSteer)
+    this.SLIP_START_SPEED_RATIO = 0.8; // próg prędkości jako procent maxSpeed
+    this.SLIP_STEER_THRESHOLD_RATIO = 0.8; // próg skrętu (procent maxSteer)
     this.obstacleBounce = 0.5; // SIŁA odbicia od przeszkody/ściany
     // Przeliczone parametry
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);

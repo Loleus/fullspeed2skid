@@ -15,11 +15,11 @@ export class Car {
     this.airDensity = 1.225; // gęstość powietrza (kg/m^3)
     this.rollingResistance = 5; // współczynnik oporu toczenia
     // Parametry jazdy
-    this.MAX_STEER_DEG = 17; // maksymalny kąt skrętu kół (stopnie)
-    this.STEER_SPEED_DEG = 28 ; // szybkość skręcania kół (stopnie/sek)
-    this.STEER_RETURN_SPEED_DEG = 80; // szybkość powrotu kół do zera (stopnie/sek)
+    this.MAX_STEER_DEG = 19; // maksymalny kąt skrętu kół (stopnie)
+    this.STEER_SPEED_DEG = 33 ; // szybkość skręcania kół (stopnie/sek)
+    this.STEER_RETURN_SPEED_DEG = 100; // szybkość powrotu kół do zera (stopnie/sek)
     this.accel = 550; // przyspieszenie
-    this.maxSpeed = 720; // maksymalna prędkość
+    this.maxSpeed = 700; // maksymalna prędkość
     this.maxRevSpeed = this.maxSpeed * 0.7; // maksymalna prędkość wstecz (30% mniej)
     this.revAccel = this.accel * 0.9; // przyspieszenie wstecz (10% mniej)
     // Parametry driftu / poślizgu

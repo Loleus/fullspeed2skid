@@ -17,6 +17,29 @@ export class GameScene extends window.Phaser.Scene {
     this.minimapa = true;
   }
 
+  isMobile() {
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(navigator.userAgent);
+  }
+
+  setupGyroControl() {
+    if (!this.isMobile()) return;
+    const handleGyro = (event) => {
+      if (!this.control) this.control = {};
+      const tiltLR = event.gamma;
+      this.control.left = tiltLR < -10;
+      this.control.right = tiltLR > 10;
+    };
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().then(response => {
+        if (response === 'granted') {
+          window.addEventListener('deviceorientation', handleGyro, true);
+        }
+      });
+    } else {
+      window.addEventListener('deviceorientation', handleGyro, true);
+    }
+  }
+
   init(data) {
     this.worldData = data.worldData;
     window._worldData = data.worldData;
@@ -86,6 +109,41 @@ export class GameScene extends window.Phaser.Scene {
     this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
     window.dispatchEvent(new Event('game-ready'));
     skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+
+    // --- HUD mobilny: kółka gazu i hamulca ---
+    if (this.isMobile()) {
+      const btnRadius = 60;
+      const margin = 30;
+      const y = this.sys.game.config.height - btnRadius - margin;
+      // Gaz (lewa)
+      this.gasBtn = this.add.circle(btnRadius + margin, y, btnRadius, 0x00cc00)
+        .setScrollFactor(0)
+        .setDepth(100)
+        .setInteractive();
+      this.add.text(btnRadius + margin, y, '↑', { font: '48px Arial', color: '#fff' })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(101);
+      // Hamulec (prawa)
+      const w = this.sys.game.config.width;
+      this.brakeBtn = this.add.circle(w - btnRadius - margin, y, btnRadius, 0xcc0000)
+        .setScrollFactor(0)
+        .setDepth(100)
+        .setInteractive();
+      this.add.text(w - btnRadius - margin, y, '↓', { font: '48px Arial', color: '#fff' })
+        .setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(101);
+      // Obsługa dotyku
+      this.gasBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.up = true; });
+      this.gasBtn.on('pointerup', () => { this.control.up = false; });
+      this.gasBtn.on('pointerout', () => { this.control.up = false; });
+      this.brakeBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.down = true; });
+      this.brakeBtn.on('pointerup', () => { this.control.down = false; });
+      this.brakeBtn.on('pointerout', () => { this.control.down = false; });
+      // Żyroskop
+      this.setupGyroControl();
+    }
   }
 
   update(time, dt) {
@@ -186,6 +244,13 @@ export class GameScene extends window.Phaser.Scene {
       if (this.cursors.right.isDown && this.wasdKeys.right.isDown) {
         right = this.cursors.right.timeDown < this.wasdKeys.right.timeDown;
       }
+    }
+    // --- Integracja mobilnych przycisków i żyroskopu ---
+    if (this.isMobile && this.control) {
+      up = !!this.control.up;
+      down = !!this.control.down;
+      left = !!this.control.left;
+      right = !!this.control.right;
     }
     return { up, down, left, right };
   }

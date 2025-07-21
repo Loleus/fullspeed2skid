@@ -38,8 +38,8 @@ export class Car {
     // Prekalkulacja progu prędkości poślizgu
     this._slipStartSpeed = this.SLIP_START_SPEED_RATIO * this.maxSpeed;
     // Prekalkulowane parametry kolizji
-    this.COLLISION_WIDTH = this.CAR_WIDTH * 0.8;  // 44.8
-    this.COLLISION_HEIGHT = this.CAR_HEIGHT * 0.8; // 76.8
+    this.COLLISION_WIDTH = this.CAR_HEIGHT * 0.8; // Poprawka: Szerokość kolizji (oś X fizyki) to DŁUGOŚĆ auta (wysokość sprite'a)
+    this.COLLISION_HEIGHT = this.CAR_WIDTH * 0.8;  // Poprawka: Wysokość kolizji (oś Y fizyki) to SZEROKOŚĆ auta (szerokość sprite'a)
     this.COLLISION_HALF_WIDTH = this.COLLISION_WIDTH / 2;  // 22.4
     this.COLLISION_HALF_HEIGHT = this.COLLISION_HEIGHT / 2; // 38.4
     // Prekalkulowane parametry elipsy kolizji

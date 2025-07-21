@@ -15,6 +15,7 @@ export class SkidMarks {
     this.lastWheelPos[i] = null;
   }
   update(i, curr, slip, steerAngle, tilePool, tileSize, localSpeed, grip = 1, mass = 1200, throttle = 0, maxSpeed = 700) {
+    const dirtyTiles = new Set();
     // --- ORYGINALNA LOGIKA POŚLIZGÓW BOCZNYCH (NIE ZMIENIAM!) ---
     if (slip > 0.3 && Math.abs(steerAngle) > 0.1) {
       const prev = this.lastWheelPos[i];
@@ -48,7 +49,7 @@ export class SkidMarks {
               ctx.lineTo(p2.x - tileX * tileSize, p2.y - tileY * tileSize);
               ctx.stroke();
               ctx.restore();
-              tileObj.texture.refresh();
+              dirtyTiles.add(tileObj);
             }
           };
 
@@ -141,7 +142,7 @@ export class SkidMarks {
                 ctx.lineTo(curr.x - tileX * tileSize, curr.y - tileY * tileSize);
                 ctx.stroke();
                 ctx.restore();
-                tileObj.texture.refresh();
+                dirtyTiles.add(tileObj);
               }
             }
           }
@@ -153,5 +154,6 @@ export class SkidMarks {
         this.burnoutDrawing[i] = false;
       }
     }
+    return dirtyTiles;
   }
 } 

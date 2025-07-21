@@ -28,9 +28,19 @@ export class SkidMarks {
             const tileObj = tilePool.get(tileId);
             if (tileObj && tileObj.texture && tileObj.texture.getSourceImage) {
               const ctx = tileObj.texture.getSourceImage().getContext('2d');
+
+              // Dynamiczna alfa bazująca na sile poślizgu
+              const minSlip = 0.3;    // Próg, od którego zaczyna się rysowanie
+              const maxSlip = 1.0;    // Maksymalna normalizowana wartość poślizgu
+              const minAlpha = 0.05;  // Minimalna widoczność śladu
+              const maxAlpha = 0.22;  // Maksymalna widoczność śladu
+
+              const slipRatio = (slip - minSlip) / (maxSlip - minSlip);
+              const finalAlpha = minAlpha + slipRatio * (maxAlpha - minAlpha);
+
               ctx.save();
               ctx.strokeStyle = 'black';
-              ctx.globalAlpha = 0.18;
+              ctx.globalAlpha = Phaser.Math.Clamp(finalAlpha, minAlpha, maxAlpha);
               ctx.lineWidth = Math.max(1, this.wheelWidth - 5);
               ctx.lineCap = 'round';
               ctx.beginPath();

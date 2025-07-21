@@ -16,7 +16,7 @@ export class Car {
     this.rollingResistance = 5; // współczynnik oporu toczenia
     // Parametry jazdy
     this.MAX_STEER_DEG = 18; // maksymalny kąt skrętu kół (stopnie)
-    this.STEER_SPEED_DEG = 30; // szybkość skręcania kół (stopnie/sek)
+    this.STEER_SPEED_DEG = 37; // szybkość skręcania kół (stopnie/sek)
     this.STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
     this.accel = 600; // przyspieszenie
     this.maxSpeed = 800; // maksymalna prędkość

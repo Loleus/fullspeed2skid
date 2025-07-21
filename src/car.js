@@ -23,10 +23,10 @@ export class Car {
     this.maxRevSpeed = this.maxSpeed * 0.7; // maksymalna prędkość wstecz (30% mniej)
     this.revAccel = this.accel * 0.9; // przyspieszenie wstecz (10% mniej)
     // Parametry driftu / poślizgu
-    this.slipBase = 900; // bazowa siła poślizgu
-    this.SLIP_START_SPEED_RATIO = 0.8; // próg prędkości jako procent maxSpeed
-    this.SLIP_STEER_THRESHOLD_RATIO = 0.8; // próg skrętu (procent maxSteer)
-    this.obstacleBounce = 0.5; // SIŁA odbicia od przeszkody/ściany
+    this.slipBase = 1500; // bazowa siła poślizgu
+    this.SLIP_START_SPEED_RATIO = 0.7; // próg prędkości jako procent maxSpeed
+    this.SLIP_STEER_THRESHOLD_RATIO = 0.7; // próg skrętu (procent maxSteer)
+    this.obstacleBounce = 0.35; // SIŁA odbicia od przeszkody/ściany
     // Przeliczone parametry
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
     this.steerSpeed = Phaser.Math.DegToRad(this.STEER_SPEED_DEG);

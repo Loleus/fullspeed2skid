@@ -16,17 +16,17 @@ export class Car {
     this.rollingResistance = 5; // współczynnik oporu toczenia
     // Parametry jazdy
     this.MAX_STEER_DEG = 18; // maksymalny kąt skrętu kół (stopnie)
-    this.STEER_SPEED_DEG = 35; // szybkość skręcania kół (stopnie/sek)
-    this.STEER_RETURN_SPEED_DEG = 80; // szybkość powrotu kół do zera (stopnie/sek)
+    this.STEER_SPEED_DEG = 37; // szybkość skręcania kół (stopnie/sek)
+    this.STEER_RETURN_SPEED_DEG = 120; // szybkość powrotu kół do zera (stopnie/sek)
     this.accel = 600; // przyspieszenie
     this.maxSpeed = 800; // maksymalna prędkość
     this.maxRevSpeed = this.maxSpeed * 0.7; // maksymalna prędkość wstecz (30% mniej)
     this.revAccel = this.accel * 0.9; // przyspieszenie wstecz (10% mniej)
     // Parametry driftu / poślizgu
-    this.slipBase = 900; // bazowa siła poślizgu
-    this.SLIP_START_SPEED_RATIO = 0.8; // próg prędkości jako procent maxSpeed
-    this.SLIP_STEER_THRESHOLD_RATIO = 0.8; // próg skrętu (procent maxSteer)
-    this.obstacleBounce = 0.5; // SIŁA odbicia od przeszkody/ściany
+    this.slipBase = 1500; // bazowa siła poślizgu
+    this.SLIP_START_SPEED_RATIO = 0.7; // próg prędkości jako procent maxSpeed
+    this.SLIP_STEER_THRESHOLD_RATIO = 0.7; // próg skrętu (procent maxSteer)
+    this.obstacleBounce = 0.35; // SIŁA odbicia od przeszkody/ściany
     // Przeliczone parametry
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
     this.steerSpeed = Phaser.Math.DegToRad(this.STEER_SPEED_DEG);
@@ -38,8 +38,8 @@ export class Car {
     // Prekalkulacja progu prędkości poślizgu
     this._slipStartSpeed = this.SLIP_START_SPEED_RATIO * this.maxSpeed;
     // Prekalkulowane parametry kolizji
-    this.COLLISION_WIDTH = this.CAR_WIDTH * 0.8;  // 44.8
-    this.COLLISION_HEIGHT = this.CAR_HEIGHT * 0.8; // 76.8
+    this.COLLISION_WIDTH = this.CAR_HEIGHT * 0.8; // Poprawka: Szerokość kolizji (oś X fizyki) to DŁUGOŚĆ auta (wysokość sprite'a)
+    this.COLLISION_HEIGHT = this.CAR_WIDTH * 0.8;  // Poprawka: Wysokość kolizji (oś Y fizyki) to SZEROKOŚĆ auta (szerokość sprite'a)
     this.COLLISION_HALF_WIDTH = this.COLLISION_WIDTH / 2;  // 22.4
     this.COLLISION_HALF_HEIGHT = this.COLLISION_HEIGHT / 2; // 38.4
     // Prekalkulowane parametry elipsy kolizji

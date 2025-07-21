@@ -21,24 +21,62 @@ export class SkidMarks {
       if (prev) {
         const dx = curr.x - prev.x;
         const dy = curr.y - prev.y;
-        if (dx*dx + dy*dy < 900) { // max 30px odcinek
-          const tileX = Math.floor(prev.x / tileSize);
-          const tileY = Math.floor(prev.y / tileSize);
-          const tileId = `tile_${tileX}_${tileY}`;
-          const tileObj = tilePool.get(tileId);
-          if (tileObj && tileObj.texture && tileObj.texture.getSourceImage) {
-            const ctx = tileObj.texture.getSourceImage().getContext('2d');
-            ctx.save();
-            ctx.strokeStyle = 'black';
-            ctx.globalAlpha = 0.18;
-            ctx.lineWidth = Math.max(1, this.wheelWidth - 5);
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(prev.x - tileX * tileSize, prev.y - tileY * tileSize);
-            ctx.lineTo(curr.x - tileX * tileSize, curr.y - tileY * tileSize);
-            ctx.stroke();
-            ctx.restore();
-            tileObj.texture.refresh();
+
+        if (dx * dx + dy * dy < 900) { // max 30px odcinek
+          const drawSegment = (p1, p2, tileX, tileY) => {
+            const tileId = `tile_${tileX}_${tileY}`;
+            const tileObj = tilePool.get(tileId);
+            if (tileObj && tileObj.texture && tileObj.texture.getSourceImage) {
+              const ctx = tileObj.texture.getSourceImage().getContext('2d');
+              ctx.save();
+              ctx.strokeStyle = 'black';
+              ctx.globalAlpha = 0.18;
+              ctx.lineWidth = Math.max(1, this.wheelWidth - 5);
+              ctx.lineCap = 'round';
+              ctx.beginPath();
+              ctx.moveTo(p1.x - tileX * tileSize, p1.y - tileY * tileSize);
+              ctx.lineTo(p2.x - tileX * tileSize, p2.y - tileY * tileSize);
+              ctx.stroke();
+              ctx.restore();
+              tileObj.texture.refresh();
+            }
+          };
+
+          const prevTileX = Math.floor(prev.x / tileSize);
+          const prevTileY = Math.floor(prev.y / tileSize);
+          const currTileX = Math.floor(curr.x / tileSize);
+          const currTileY = Math.floor(curr.y / tileSize);
+
+          if (prevTileX === currTileX && prevTileY === currTileY) {
+            // Segment w całości na jednym kafelku
+            drawSegment(prev, curr, prevTileX, prevTileY);
+          } else {
+            // Segment przecina granicę - dzielimy go na dwa
+            let t = 1.0;
+            // Sprawdź przecięcie z pionową granicą
+            if (currTileX > prevTileX && dx !== 0) {
+              t = Math.min(t, ((prevTileX + 1) * tileSize - prev.x) / dx);
+            } else if (currTileX < prevTileX && dx !== 0) {
+              t = Math.min(t, (prevTileX * tileSize - prev.x) / dx);
+            }
+            // Sprawdź przecięcie z poziomą granicą
+            if (currTileY > prevTileY && dy !== 0) {
+              t = Math.min(t, ((prevTileY + 1) * tileSize - prev.y) / dy);
+            } else if (currTileY < prevTileY && dy !== 0) {
+              t = Math.min(t, (prevTileY * tileSize - prev.y) / dy);
+            }
+            
+            t = Phaser.Math.Clamp(t, 0.0, 1.0);
+
+            const intersectionPoint = {
+              x: prev.x + t * dx,
+              y: prev.y + t * dy,
+            };
+
+            // Rysuj pierwszą część
+            drawSegment(prev, intersectionPoint, prevTileX, prevTileY);
+            // Rysuj drugą część
+            drawSegment(intersectionPoint, curr, currTileX, currTileY);
           }
         }
       }

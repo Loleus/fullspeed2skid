@@ -68,13 +68,16 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   const bgImg = textureMap[bgTexture] || null;
   // Przeszkody: przygotuj mapę Promise'ów na podstawie id przeszkód
   let obstacleTypes = new Set();
+  let allObstacles = [];
   if (obstaclesGroup) {
-    const obstacles = obstaclesGroup.querySelectorAll('path');
-    for (const obs of obstacles) {
+    allObstacles = Array.from(obstaclesGroup.querySelectorAll('path, ellipse, circle, rect, polygon, polyline, line'));
+    for (const obs of allObstacles) {
+      let type = 'stone';
       if (obs.id) {
         const parts = obs.id.split('_');
-        if (parts.length > 1) obstacleTypes.add(parts[parts.length - 1].toLowerCase());
+        if (parts.length > 1) type = parts[parts.length - 1].toLowerCase();
       }
+      obstacleTypes.add(type);
     }
   }
   const obstacleTexturePromises = {};
@@ -139,19 +142,15 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   }
   // Przeszkody (z teksturą, rasteryzacja po tile'ach)
   if (obstaclesGroup) {
-    const obstacles = obstaclesGroup.querySelectorAll('path');
-    for (const obs of obstacles) {
-      const d = obs.getAttribute('d');
-      if (!d) continue;
-      const path2d = new Path2D(scaleSvgPath(d, scale));
-      // Ustal nazwę tekstury na podstawie id przeszkody
-      let texName = 'obstacle';
+    for (const obs of allObstacles) {
+      let texName = 'stone';
       if (obs.id) {
         const parts = obs.id.split('_');
         if (parts.length > 1) texName = parts[parts.length - 1].toLowerCase();
       }
-      let texImg = obstacleTextureCache[texName] || obstacleTextureCache['obstacle'];
-      // Rasteryzuj przeszkodę w pętli po tile'ach
+      let texImg = obstacleTextureCache[texName] || obstacleTextureCache['stone'];
+      let path2d = svgElementToPath2D(obs, scale);
+      if (!path2d) continue;
       for (let x = 0; x < worldSize; x += tileSize) {
         for (let y = 0; y < worldSize; y += tileSize) {
           worldCtx.save();
@@ -200,13 +199,11 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
       collisionCtx.restore();
     }
   }
-  // Rasteryzuj przeszkody
+  // Rasteryzuj przeszkody do collisionCanvas
   if (obstaclesGroup) {
-    const obstacles = obstaclesGroup.querySelectorAll('path');
-    for (const obs of obstacles) {
-      const d = obs.getAttribute('d');
-      if (!d) continue;
-      const path2d = new Path2D(scaleSvgPath(d, collisionMapSize / 1024));
+    for (const obs of allObstacles) {
+      let path2d = svgElementToPath2D(obs, collisionMapSize / 1024);
+      if (!path2d) continue;
       collisionCtx.save();
       collisionCtx.clip(path2d);
       collisionCtx.fillStyle = '#fff';
@@ -240,13 +237,11 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
       }
     }
   }
-  // Przeszkody
+  // Przeszkody do surfaceAreaMap
   if (obstaclesGroup) {
-    const obstacles = obstaclesGroup.querySelectorAll('path');
-    for (const obs of obstacles) {
-      const d = obs.getAttribute('d');
-      if (!d) continue;
-      const path2d = new Path2D(scaleSvgPath(d, collisionMapSize / 1024));
+    for (const obs of allObstacles) {
+      let path2d = svgElementToPath2D(obs, collisionMapSize / 1024);
+      if (!path2d) continue;
       for (let y = 0; y < collisionMapSize; y++) {
         for (let x = 0; x < collisionMapSize; x++) {
           if (collisionCtx.isPointInPath(path2d, x, y)) {
@@ -412,6 +407,55 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
 // Pomocnicza: skalowanie ścieżki SVG (d) o podany mnożnik
 function scaleSvgPath(d, scale) {
   return d.replace(/([0-9.]+(?:e[\-+]?[0-9]+)?)/gi, (m) => parseFloat(m) * scale);
+}
+
+// Pomocnicza: zamiana dowolnego elementu SVG na Path2D (obsługuje path, ellipse, circle, rect, polygon, polyline, line)
+function svgElementToPath2D(elem, scale) {
+  let path2d = null;
+  if (elem.tagName === 'path') {
+    const d = elem.getAttribute('d');
+    if (!d) return null;
+    path2d = new Path2D(scaleSvgPath(d, scale));
+  } else if (elem.tagName === 'ellipse') {
+    const cx = parseFloat(elem.getAttribute('cx')) * scale;
+    const cy = parseFloat(elem.getAttribute('cy')) * scale;
+    const rx = parseFloat(elem.getAttribute('rx')) * scale;
+    const ry = parseFloat(elem.getAttribute('ry')) * scale;
+    path2d = new Path2D();
+    path2d.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+  } else if (elem.tagName === 'circle') {
+    const cx = parseFloat(elem.getAttribute('cx')) * scale;
+    const cy = parseFloat(elem.getAttribute('cy')) * scale;
+    const r = parseFloat(elem.getAttribute('r')) * scale;
+    path2d = new Path2D();
+    path2d.arc(cx, cy, r, 0, 2 * Math.PI);
+  } else if (elem.tagName === 'rect') {
+    const x = parseFloat(elem.getAttribute('x')) * scale;
+    const y = parseFloat(elem.getAttribute('y')) * scale;
+    const w = parseFloat(elem.getAttribute('width')) * scale;
+    const h = parseFloat(elem.getAttribute('height')) * scale;
+    path2d = new Path2D();
+    path2d.rect(x, y, w, h);
+  } else if (elem.tagName === 'polygon' || elem.tagName === 'polyline') {
+    const points = (elem.getAttribute('points') || '').trim().split(/\s+/).map(pt => pt.split(',').map(Number));
+    if (points.length > 1) {
+      path2d = new Path2D();
+      path2d.moveTo(points[0][0] * scale, points[0][1] * scale);
+      for (let j = 1; j < points.length; j++) {
+        path2d.lineTo(points[j][0] * scale, points[j][1] * scale);
+      }
+      if (elem.tagName === 'polygon') path2d.closePath();
+    }
+  } else if (elem.tagName === 'line') {
+    const x1 = parseFloat(elem.getAttribute('x1')) * scale;
+    const y1 = parseFloat(elem.getAttribute('y1')) * scale;
+    const x2 = parseFloat(elem.getAttribute('x2')) * scale;
+    const y2 = parseFloat(elem.getAttribute('y2')) * scale;
+    path2d = new Path2D();
+    path2d.moveTo(x1, y1);
+    path2d.lineTo(x2, y2);
+  }
+  return path2d;
 }
 
 function loadImage(src) {

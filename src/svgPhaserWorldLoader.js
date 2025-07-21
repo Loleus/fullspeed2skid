@@ -211,44 +211,77 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
       collisionCtx.restore();
     }
   }
-  // 4c. Generuj surfaceAreaMap na podstawie id pathów
+  // 4c. Generuj surfaceAreaMap na podstawie id pathów (optymalizacja: rasteryzacja na canvasie i odczyt pikseli)
   const surfaceAreaMap = new Array(collisionMapSize * collisionMapSize).fill('grass');
+  // Mapowanie typów powierzchni na unikalne kolory (R,G,B)
+  const surfaceTypeColors = {
+    asphalt: [0, 0, 0],
+    cobblestone: [128, 128, 128],
+    gravel: [180, 180, 0],
+    grass: [0, 255, 0],
+    water: [0, 0, 255],
+    obstacle: [255, 255, 255],
+  };
+  // Odwrotna mapa kolorów na typ powierzchni
+  const colorToSurfaceType = {};
+  for (const [type, rgb] of Object.entries(surfaceTypeColors)) {
+    colorToSurfaceType[rgb.join(',')] = type;
+  }
+  // Przygotuj canvas do rasteryzacji
+  const surfCanvas = document.createElement('canvas');
+  surfCanvas.width = collisionMapSize;
+  surfCanvas.height = collisionMapSize;
+  const surfCtx = surfCanvas.getContext('2d');
+  // Najpierw tło
+  surfCtx.fillStyle = 'rgb(' + surfaceTypeColors.grass.join(',') + ')';
+  surfCtx.fillRect(0, 0, collisionMapSize, collisionMapSize);
+  // Rasteryzuj każdy typ powierzchni
   if (roadGroup) {
+    // Grupuj pathy po typie powierzchni
+    const typeToPaths = {};
     const tracks = roadGroup.querySelectorAll('path');
     for (const track of tracks) {
       const d = track.getAttribute('d');
       if (!d) continue;
-      // Rozpoznaj typ nawierzchni po sufiksie id
       let surfaceType = 'asphalt';
       if (track.id) {
         const match = track.id.match(/_([a-zA-Z0-9]+)$/);
-        if (match) {
-          surfaceType = match[1].toLowerCase();
-        }
+        if (match) surfaceType = match[1].toLowerCase();
       }
-      const path2d = new Path2D(scaleSvgPath(d, collisionMapSize / 1024));
-      // Dla każdego piksela na collisionMapSize x collisionMapSize sprawdź, czy jest w path2d
-      for (let y = 0; y < collisionMapSize; y++) {
-        for (let x = 0; x < collisionMapSize; x++) {
-          if (collisionCtx.isPointInPath(path2d, x, y)) {
-            surfaceAreaMap[x + y * collisionMapSize] = surfaceType;
-          }
-        }
+      if (!typeToPaths[surfaceType]) typeToPaths[surfaceType] = [];
+      typeToPaths[surfaceType].push(scaleSvgPath(d, collisionMapSize / 1024));
+    }
+    for (const [type, paths] of Object.entries(typeToPaths)) {
+      surfCtx.save();
+      surfCtx.beginPath();
+      for (const d of paths) {
+        const path2d = new Path2D(d);
+        surfCtx.fillStyle = 'rgb(' + (surfaceTypeColors[type] || surfaceTypeColors.asphalt).join(',') + ')';
+        surfCtx.fill(path2d);
       }
+      surfCtx.restore();
     }
   }
-  // Przeszkody do surfaceAreaMap
+  // Przeszkody (nadpisują wszystko)
   if (obstaclesGroup) {
-    for (const obs of allObstacles) {
+    const allObs = Array.from(obstaclesGroup.querySelectorAll('path, ellipse, circle, rect, polygon, polyline, line'));
+    for (const obs of allObs) {
       let path2d = svgElementToPath2D(obs, collisionMapSize / 1024);
       if (!path2d) continue;
-      for (let y = 0; y < collisionMapSize; y++) {
-        for (let x = 0; x < collisionMapSize; x++) {
-          if (collisionCtx.isPointInPath(path2d, x, y)) {
-            surfaceAreaMap[x + y * collisionMapSize] = 'obstacle';
-          }
-        }
-      }
+      surfCtx.save();
+      surfCtx.fillStyle = 'rgb(' + surfaceTypeColors.obstacle.join(',') + ')';
+      surfCtx.fill(path2d);
+      surfCtx.restore();
+    }
+  }
+  // Odczytaj bufor pikseli i przypisz typ powierzchni
+  const imgData = surfCtx.getImageData(0, 0, collisionMapSize, collisionMapSize).data;
+  for (let y = 0; y < collisionMapSize; y++) {
+    for (let x = 0; x < collisionMapSize; x++) {
+      const idx = (x + y * collisionMapSize) * 4;
+      const rgb = [imgData[idx], imgData[idx + 1], imgData[idx + 2]];
+      const type = colorToSurfaceType[rgb.join(',')] || 'grass';
+      surfaceAreaMap[x + y * collisionMapSize] = type;
     }
   }
   // 4d. Podziel worldCanvas na kafle

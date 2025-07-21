@@ -210,18 +210,22 @@ export class Car {
   // Sprawdź kolizje z przeszkodami (elipsa)
   checkEllipseCollision() {
     const speedMagnitude = Math.sqrt(this.v_x * this.v_x + this.v_y * this.v_y);
-    
-    // Safety margin
-    let safetyMargin = 0;
+
+    // Safety margin zależny od prędkości i poślizgu
+    let baseSafetyMargin = 0;
     if (speedMagnitude > this.speedThresholdFast) {
-      safetyMargin = this.safetyMarginFast;
+      baseSafetyMargin = this.safetyMarginFast;
     } else if (speedMagnitude > this.speedThresholdSlow) {
-      safetyMargin = this.safetyMarginSlow;
+      baseSafetyMargin = this.safetyMarginSlow;
     }
+
+    // Dodatkowy margines na szerokość, proporcjonalny do prędkości bocznej.
+    // Zwiększa "wystawanie" auta na boki podczas poślizgu. Mnożnik do ewentualnego dostrojenia.
+    const slideMargin = Math.abs(this.v_y) * 0.02;
     
-    // Półosie elipsy - używaj prekalkulowanych
-    const a = this.COLLISION_HALF_WIDTH + safetyMargin;
-    const b = this.COLLISION_HALF_HEIGHT + safetyMargin;
+    // Półosie elipsy - DŁUGOŚĆ (a) i SZEROKOŚĆ (b)
+    const a = this.COLLISION_HALF_WIDTH + baseSafetyMargin;
+    const b = this.COLLISION_HALF_HEIGHT + baseSafetyMargin + slideMargin;
     
     // Sprawdź środek auta
     if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
@@ -297,8 +301,8 @@ export class Car {
       this.carSprite.y = this.carY;
     }
 
-    // Reset prędkości bocznej
-    this.v_y = 0;
+    // Usunięto reset prędkości bocznej dla bardziej naturalnego odbicia
+    // this.v_y = 0;
 
     // Krótka nieczułość na kolizje
     this.throttleLock = true;

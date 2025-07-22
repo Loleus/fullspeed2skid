@@ -29,6 +29,45 @@ const config = {
 
 window._phaserGame = new Phaser.Game(config);
 
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+}
+
+function resizeGameCanvas() {
+  if (!isIOS()) return;
+  const canvas = document.querySelector('canvas');
+  if (!canvas) return;
+  // Jeśli fullscreen, nie zmieniaj rozmiaru
+  if (document.fullscreenElement) {
+    canvas.style.width = '';
+    canvas.style.height = '';
+    return;
+  }
+  // Dopasuj do widocznego okna (bez paska przeglądarki)
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  // Zachowaj proporcje gry (1280x720)
+  const aspect = 1280 / 720;
+  let newW = w;
+  let newH = Math.round(w / aspect);
+  if (newH > h) {
+    newH = h;
+    newW = Math.round(h * aspect);
+  }
+  canvas.style.width = newW + 'px';
+  canvas.style.height = newH + 'px';
+  canvas.style.display = 'block';
+  canvas.style.margin = '0 auto';
+}
+
+if (isIOS()) {
+  window.addEventListener('resize', resizeGameCanvas);
+  window.addEventListener('orientationchange', () => setTimeout(resizeGameCanvas, 300));
+  document.addEventListener('fullscreenchange', resizeGameCanvas);
+  window.addEventListener('DOMContentLoaded', () => setTimeout(resizeGameCanvas, 300));
+  setTimeout(resizeGameCanvas, 500);
+}
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');

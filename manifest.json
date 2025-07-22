@@ -3,6 +3,7 @@
   "short_name": "FS2Skid",
   "start_url": "/fullspeed2skid/index.html",
   "display": "standalone",
+  "apple-mobile-web-app-capable": "yes",
   "background_color": "#222222",
   "theme_color": "#222222",
   "description": "Wyścigowa gra offline. Autor: LxO (@loleus)",

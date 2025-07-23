@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v9';
+const CACHE_NAME = 'fullspeed2skid-v0.1';
 const ASSETS = [
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
@@ -31,6 +31,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/levels/scene_3.svg',
   '/fullspeed2skid/assets/levels/scene_4.svg',
   '/fullspeed2skid/assets/levels/scene_5.svg',
+  '/fullspeed2skid/assets/levels/scene_6.svg',
 ];
 
 // Instalacja service workera

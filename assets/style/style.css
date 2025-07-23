@@ -38,4 +38,26 @@ body {
       max-height: 100vh;
     }
   }
+
+#rotate-warning {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0; top: 0; right: 0; bottom: 0;
+  background: #222;
+  color: #fff;
+  font-size: 2.5em;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  padding-top: 30vh;
+}
+@media (orientation: portrait) {
+  #rotate-warning { display: flex; }
+  #phaser-canvas, canvas { display: none !important; }
+}
+@media (orientation: landscape) {
+  #rotate-warning { display: none; }
+  #phaser-canvas, canvas { display: block; }
+}
   

@@ -1,8 +1,8 @@
 {
   "liveServer.settings.https": {
     "enable": true,
-    "key": "E:\\assets\\fullspeed2skid\\.ssl\\localhost-key.pem",
-    "cert": "E:\\assets\\fullspeed2skid\\.ssl\\localhost.pem"
+    "key": "E:\\fullspeed2skid\\.ssl\\localhost-key.pem",
+    "cert": "E:\\fullspeed2skid\\.ssl\\localhost.pem"
   },
   "liveServer.settings.port": 5500
 }

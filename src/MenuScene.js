@@ -126,7 +126,7 @@ export class MenuScene extends window.Phaser.Scene {
     const boxHeight = 220;
     const popup = this.add.rectangle(width / 2, height / 2, boxWidth, boxHeight, 0x333333, 1)
       .setStrokeStyle(2, 0xffffff).setDepth(1001);
-
+  
     this.add.text(width / 2, height / 2 - 60, 'Czy zezwalasz na żyroskop?', {
       fontFamily: 'Stormfaze',
       fontSize: '20px',
@@ -134,7 +134,7 @@ export class MenuScene extends window.Phaser.Scene {
       align: 'center',
       wordWrap: { width: boxWidth - 40 }
     }).setOrigin(0.5).setDepth(1002);
-
+  
     const allowBtn = this.add.text(width / 2 - 100, height / 2 + 40, 'Zezwól', {
       fontFamily: 'punk_kid',
       fontSize: '24px',
@@ -142,12 +142,7 @@ export class MenuScene extends window.Phaser.Scene {
       backgroundColor: '#222',
       padding: { x: 16, y: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(1002);
-
-    allowBtn.on('pointerdown', () => {
-      overlay.destroy(); popup.destroy(); allowBtn.destroy(); denyBtn.destroy();
-      this.requestGyroPermission();
-    });
-
+  
     const denyBtn = this.add.text(width / 2 + 100, height / 2 + 40, 'Odmów', {
       fontFamily: 'punk_kid',
       fontSize: '24px',
@@ -155,23 +150,33 @@ export class MenuScene extends window.Phaser.Scene {
       backgroundColor: '#222',
       padding: { x: 16, y: 10 }
     }).setOrigin(0.5).setInteractive({ useHandCursor: true }).setDepth(1002);
-
+  
+    allowBtn.on('pointerdown', async () => {
+      if (typeof DeviceOrientationEvent?.requestPermission !== 'function') {
+        alert('Twoje urządzenie nie wymaga zgody na dostęp do żyroskopu.');
+        overlay.destroy(); popup.destroy(); allowBtn.destroy(); denyBtn.destroy();
+        return;
+      }
+      try {
+        const response = await DeviceOrientationEvent.requestPermission();
+        if (response === 'granted') {
+          this.scene.start('LoadingScene', { trackFile: this.tracks[this.selectedTrack].file });
+        } else {
+          alert('Dostęp do żyroskopu został odrzucony.');
+        }
+      } catch (err) {
+        console.warn('Błąd przy uzyskiwaniu zgody:', err);
+        alert('Nie udało się uzyskać zgody na żyroskop.');
+      }
+      overlay.destroy(); popup.destroy(); allowBtn.destroy(); denyBtn.destroy();
+    });
+  
     denyBtn.on('pointerdown', () => {
       overlay.destroy(); popup.destroy(); allowBtn.destroy(); denyBtn.destroy();
       alert('Dostęp do żyroskopu nie został przyznany.');
     });
   }
-
-  requestGyroPermission() {
-    DeviceOrientationEvent.requestPermission().then((response) => {
-      if (response === 'granted') {
-        this.scene.start('LoadingScene', { trackFile: this.tracks[this.selectedTrack].file });
-      } else {
-        alert('Dostęp do żyroskopu został odrzucony.');
-      }
-    }).catch((err) => {
-      console.warn('Błąd przy uzyskiwaniu zgody:', err);
-      alert('Nie udało się uzyskać zgody na żyroskop.');
-    });
-  }
+  
 }
+
+

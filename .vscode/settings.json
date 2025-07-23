@@ -1,0 +1,10 @@
+{
+    "liveServer.settings.https": {
+      "enable": true,
+      "key": "C:\\Users\\SERON\\AppData\\Local\\mkcert\\localhost-key.pem",
+      "cert": "C:\\Users\\SERON\\AppData\\Local\\mkcert\\localhost.pem"
+    },
+    "liveServer.settings.port": 5500,
+    "liveServer.settings.host": "localhost"
+  }
+  

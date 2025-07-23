@@ -4,7 +4,7 @@ import { LoadingScene } from './LoadingScene.js';
 import { GameScene } from './game.js';
 
 const tileSize  = 256;
-const worldH    = 4096;
+const worldH    = 2048
 
 // Inicjalizacja Phasera z LoadingScene i MenuScene
 const config = {

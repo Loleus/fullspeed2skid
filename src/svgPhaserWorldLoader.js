@@ -395,11 +395,9 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
         canvas.width = outputSize;
         canvas.height = outputSize;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'rgba(231, 231, 231, 1)';
+        ctx.fillStyle = 'rgba(128, 128, 128, 0.5)';
         ctx.fillRect(0, 0, outputSize, outputSize);
-        ctx.strokeStyle = 'rgba(100, 100, 100, 1)';
-        ctx.lineWidth = 10;
-        ctx.strokeRect(0, 0, outputSize, outputSize);
+
 
         let pathsSVG = '';
         trackPaths.forEach(pathElem => {

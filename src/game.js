@@ -64,13 +64,17 @@ export class GameScene extends window.Phaser.Scene {
 
     this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
 
-    this.hudInfoText = this.add.text(10, 10, 'V - zmiana kamery\nR - reset\nX - exit', {
-      fontFamily: 'Stormfaze',
-      font: '20px Stormfaze',
-      fill: '#fff',
-      backgroundColor: 'rgb(31, 31, 31)',
-      padding: { left: 8, right: 8, top: 4, bottom: 4 },
-    }).setScrollFactor(0).setDepth(100);
+    if (this.isMobile()) {
+      this.hudInfoText = '';
+    } else {
+      this.hudInfoText = this.add.text(10, 10, 'V - zmiana kamery\nR - reset\nX - exit', {
+        fontFamily: 'Stormfaze',
+        font: '20px Stormfaze',
+        fill: '#fff',
+        backgroundColor: 'rgb(31, 31, 31)',
+        padding: { left: 8, right: 8, top: 4, bottom: 4 },
+      }).setScrollFactor(0).setDepth(100);
+    }
 
     this.world = new World(this, worldData, tileSize, viewW, viewH);
     if (worldData.worldSize) {
@@ -104,6 +108,7 @@ export class GameScene extends window.Phaser.Scene {
         .setAlpha(0.3)
         .setScrollFactor(0)
         .setDepth(100)
+        .setStrokeStyle(3, 0xffffff)
         .setInteractive();
       this.add.text(btnRadius + margin, y, '↑', { font: '48px Arial', color: '#fff' })
         .setOrigin(0.5)
@@ -115,6 +120,7 @@ export class GameScene extends window.Phaser.Scene {
         .setAlpha(0.3)
         .setScrollFactor(0)
         .setDepth(100)
+        .setStrokeStyle(3, 0xffffff)
         .setInteractive();
       this.add.text(w - btnRadius - margin, y, '↓', { font: '48px Arial', color: '#fff' })
         .setOrigin(0.5)

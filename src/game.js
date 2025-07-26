@@ -101,6 +101,7 @@ export class GameScene extends window.Phaser.Scene {
       const y = this.sys.game.config.height - btnRadius - margin - 40;
 
       this.gasBtn = this.add.circle(btnRadius + margin, y, btnRadius, 0x00cc00)
+        .setAlpha(0.3)
         .setScrollFactor(0)
         .setDepth(100)
         .setInteractive();
@@ -111,6 +112,7 @@ export class GameScene extends window.Phaser.Scene {
 
       const w = this.sys.game.config.width;
       this.brakeBtn = this.add.circle(w - btnRadius - margin, y, btnRadius, 0xcc0000)
+        .setAlpha(0.3)
         .setScrollFactor(0)
         .setDepth(100)
         .setInteractive();

@@ -6,8 +6,7 @@
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description"
-    content="Full Speed 2 Skid - online racing project. Author: LxO (@loleus), email: loleus@gmail.com" />
+  <meta name="description" content="Full Speed 2 Skid - online racing project. Author: LxO (@loleus), email: loleus@gmail.com" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#222222" />
   <meta name="author" content="LxO" />
@@ -20,369 +19,69 @@
   <meta property="og:url" content="https://loleus.github.io/fullspeed2skid/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Full Speed 2 Skid" />
+  <!-- Assets -->
   <link rel="preload" href="assets/fonts/skid.ttf" as="font" type="font/ttf" crossorigin />
   <link rel="preload" href="assets/fonts/punk_kid.ttf" as="font" type="font/ttf" crossorigin />
   <link rel="preload" href="assets/fonts/Stormfaze.otf" as="font" type="font/otf" crossorigin />
-  <script src="src/phaser.js"></script>
   <link rel="stylesheet" href="assets/style/style.css" />
+    <!-- Engine -->
+  <script src="src/phaser.js"></script>
+    <!-- Preload assets -->
   <style>
-    @font-face {
-      font-family: "skid";
-      src: url("assets/fonts/skid.ttf") format("truetype");
-      font-weight: normal;
-      font-style: normal;
+    @font-face { font-family: "skid"; src: url("assets/fonts/skid.ttf") format("truetype"); font-weight: normal; font-style: normal;}
+    @font-face { font-family: "punk_kid"; src: url("assets/fonts/punk_kid.ttf") format("truetype"); font-weight: normal; font-style: normal;}
+    @font-face { font-family: "Stormfaze"; src: url("assets/fonts/Stormfaze.otf") format("opentype"); font-weight: normal; font-style: normal;}
+    #font-preload { position: absolute; left: -9999px; visibility: hidden; font-family: "skid", "punk kid", "Stormfaze", Arial, sans-serif;} 
+    #rotate-warning { display: none; position: fixed; z-index: 9999!important; left: 0; top: 0; right: 0; bottom: 0; background: #222; color: #fff; font-size: 2.5em; text-align: center; align-items: center; justify-content: center; padding-top: 30vh;
     }
-
-    @font-face {
-      font-family: "punk_kid";
-      src: url("assets/fonts/punk_kid.ttf") format("truetype");
-      font-weight: normal;
-      font-style: normal;
+    @media (orientation: portrait) {
+      #rotate-warning { display: flex; }
+      #phaser-canvas, canvas { display: none !important; }
     }
-
-    @font-face {
-      font-family: "Stormfaze";
-      src: url("assets/fonts/Stormfaze.otf") format("opentype");
-      font-weight: normal;
-      font-style: normal;
-    }
-
-    #font-preload {
-      position: absolute;
-      left: -9999px;
-      visibility: hidden;
-      font-family: "skid", "punk kid", "Stormfaze", Arial, sans-serif;
+    @media (orientation: landscape) {
+      #rotate-warning { display: none; }
+      #phaser-canvas, canvas { display: block; }
     }
   </style>
 </head>
-
 <body>
   <span id="font-preload">Font preload</span>
-  <div id="rotate-warning">Obróć telefon</div>
-  <div id="install-pwa-container" style="
-        display: none;
-        position: fixed;
-        bottom: 30px;
-        left: 0;
-        right: 0;
-        z-index: 10000;
-        text-align: center;
-      ">
-    <button id="install-pwa-btn" style="
-          font-size: 1.2em;
-          padding: 16px 32px;
-          border-radius: 32px;
-          border: none;
-          background: #222;
-          color: #fff;
-          box-shadow: 0 2px 8px #000a;
-        ">
+  <div id="install-pwa-container" style=" display: none; position: fixed; bottom: 30px; left: 0; right: 0; z-index: 9997; text-align: center; ">
+    <button id="install-pwa-btn" style=" font-size: 1.2em; padding: 16px 32px; border-radius: 32px; border: none; background: #222; color: #fff; box-shadow: 0 2px 8px #000a; ">
       Zainstaluj grę na ekranie głównym
     </button>
   </div>
-  <div id="ios-pwa-instruction" style="
-        display: none;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        top: 0;
-        background: #222d;
-        color: #fff;
-        z-index: 10001;
-        text-align: center;
-        padding-top: 10vh;
-        font-size: 1em;
-        overflow: auto;
-      ">
-    <div class="ios-pwa-box" style="
-          max-width: 95vw;
-          margin: 0 auto;
-          background: #222;
-          border-radius: 12px;
-          padding: 12px 8px 16px 8px;
-          box-shadow: 0 2px 16px #000a;
-          font-size: 0.95em;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        ">
+  <div id="ios-pwa-instruction" style=" display: none; position: fixed; left: 0; right: 0; bottom: 0; top: 0; background: #222d; color: #fff; z-index: 9998; text-align: center; padding-top: 10vh; font-size: 1em; overflow: auto; ">
+    <div class="ios-pwa-box" style=" max-width: 95vw; margin: 0 auto; background: #222; border-radius: 12px; padding: 12px 8px 16px 8px; box-shadow: 0 2px 16px #000a; font-size: 0.95em; display: flex; flex-direction: column; align-items: center; ">
       <b style="font-size: 1.05em">Dodaj grę do ekranu początkowego:</b><br />
       <span class="ios-pwa-desc" style="font-size: 0.95em; line-height: 1.3; margin: 8px 0 0 0">Kliknij <b>ikonkę
           udostępniania</b>
         <span style="font-size: 1.2em">⬆️</span> na dole ekranu,<br />następnie
         wybierz <b>„Dodaj do ekranu początkowego”</b>.</span>
-      <button class="ios-pwa-close" onclick="document.getElementById('ios-pwa-instruction').style.display='none'" style="
-            margin-top: 12px;
-            font-size: 0.95em;
-            padding: 6px 18px;
-            border-radius: 12px;
-            border: none;
-            background: #444;
-            color: #fff;
-            min-width: 80px;
-            cursor: pointer;
-          ">
+      <button class="ios-pwa-close" onclick="document.getElementById('ios-pwa-instruction').style.display='none'" style=" margin-top: 12px; font-size: 0.95em; padding: 6px 18px; border-radius: 12px; border: none; background: #444; color: #fff; min-width: 80px; cursor: pointer; ">
         Zamknij
       </button>
     </div>
   </div>
-  <div id="gyro-permission-popup" style="
-        display: none;
-        position: fixed;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        background: #222d;
-        color: #fff;
-        z-index: 10002;
-        text-align: center;
-        padding-top: 10vh;
-        font-size: 1em;
-      ">
-    <div style="
-          max-width: 95vw;
-          margin: 0 auto;
-          background: #222;
-          border-radius: 12px;
-          padding: 24px 8px 24px 8px;
-          box-shadow: 0 2px 16px #000a;
-          font-size: 1.2em;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        ">
+  <div id="gyro-permission-popup" style=" display: none; position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: #222d; color: #fff; z-index: 9998; text-align: center; padding-top: 10vh; font-size: 1em; ">
+    <div style=" max-width: 95vw; margin: 0 auto; background: #222; border-radius: 12px; padding: 24px 8px 24px 8px; box-shadow: 0 2px 16px #000a; font-size: 1.2em; display: flex; flex-direction: column; align-items: center; ">
       <b style="font-size: 2em; margin-bottom: 16px">Czy zezwalasz na żyroskop?</b>
       <span style="font-size: 1.1em; line-height: 1.3; margin: 8px 0 16px 0">Aby zagrać, musisz zezwolić na dostęp do
         żyroskopu.</span>
       <div style="display: flex; gap: 32px; margin-top: 16px">
-        <button id="gyro-allow-btn" style="
-              font-size: 1.2em;
-              padding: 12px 32px;
-              border-radius: 16px;
-              border: none;
-              background: #0f0;
-              color: #222;
-              min-width: 100px;
-              cursor: pointer;
-            ">
+        <button id="gyro-allow-btn" style=" font-size: 1.2em; padding: 12px 32px; border-radius: 16px; border: none; background: #0f0; color: #222; min-width: 100px; cursor: pointer; ">
           Zezwól
         </button>
-        <button id="gyro-deny-btn" style="
-              font-size: 1.2em;
-              padding: 12px 32px;
-              border-radius: 16px;
-              border: none;
-              background: #f33;
-              color: #fff;
-              min-width: 100px;
-              cursor: pointer;
-            ">
+        <button id="gyro-deny-btn" style=" font-size: 1.2em; padding: 12px 32px; border-radius: 16px; border: none; background: #f33; color: #fff; min-width: 100px; cursor: pointer; ">
           Odmów
         </button>
       </div>
     </div>
   </div>
-  <div id="gyro-blocked-info" style="
-        display: none;
-        position: fixed;
-        left: 0;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        background: #222d;
-        color: #fff;
-        z-index: 10003;
-        text-align: center;
-        padding-top: 20vh;
-        font-size: 2em;
-      ">
+  <div id="gyro-blocked-info" style=" display: none; position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: #222d; color: #fff; z-index: 9999; text-align: center; padding-top: 20vh; font-size: 2em; ">
     Bez żyroskopu nie zagrasz :(
   </div>
-  <script>
-    async function waitForFonts() {
-      if (document.fonts) {
-        await document.fonts.load('24px "punk_kid"');
-        await document.fonts.load("40px skid");
-        await document.fonts.load("50px Stormfaze");
-        await document.fonts.ready;
-      }
-    }
-
-    function isMobileGyro() {
-      return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(
-        navigator.userAgent
-      );
-    }
-    function needsGyroPermission() {
-      return (
-        typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function"
-      );
-    }
-    function showGyroPopup() {
-      document.getElementById("gyro-permission-popup").style.display =
-        "block";
-    }
-    function hideGyroPopup() {
-      document.getElementById("gyro-permission-popup").style.display = "none";
-    }
-    function showGyroBlocked() {
-      document.getElementById("gyro-blocked-info").style.display = "block";
-    }
-    function hideGyroBlocked() {
-      document.getElementById("gyro-blocked-info").style.display = "none";
-    }
-    async function handleGyroPermission() {
-      if (!isMobileGyro() || !needsGyroPermission()) {
-        // Jeśli nie potrzeba zgody, ale jesteśmy na mobile, też rejestruj event
-        if (isMobileGyro()) {
-          window._gyroControl = { left: false, right: false };
-          window._gyroCalib = null;
-          window.addEventListener("deviceorientation", function (event) {
-            if (window._gyroCalib === null) {
-              window._gyroCalib = event.beta;
-            }
-            const tilt = event.beta - window._gyroCalib;
-            window._gyroControl.left = tilt > 10;
-            window._gyroControl.right = tilt < -10;
-          });
-        }
-        startGameNormally();
-        return;
-      }
-      showGyroPopup();
-      document.getElementById("gyro-allow-btn").onclick = async function () {
-        try {
-          const response = await DeviceOrientationEvent.requestPermission();
-          if (response === "granted") {
-            hideGyroPopup();
-            // Dodaj obsługę żyroskopu
-            window._gyroControl = { left: false, right: false };
-            window._gyroCalib = null;
-            window.addEventListener("deviceorientation", function (event) {
-              if (window._gyroCalib === null) {
-                window._gyroCalib = event.beta;
-              }
-              const tilt = event.beta - window._gyroCalib;
-              window._gyroControl.left = tilt > 10;
-              window._gyroControl.right = tilt < -10;
-            });
-            startGameNormally();
-          } else {
-            hideGyroPopup();
-            showGyroBlocked();
-          }
-        } catch (e) {
-          hideGyroPopup();
-          showGyroBlocked();
-        }
-      };
-      document.getElementById("gyro-deny-btn").onclick = function () {
-        hideGyroPopup();
-        showGyroBlocked();
-      };
-    }
-    function startGameNormally() {
-      // Phaser domyślnie tworzy <canvas> bez id, więc nadajemy mu id po utworzeniu gry
-      const observer = new MutationObserver(() => {
-        document.querySelectorAll("canvas").forEach((c) => {
-          if (!c.id || c.id !== "phaser-canvas") {
-            c.id = "phaser-canvas";
-          }
-          c.addEventListener("contextmenu", function (event) {
-            event.preventDefault();
-          });
-        });
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-      // Start gry po observerze
-      const script = document.createElement("script");
-      script.type = "module";
-      script.src = "src/main.js";
-      document.body.appendChild(script);
-    }
-    // --- Zmodyfikowana logika uruchamiania gry ---
-    window.addEventListener("DOMContentLoaded", async () => {
-      await waitForFonts();
-      // Android/Chrome: obsługa beforeinstallprompt
-      let deferredPrompt = null;
-      const installContainer = document.getElementById(
-        "install-pwa-container"
-      );
-      const installBtn = document.getElementById("install-pwa-btn");
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        installContainer.style.display = "block";
-        installBtn.onclick = () => {
-          installContainer.style.display = "none";
-          deferredPrompt.prompt();
-          deferredPrompt.userChoice.then(() => {
-            deferredPrompt = null;
-            handleGyroPermission();
-          });
-        };
-      });
-      // iOS/Safari: własny overlay z instrukcją
-      function isIOS() {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent);
-      }
-      function isSafari() {
-        return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      }
-      if (isIOS() && isSafari() && !window.navigator.standalone) {
-        setTimeout(() => {
-          document.getElementById("ios-pwa-instruction").style.display =
-            "block";
-          // Po zamknięciu instrukcji iOS wywołaj popup gyro
-          document.querySelector(".ios-pwa-close").onclick = function () {
-            document.getElementById("ios-pwa-instruction").style.display =
-              "none";
-            handleGyroPermission();
-          };
-        }, 1200);
-      } else {
-        // Jeśli nie iOS/Safari, uruchom gyro popup po instalacji lub od razu
-        if (!installContainer || installContainer.style.display === "none") {
-          handleGyroPermission();
-        }
-      }
-    });
-  </script>
-  <script>
-    // Android/Chrome: obsługa beforeinstallprompt
-    let deferredPrompt = null;
-    const installContainer = document.getElementById("install-pwa-container");
-    const installBtn = document.getElementById("install-pwa-btn");
-    window.addEventListener("beforeinstallprompt", (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      installContainer.style.display = "block";
-      installBtn.onclick = () => {
-        installContainer.style.display = "none";
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(() => {
-          deferredPrompt = null;
-        });
-      };
-    });
-
-    // iOS/Safari: własny overlay z instrukcją
-    function isIOS() {
-      return /iPad|iPhone|iPod/.test(navigator.userAgent);
-    }
-    function isSafari() {
-      return /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    }
-    if (isIOS() && isSafari() && !window.navigator.standalone) {
-      setTimeout(() => {
-        document.getElementById("ios-pwa-instruction").style.display =
-          "block";
-      }, 1200);
-    }
-  </script>
+  <div id="rotate-warning">Obróć telefon</div>
+  <script type="module" src="src/startup.js"></script>
 </body>
-
 </html>

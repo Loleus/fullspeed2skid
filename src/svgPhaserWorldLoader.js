@@ -401,7 +401,7 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
 
         let pathsSVG = '';
         trackPaths.forEach(pathElem => {
-          pathsSVG += `<path d="${pathElem.getAttribute('d')}" fill="#111" stroke="none"/>`;
+          pathsSVG += `<path d="${pathElem.getAttribute('d')}" fill="#111a" stroke="none"/>`;
         });
         const scaledSVG = `
           <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">

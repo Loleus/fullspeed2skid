@@ -21,6 +21,7 @@ class HudMobileControls {
     const centerY = y + marginY;
   
     const circle = this.scene.add.circle(centerX, centerY, diameter / 2, 0x1f1f1f)
+      .setAlpha(0.3)
       .setStrokeStyle(3, 0xffffff)
       .setInteractive()
       .setScrollFactor(0)
@@ -39,7 +40,7 @@ class HudMobileControls {
     
 
   createAll() {
-    const spacing = 80;
+    const spacing = 100;
     const margin = 30;
     const y = 30;
 
@@ -170,7 +171,7 @@ export class GameScene extends window.Phaser.Scene {
       fontFamily: 'Stormfaze',
       font: '20px Stormfaze',
       fill: '#fff',
-      backgroundColor: 'rgb(31, 31, 31)',
+      backgroundColor: 'rgba(31, 31, 31,0.5)',
       padding: { left: 8, right: 8, top: 4, bottom: 4 },
     }).setScrollFactor(0).setDepth(100);
     }

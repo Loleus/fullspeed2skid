@@ -101,10 +101,10 @@ export class World {
     const minimapOffsetY = this.minimapMargin;
     const carX = minimapOffsetX + (px / worldW * this.minimapSize);
     const carY = minimapOffsetY + (py / worldH * this.minimapSize);
-    this.minimapOverlay.fillStyle(0xffffff, 1);
+    this.minimapOverlay.fillStyle(0xff1111, 1);
     this.minimapOverlay.fillCircle(carX, carY, 3);
-    // this.minimapOverlay.lineStyle(1, 0xffffff, 1);
-    // this.minimapOverlay.strokeCircle(carX, carY, 3);
+    this.minimapOverlay.lineStyle(1, 0xff0000, 1);
+    this.minimapOverlay.strokeCircle(carX, carY, 3);
   }
 
   // Pobierz typ nawierzchni w punkcie (delegacja do worldData)

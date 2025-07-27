@@ -163,9 +163,21 @@ export class GameScene extends window.Phaser.Scene {
       this.cameras.main.ignore(hudObjects);
     
       // ✅ Można też dodać osobną kamerę HUD jeśli używasz minimapy
-      this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
-      this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
-      this.hudCamera.setScroll(0, 0);
+      // this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+      // this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
+      // this.hudCamera.setScroll(0, 0);
+// … po tym, jak dodałeś hudCamera:
+this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+this.hudCamera.setScroll(0, 0);
+
+// <<< TUTAJ dodaj to aby ignorować kafle
+if (this.world && this.world.tilePool) {
+  for (const tileObj of this.world.tilePool.values()) {
+    this.hudCamera.ignore(tileObj);
+  }
+}
+
+
     } else {
     this.hudInfoText = this.add.text(10, 10, 'V - zmiana kamery\nR - reset\nX - exit', {
       fontFamily: 'Stormfaze',
@@ -219,6 +231,11 @@ export class GameScene extends window.Phaser.Scene {
     const carPos = this.carController.getPosition();
     this.world.drawTiles(carPos.x, carPos.y);
 
+  if (this.hudCamera && this.world.tilePool) {
+    for (const tileObj of this.world.tilePool.values()) {
+      this.hudCamera.ignore([tileObj, this.car]);
+    }
+  }
     if (skidMarks && skidMarks.enabled) {
       const steerAngle = this.carController.getSteerAngle();
       const carMass = this.carController.carMass;

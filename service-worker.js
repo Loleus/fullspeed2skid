@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v0.2a';
+const CACHE_NAME = 'fullspeed2skid-v0.2b';
 const ASSETS = [
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',

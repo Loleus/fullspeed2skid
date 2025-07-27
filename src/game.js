@@ -7,6 +7,48 @@ import { SkidMarks } from './skidMarks.js';
 let skidMarks = null;
 let skidMarksEnabled = true;
 
+class HudMobileControls {
+  constructor(scene) {
+    this.scene = scene;
+  }
+
+  createButton(x, y, label, callback) {
+    const marginX = 50;
+    const marginY = 50;
+    const diameter = 80;
+  
+    const centerX = x + marginX;
+    const centerY = y + marginY;
+  
+    const circle = this.scene.add.circle(centerX, centerY, diameter / 2, 0x1f1f1f)
+      .setStrokeStyle(3, 0xffffff)
+      .setInteractive()
+      .setScrollFactor(0)
+      .setDepth(100);
+  
+    const text = this.scene.add.text(centerX, centerY, label, {
+      fontFamily: 'Stormfaze',
+      fontSize: '40px',
+      color: '#ffffff'
+    }).setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(101);
+  
+    circle.on('pointerdown', callback);
+  }
+    
+
+  createAll() {
+    const spacing = 80;
+    const margin = 30;
+    const y = 30;
+
+    this.createButton(margin + 0 * spacing, y, 'V', () => this.scene.cameraManager.toggle());
+    this.createButton(margin + 1 * spacing, y, 'R', () => this.scene.resetGame());
+    this.createButton(margin + 2 * spacing, y, 'X', () => this.scene.exitToMenu());
+  }
+}
+
 export class GameScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });
@@ -65,15 +107,72 @@ export class GameScene extends window.Phaser.Scene {
     this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
 
     if (this.isMobile()) {
-      this.hudInfoText = '';
-    } else {
-      this.hudInfoText = this.add.text(10, 10, 'V - zmiana kamery\nR - reset\nX - exit', {
-        fontFamily: 'Stormfaze',
-        font: '20px Stormfaze',
-        fill: '#fff',
-        backgroundColor: 'rgb(31, 31, 31)',
-        padding: { left: 8, right: 8, top: 4, bottom: 4 },
+      // ✅ Ustaw pusty tekst HUD (ale potrzebny do ignorowania przez kamerę)
+      this.hudInfoText = this.add.text(0, 0, '', {
+        fontSize: '1px' // mikroskopijny placeholder
       }).setScrollFactor(0).setDepth(100);
+    
+      // ✅ Tworzenie przycisków gaz/hamulec
+      const btnRadius = 60;
+      const margin = 30;
+      const y = this.sys.game.config.height - btnRadius - margin - 40;
+    
+      this.gasBtn = this.add.circle(btnRadius + margin, y, btnRadius, 0x00cc00)
+        .setAlpha(0.3)
+        .setScrollFactor(0)
+        .setDepth(100)
+        .setStrokeStyle(3, 0xffffff)
+        .setInteractive();
+      this.add.text(btnRadius + margin, y, '↑', {
+        font: '48px Arial',
+        color: '#fff'
+      }).setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(101);
+    
+      const w = this.sys.game.config.width;
+      this.brakeBtn = this.add.circle(w - btnRadius - margin, y, btnRadius, 0xcc0000)
+        .setAlpha(0.3)
+        .setScrollFactor(0)
+        .setDepth(100)
+        .setStrokeStyle(3, 0xffffff)
+        .setInteractive();
+      this.add.text(w - btnRadius - margin, y, '↓', {
+        font: '48px Arial',
+        color: '#fff'
+      }).setOrigin(0.5)
+        .setScrollFactor(0)
+        .setDepth(101);
+    
+      this.gasBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.up = true; });
+      this.gasBtn.on('pointerup', () => { this.control.up = false; });
+      this.gasBtn.on('pointerout', () => { this.control.up = false; });
+      this.brakeBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.down = true; });
+      this.brakeBtn.on('pointerup', () => { this.control.down = false; });
+      this.brakeBtn.on('pointerout', () => { this.control.down = false; });
+    
+      // ✅ Tworzenie przycisków opcji (V/R/X) — HudMobileControls
+      const mobileControls = new HudMobileControls(this);
+      mobileControls.createAll();
+    
+      // ✅ Ignorujemy HUD w głównej kamerze (jak dla desktopu)
+      const hudObjects = [this.hudInfoText, this.gasBtn, this.brakeBtn];
+      hudObjects.push(...this.children.list.filter(child => child.depth >= 100));
+    
+      this.cameras.main.ignore(hudObjects);
+    
+      // ✅ Można też dodać osobną kamerę HUD jeśli używasz minimapy
+      this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+      this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
+      this.hudCamera.setScroll(0, 0);
+    } else {
+    this.hudInfoText = this.add.text(10, 10, 'V - zmiana kamery\nR - reset\nX - exit', {
+      fontFamily: 'Stormfaze',
+      font: '20px Stormfaze',
+      fill: '#fff',
+      backgroundColor: 'rgb(31, 31, 31)',
+      padding: { left: 8, right: 8, top: 4, bottom: 4 },
+    }).setScrollFactor(0).setDepth(100);
     }
 
     this.world = new World(this, worldData, tileSize, viewW, viewH);
@@ -98,42 +197,6 @@ export class GameScene extends window.Phaser.Scene {
 
     window.dispatchEvent(new Event('game-ready'));
     skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-
-    if (this.isMobile()) {
-      const btnRadius = 60;
-      const margin = 30;
-      const y = this.sys.game.config.height - btnRadius - margin - 40;
-
-      this.gasBtn = this.add.circle(btnRadius + margin, y, btnRadius, 0x00cc00)
-        .setAlpha(0.3)
-        .setScrollFactor(0)
-        .setDepth(100)
-        .setStrokeStyle(3, 0xffffff)
-        .setInteractive();
-      this.add.text(btnRadius + margin, y, '↑', { font: '48px Arial', color: '#fff' })
-        .setOrigin(0.5)
-        .setScrollFactor(0)
-        .setDepth(101);
-
-      const w = this.sys.game.config.width;
-      this.brakeBtn = this.add.circle(w - btnRadius - margin, y, btnRadius, 0xcc0000)
-        .setAlpha(0.3)
-        .setScrollFactor(0)
-        .setDepth(100)
-        .setStrokeStyle(3, 0xffffff)
-        .setInteractive();
-      this.add.text(w - btnRadius - margin, y, '↓', { font: '48px Arial', color: '#fff' })
-        .setOrigin(0.5)
-        .setScrollFactor(0)
-        .setDepth(101);
-
-      this.gasBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.up = true; });
-      this.gasBtn.on('pointerup', () => { this.control.up = false; });
-      this.gasBtn.on('pointerout', () => { this.control.up = false; });
-      this.brakeBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.down = true; });
-      this.brakeBtn.on('pointerup', () => { this.control.down = false; });
-      this.brakeBtn.on('pointerout', () => { this.control.down = false; });
-    }
   }
 
   update(time, dt) {

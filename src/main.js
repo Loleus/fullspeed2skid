@@ -68,10 +68,4 @@ if (isIOS()) {
   setTimeout(resizeGameCanvas, 500);
 }
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
-  });
-}
-
 export { tileSize, worldH };

@@ -37,8 +37,7 @@ class HudMobileControls {
   
     circle.on('pointerdown', callback);
   }
-    
-
+  
   createAll() {
     const spacing = 100;
     const margin = 30;

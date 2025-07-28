@@ -7,6 +7,48 @@ import { SkidMarks } from './skidMarks.js';
 let skidMarks = null;
 let skidMarksEnabled = true;
 
+class HudMobileControls {
+  constructor(scene) {
+    this.scene = scene;
+  }
+
+  createButton(x, y, label, callback) {
+    const marginX = 50;
+    const marginY = 50;
+    const diameter = 80;
+  
+    const centerX = x + marginX;
+    const centerY = y + marginY;
+  
+    const circle = this.scene.add.circle(centerX, centerY, diameter / 2, 0x1f1f1f)
+      .setAlpha(0.3)
+      .setStrokeStyle(3, 0xffffff)
+      .setInteractive()
+      .setScrollFactor(0)
+      .setDepth(100);
+  
+    const text = this.scene.add.text(centerX, centerY, label, {
+      fontFamily: 'Stormfaze',
+      fontSize: '40px',
+      color: '#ffffff'
+    }).setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(101);
+  
+    circle.on('pointerdown', callback);
+  }
+  
+  createAll() {
+    const spacing = 100;
+    const margin = 30;
+    const y = 30;
+
+    this.createButton(margin + 0 * spacing, y, 'V', () => this.scene.cameraManager.toggle());
+    this.createButton(margin + 1 * spacing, y, 'R', () => this.scene.resetGame());
+    this.createButton(margin + 2 * spacing, y, 'X', () => this.scene.exitToMenu());
+  }
+}
+
 export class GameScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'GameScene' });

@@ -1,7 +1,8 @@
-// main.js
+ // main.js
 import { MenuScene } from './MenuScene.js';
 import { LoadingScene } from './LoadingScene.js';
 import { GameScene } from './game.js';
+import { HudScene } from './HudScene.js';
 
 const tileSize  = 256;
 const worldH    = 4096;
@@ -23,7 +24,7 @@ const config = {
     disableContextMenu: true
   },
   physics: { default: 'arcade', arcade: { gravity: { y: 0 }, debug: false } },
-  scene: [LoadingScene, MenuScene, GameScene],
+  scene: [LoadingScene, MenuScene, GameScene, HudScene],
   // USUWAM canvas: niech Phaser sam utworzy element
 };
 

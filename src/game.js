@@ -55,6 +55,18 @@ export class GameScene extends window.Phaser.Scene {
     this.minimapa = true;
   }
 
+  create() {
+    // existing create code...
+
+    // Emit custom event on start
+    this.events.emit('game-scene-start');
+
+    // Listen for shutdown event and emit custom event
+    this.events.once('shutdown', () => {
+      this.events.emit('game-scene-shutdown');
+    });
+  }
+
   isMobile() {
     return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(navigator.userAgent);
   }
@@ -142,39 +154,11 @@ export class GameScene extends window.Phaser.Scene {
     skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
 
     if (this.isMobile()) {
-      const btnRadius = 60;
-      const margin = 30;
-      const y = this.sys.game.config.height - btnRadius - margin - 40;
-
-      this.gasBtn = this.add.circle(btnRadius + margin, y, btnRadius, 0x00cc00)
-        .setAlpha(0.3)
-        .setScrollFactor(0)
-        .setDepth(100)
-        .setStrokeStyle(3, 0xffffff)
-        .setInteractive();
-      this.add.text(btnRadius + margin, y, '↑', { font: '48px Arial', color: '#fff' })
-        .setOrigin(0.5)
-        .setScrollFactor(0)
-        .setDepth(101);
-
-      const w = this.sys.game.config.width;
-      this.brakeBtn = this.add.circle(w - btnRadius - margin, y, btnRadius, 0xcc0000)
-        .setAlpha(0.3)
-        .setScrollFactor(0)
-        .setDepth(100)
-        .setStrokeStyle(3, 0xffffff)
-        .setInteractive();
-      this.add.text(w - btnRadius - margin, y, '↓', { font: '48px Arial', color: '#fff' })
-        .setOrigin(0.5)
-        .setScrollFactor(0)
-        .setDepth(101);
-
-      this.gasBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.up = true; });
-      this.gasBtn.on('pointerup', () => { this.control.up = false; });
-      this.gasBtn.on('pointerout', () => { this.control.up = false; });
-      this.brakeBtn.on('pointerdown', () => { this.control = this.control || {}; this.control.down = true; });
-      this.brakeBtn.on('pointerup', () => { this.control.down = false; });
-      this.brakeBtn.on('pointerout', () => { this.control.down = false; });
+      // Usuwamy tworzenie przycisków z tej sceny, teraz są w HudScene
+      this.control = {};
+      this.game.events.on('hud-control', (control) => {
+        this.control = control;
+      });
     }
   }
 
@@ -225,6 +209,19 @@ export class GameScene extends window.Phaser.Scene {
 
     if (this.cameraManager) {
       this.cameraManager.update(dt);
+    }
+
+    if (this.hudCamera) {
+      this.hudCamera.setRotation(0);
+    }
+    if (this.hudContainer) {
+      this.hudContainer.rotation = 0;
+    }
+    if (this.gasBtn) {
+      this.gasBtn.rotation = 0;
+    }
+    if (this.brakeBtn) {
+      this.brakeBtn.rotation = 0;
     }
   }
 

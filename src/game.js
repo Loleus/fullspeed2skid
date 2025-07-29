@@ -1,57 +1,15 @@
-import { CameraManager } from './cameras.js';
-import { Car } from './car.js';
-import { World } from './world.js';
-import { tileSize } from './main.js';
-import { SkidMarks } from './skidMarks.js';
+import { CameraManager } from "./cameras.js";
+import { Car } from "./car.js";
+import { World } from "./world.js";
+import { tileSize } from "./main.js";
+import { SkidMarks } from "./skidMarks.js";
 
 let skidMarks = null;
 let skidMarksEnabled = true;
 
-class HudMobileControls {
-  constructor(scene) {
-    this.scene = scene;
-  }
-
-  createButton(x, y, label, callback) {
-    const marginX = 50;
-    const marginY = 50;
-    const diameter = 80;
-  
-    const centerX = x + marginX;
-    const centerY = y + marginY;
-  
-    const circle = this.scene.add.circle(centerX, centerY, diameter / 2, 0x1f1f1f)
-      .setAlpha(0.3)
-      .setStrokeStyle(3, 0xffffff)
-      .setInteractive()
-      .setScrollFactor(0)
-      .setDepth(100);
-  
-    const text = this.scene.add.text(centerX, centerY, label, {
-      fontFamily: 'Stormfaze',
-      fontSize: '40px',
-      color: '#ffffff'
-    }).setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(101);
-  
-    circle.on('pointerdown', callback);
-  }
-  
-  createAll() {
-    const spacing = 100;
-    const margin = 30;
-    const y = 30;
-
-    this.createButton(margin + 0 * spacing, y, 'V', () => this.scene.cameraManager.toggle());
-    this.createButton(margin + 1 * spacing, y, 'R', () => this.scene.resetGame());
-    this.createButton(margin + 2 * spacing, y, 'X', () => this.scene.exitToMenu());
-  }
-}
-
 export class GameScene extends window.Phaser.Scene {
   constructor() {
-    super({ key: 'GameScene' });
+    super({ key: "GameScene" });
     this.minimapa = true;
   }
 
@@ -59,16 +17,18 @@ export class GameScene extends window.Phaser.Scene {
     // existing create code...
 
     // Emit custom event on start
-    this.events.emit('game-scene-start');
+    this.events.emit("game-scene-start");
 
     // Listen for shutdown event and emit custom event
-    this.events.once('shutdown', () => {
-      this.events.emit('game-scene-shutdown');
+    this.events.once("shutdown", () => {
+      this.events.emit("game-scene-shutdown");
     });
   }
 
   isMobile() {
-    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(navigator.userAgent);
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(
+      navigator.userAgent
+    );
   }
 
   init(data) {
@@ -84,14 +44,26 @@ export class GameScene extends window.Phaser.Scene {
         }
       }
       for (const tile of window._worldData.tiles) {
-        const cropped = document.createElement('canvas');
+        const cropped = document.createElement("canvas");
         cropped.width = tileSize;
         cropped.height = tileSize;
-        cropped.getContext('2d').drawImage(tile.canvas, 0, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
+        cropped
+          .getContext("2d")
+          .drawImage(
+            tile.canvas,
+            0,
+            0,
+            tileSize,
+            tileSize,
+            0,
+            0,
+            tileSize,
+            tileSize
+          );
         this.textures.addCanvas(tile.id, cropped);
       }
     }
-    this.load.image('car', 'assets/images/car.png');
+    this.load.image("car", "assets/images/car.png");
   }
 
   async create() {
@@ -99,35 +71,40 @@ export class GameScene extends window.Phaser.Scene {
     const viewW = this.sys.game.config.width;
     const viewH = this.sys.game.config.height;
     const start = worldData.startPos;
-    const startYOffset = viewH * 3/10;
+    const startYOffset = (viewH * 3) / 10;
 
-    this.car = this.physics.add.sprite(start.x, start.y + startYOffset, 'car');
+    this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car");
     this.car.setOrigin(0.5).setDepth(2);
     this.car.body.allowRotation = false;
     this.carController = new Car(this, this.car, worldData);
     this.carController.resetState(start.x, start.y + startYOffset);
 
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.vKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.V);
+    this.vKey = this.input.keyboard.addKey(
+      window.Phaser.Input.Keyboard.KeyCodes.V
+    );
     this.wasdKeys = this.input.keyboard.addKeys({
       up: window.Phaser.Input.Keyboard.KeyCodes.W,
       down: window.Phaser.Input.Keyboard.KeyCodes.S,
       left: window.Phaser.Input.Keyboard.KeyCodes.A,
-      right: window.Phaser.Input.Keyboard.KeyCodes.D
+      right: window.Phaser.Input.Keyboard.KeyCodes.D,
     });
 
     this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
 
     if (this.isMobile()) {
-      this.hudInfoText = '';
+      this.hudInfoText = "";
     } else {
-      this.hudInfoText = this.add.text(10, 10, 'V - zmiana kamery\nR - reset\nX - exit', {
-        fontFamily: 'Stormfaze',
-        font: '20px Stormfaze',
-        fill: '#fff',
-        backgroundColor: 'rgb(31, 31, 31)',
-        padding: { left: 8, right: 8, top: 4, bottom: 4 },
-      }).setScrollFactor(0).setDepth(100);
+      this.hudInfoText = this.add
+        .text(10, 10, "V - zmiana kamery\nR - reset\nX - exit", {
+          fontFamily: "Stormfaze",
+          font: "20px Stormfaze",
+          fill: "#fff",
+          backgroundColor: "rgb(31, 31, 31)",
+          padding: { left: 8, right: 8, top: 4, bottom: 4 },
+        })
+        .setScrollFactor(0)
+        .setDepth(100);
     }
 
     this.world = new World(this, worldData, tileSize, viewW, viewH);
@@ -140,24 +117,38 @@ export class GameScene extends window.Phaser.Scene {
       await this.world.initMinimap(worldData.svgPath, this.hudInfoText);
     } else {
       const hudObjects = [this.hudInfoText];
-      this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+      this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, "hud");
       this.cameras.main.ignore(hudObjects);
-      this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
+      this.hudCamera.ignore(
+        this.children.list.filter((obj) => !hudObjects.includes(obj))
+      );
       this.hudCamera.setScroll(0, 0);
       this.hudCamera.setRotation(0);
     }
 
-    this.rKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.R);
-    this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
+    this.rKey = this.input.keyboard.addKey(
+      window.Phaser.Input.Keyboard.KeyCodes.R
+    );
+    this.xKey = this.input.keyboard.addKey(
+      window.Phaser.Input.Keyboard.KeyCodes.X
+    );
 
-    window.dispatchEvent(new Event('game-ready'));
+    window.dispatchEvent(new Event("game-ready"));
     skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
 
     if (this.isMobile()) {
-      // Usuwamy tworzenie przycisków z tej sceny, teraz są w HudScene
       this.control = {};
-      this.game.events.on('hud-control', (control) => {
+      this.game.events.on("hud-control", (control) => {
         this.control = control;
+        if (control.v) {
+          this.cameraManager.toggle();
+        }
+        if (control.r) {
+          this.resetGame();
+        }
+        if (control.x) {
+          this.exitToMenu();
+        }
       });
     }
   }
@@ -190,13 +181,14 @@ export class GameScene extends window.Phaser.Scene {
         const slip = this.carController.getWheelSlip(i);
         const curr = this.carController.getWheelWorldPosition(i);
         const surfaceType = this.world.getSurfaceTypeAt(curr.x, curr.y);
-        const grip = this.world.worldData.surfaceParams?.[surfaceType]?.grip ?? 1.0;
+        const grip =
+          this.world.worldData.surfaceParams?.[surfaceType]?.grip ?? 1.0;
         const maxSpeed = this.carController.maxSpeed;
-        const wheelDirtyTiles = skidMarks.update(i, curr, slip, steerAngle, this.world.tilePool, tileSize, this.carController.getLocalSpeed(), grip, carMass, throttle, maxSpeed);
-        wheelDirtyTiles && wheelDirtyTiles.forEach(tile => dirtyTiles.add(tile));
+        const wheelDirtyTiles = skidMarks.update( i, curr, slip, steerAngle, this.world.tilePool, tileSize, this.carController.getLocalSpeed(), grip, carMass, throttle, maxSpeed);
+        wheelDirtyTiles && wheelDirtyTiles.forEach((tile) => dirtyTiles.add(tile));
       }
 
-      dirtyTiles.forEach(tile => {
+      dirtyTiles.forEach((tile) => {
         if (tile && tile.texture) {
           tile.texture.refresh();
         }
@@ -226,10 +218,10 @@ export class GameScene extends window.Phaser.Scene {
   }
 
   getControlState() {
-    let upPressed    = (this.cursors.up.isDown    || this.wasdKeys.up.isDown);
-    let downPressed  = (this.cursors.down.isDown  || this.wasdKeys.down.isDown);
-    let leftPressed  = (this.cursors.left.isDown  || this.wasdKeys.left.isDown);
-    let rightPressed = (this.cursors.right.isDown || this.wasdKeys.right.isDown);
+    let upPressed = this.cursors.up.isDown || this.wasdKeys.up.isDown;
+    let downPressed = this.cursors.down.isDown || this.wasdKeys.down.isDown;
+    let leftPressed = this.cursors.left.isDown || this.wasdKeys.left.isDown;
+    let rightPressed = this.cursors.right.isDown || this.wasdKeys.right.isDown;
 
     if (this.isMobile()) {
       upPressed = !!(this.control && this.control.up);
@@ -249,7 +241,7 @@ export class GameScene extends window.Phaser.Scene {
       up: upPressed,
       down: downPressed,
       left: leftPressed,
-      right: rightPressed
+      right: rightPressed,
     };
   }
 
@@ -257,7 +249,7 @@ export class GameScene extends window.Phaser.Scene {
     const worldData = this.worldData || window._worldData;
     const viewH = this.sys.game.config.height;
     const start = worldData.startPos;
-    const startYOffset = viewH * 3/10;
+    const startYOffset = (viewH * 3) / 10;
     this.carController.resetState(start.x, start.y + startYOffset);
 
     if (this.world) {
@@ -277,6 +269,6 @@ export class GameScene extends window.Phaser.Scene {
   }
 
   exitToMenu() {
-    this.scene.start('MenuScene');
+    this.scene.start("MenuScene");
   }
 }

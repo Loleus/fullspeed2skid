@@ -7,6 +7,48 @@ import { SkidMarks } from "./skidMarks.js";
 let skidMarks = null;
 let skidMarksEnabled = true;
 
+class HudMobileControls {
+  constructor(scene) {
+    this.scene = scene;
+  }
+
+  createButton(x, y, label, callback) {
+    const marginX = 50;
+    const marginY = 50;
+    const diameter = 80;
+  
+    const centerX = x + marginX;
+    const centerY = y + marginY;
+  
+    const circle = this.scene.add.circle(centerX, centerY, diameter / 2, 0x1f1f1f)
+      .setAlpha(0.3)
+      .setStrokeStyle(3, 0xffffff)
+      .setInteractive()
+      .setScrollFactor(0)
+      .setDepth(100);
+  
+    const text = this.scene.add.text(centerX, centerY, label, {
+      fontFamily: 'Stormfaze',
+      fontSize: '40px',
+      color: '#ffffff'
+    }).setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(101);
+  
+    circle.on('pointerdown', callback);
+  }
+  
+  createAll() {
+    const spacing = 100;
+    const margin = 30;
+    const y = 30;
+
+    this.createButton(margin + 0 * spacing, y, 'V', () => this.scene.cameraManager.toggle());
+    this.createButton(margin + 1 * spacing, y, 'R', () => this.scene.resetGame());
+    this.createButton(margin + 2 * spacing, y, 'X', () => this.scene.exitToMenu());
+  }
+}
+
 export class GameScene extends window.Phaser.Scene {
   constructor() {
     super({ key: "GameScene" });
@@ -151,6 +193,29 @@ export class GameScene extends window.Phaser.Scene {
         }
       });
     }
+
+    this.world = new World(this, worldData, tileSize, viewW, viewH);
+    if (worldData.worldSize) {
+      this.worldSize = worldData.worldSize;
+    }
+
+    if (this.minimapa) {
+      this.cameras.main.ignore([this.hudInfoText]);
+      await this.world.initMinimap(worldData.svgPath, this.hudInfoText);
+    } else {
+      const hudObjects = [this.hudInfoText];
+      this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, 'hud');
+      this.cameras.main.ignore(hudObjects);
+      this.hudCamera.ignore(this.children.list.filter(obj => !hudObjects.includes(obj)));
+      this.hudCamera.setScroll(0, 0);
+      this.hudCamera.setRotation(0);
+    }
+
+    this.rKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.R);
+    this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
+
+    window.dispatchEvent(new Event('game-ready'));
+    skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
   }
 
   update(time, dt) {
@@ -172,6 +237,11 @@ export class GameScene extends window.Phaser.Scene {
     const carPos = this.carController.getPosition();
     this.world.drawTiles(carPos.x, carPos.y);
 
+  if (this.hudCamera && this.world.tilePool) {
+    for (const tileObj of this.world.tilePool.values()) {
+      this.hudCamera.ignore([tileObj, this.car]);
+    }
+  }
     if (skidMarks && skidMarks.enabled) {
       const steerAngle = this.carController.getSteerAngle();
       const carMass = this.carController.carMass;

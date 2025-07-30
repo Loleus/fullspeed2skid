@@ -92,8 +92,8 @@ export class GameScene extends window.Phaser.Scene {
         if (control.x) {
           this.exitToMenu();
         }
-        this.hudInfoText = this.control;
       });
+      this.hudInfoText = this.control;
     } else {
       this.hudInfoText = this.add
         .text(10, 10, "V - zmiana kamery\nR - reset\nX - exit", {

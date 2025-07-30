@@ -26,9 +26,7 @@ export class GameScene extends window.Phaser.Scene {
   }
 
   isMobile() {
-    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(
-      navigator.userAgent
-    );
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(navigator.userAgent);
   }
 
   init(data) {
@@ -47,19 +45,7 @@ export class GameScene extends window.Phaser.Scene {
         const cropped = document.createElement("canvas");
         cropped.width = tileSize;
         cropped.height = tileSize;
-        cropped
-          .getContext("2d")
-          .drawImage(
-            tile.canvas,
-            0,
-            0,
-            tileSize,
-            tileSize,
-            0,
-            0,
-            tileSize,
-            tileSize
-          );
+        cropped.getContext("2d").drawImage(tile.canvas, 0, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
         this.textures.addCanvas(tile.id, cropped);
       }
     }
@@ -78,11 +64,8 @@ export class GameScene extends window.Phaser.Scene {
     this.car.body.allowRotation = false;
     this.carController = new Car(this, this.car, worldData);
     this.carController.resetState(start.x, start.y + startYOffset);
-
+    
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.vKey = this.input.keyboard.addKey(
-      window.Phaser.Input.Keyboard.KeyCodes.V
-    );
     this.wasdKeys = this.input.keyboard.addKeys({
       up: window.Phaser.Input.Keyboard.KeyCodes.W,
       down: window.Phaser.Input.Keyboard.KeyCodes.S,
@@ -91,6 +74,10 @@ export class GameScene extends window.Phaser.Scene {
     });
 
     this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
+
+    this.vKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.V);
+    this.rKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.R);
+    this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
 
     if (this.isMobile()) {
       this.hudInfoText = "";
@@ -119,19 +106,10 @@ export class GameScene extends window.Phaser.Scene {
       const hudObjects = [this.hudInfoText];
       this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, "hud");
       this.cameras.main.ignore(hudObjects);
-      this.hudCamera.ignore(
-        this.children.list.filter((obj) => !hudObjects.includes(obj))
-      );
+      this.hudCamera.ignore(this.children.list.filter((obj) => !hudObjects.includes(obj)));
       this.hudCamera.setScroll(0, 0);
       this.hudCamera.setRotation(0);
     }
-
-    this.rKey = this.input.keyboard.addKey(
-      window.Phaser.Input.Keyboard.KeyCodes.R
-    );
-    this.xKey = this.input.keyboard.addKey(
-      window.Phaser.Input.Keyboard.KeyCodes.X
-    );
 
     window.dispatchEvent(new Event("game-ready"));
     skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
@@ -181,10 +159,9 @@ export class GameScene extends window.Phaser.Scene {
         const slip = this.carController.getWheelSlip(i);
         const curr = this.carController.getWheelWorldPosition(i);
         const surfaceType = this.world.getSurfaceTypeAt(curr.x, curr.y);
-        const grip =
-          this.world.worldData.surfaceParams?.[surfaceType]?.grip ?? 1.0;
+        const grip = this.world.worldData.surfaceParams?.[surfaceType]?.grip ?? 1.0;
         const maxSpeed = this.carController.maxSpeed;
-        const wheelDirtyTiles = skidMarks.update( i, curr, slip, steerAngle, this.world.tilePool, tileSize, this.carController.getLocalSpeed(), grip, carMass, throttle, maxSpeed);
+        const wheelDirtyTiles = skidMarks.update(i, curr, slip, steerAngle, this.world.tilePool, tileSize, this.carController.getLocalSpeed(), grip, carMass, throttle, maxSpeed);
         wheelDirtyTiles && wheelDirtyTiles.forEach((tile) => dirtyTiles.add(tile));
       }
 

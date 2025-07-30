@@ -64,7 +64,7 @@ export class GameScene extends window.Phaser.Scene {
     this.car.body.allowRotation = false;
     this.carController = new Car(this, this.car, worldData);
     this.carController.resetState(start.x, start.y + startYOffset);
-    
+
     this.cursors = this.input.keyboard.createCursorKeys();
     this.wasdKeys = this.input.keyboard.addKeys({
       up: window.Phaser.Input.Keyboard.KeyCodes.W,
@@ -80,7 +80,20 @@ export class GameScene extends window.Phaser.Scene {
     this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
 
     if (this.isMobile()) {
-      this.hudInfoText = "";
+      this.control = {};
+      this.game.events.on("hud-control", (control) => {
+        this.control = control;
+        if (control.v) {
+          this.cameraManager.toggle();
+        }
+        if (control.r) {
+          this.resetGame();
+        }
+        if (control.x) {
+          this.exitToMenu();
+        }
+        this.hudInfoText = this.control;
+      });
     } else {
       this.hudInfoText = this.add
         .text(10, 10, "V - zmiana kamery\nR - reset\nX - exit", {
@@ -113,22 +126,6 @@ export class GameScene extends window.Phaser.Scene {
 
     window.dispatchEvent(new Event("game-ready"));
     skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-
-    if (this.isMobile()) {
-      this.control = {};
-      this.game.events.on("hud-control", (control) => {
-        this.control = control;
-        if (control.v) {
-          this.cameraManager.toggle();
-        }
-        if (control.r) {
-          this.resetGame();
-        }
-        if (control.x) {
-          this.exitToMenu();
-        }
-      });
-    }
   }
 
   update(time, dt) {

@@ -18,6 +18,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   const roadGroup = svgElem.querySelector('#ROAD');
   const obstaclesGroup = svgElem.querySelector('#OBSTACLES');
   const startElem = svgElem.querySelector('#START');
+  const layoutGroup = svgElem.querySelector('#layout');
 
   // 2a. Pobierz domyślną nawierzchnię z BACKGROUND_*
   let bgTexture = 'grass';
@@ -227,6 +228,19 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   for (const [type, rgb] of Object.entries(surfaceTypeColors)) {
     colorToSurfaceType[rgb.join(',')] = type;
   }
+
+  if (layoutGroup) {
+  const layoutElements = Array.from(layoutGroup.children);
+  layoutElements.forEach((element) => {
+    const path2d = svgElementToPath2D(element, scale);
+    if (path2d) {
+      worldCtx.fillStyle = element.getAttribute('fill') || '#ffffffb0';
+      worldCtx.fill(path2d);
+    }
+  });
+}
+
+
   // Przygotuj canvas do rasteryzacji
   const surfCanvas = document.createElement('canvas');
   surfCanvas.width = collisionMapSize;

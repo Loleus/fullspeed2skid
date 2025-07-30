@@ -228,17 +228,39 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   for (const [type, rgb] of Object.entries(surfaceTypeColors)) {
     colorToSurfaceType[rgb.join(',')] = type;
   }
+// ...
 
-  if (layoutGroup) {
-  const layoutElements = Array.from(layoutGroup.children);
-  layoutElements.forEach((element) => {
-    const path2d = svgElementToPath2D(element, scale);
-    if (path2d) {
-      worldCtx.fillStyle = element.getAttribute('fill') || '#ffffffb0';
-      worldCtx.fill(path2d);
-    }
-  });
-}
+// Rasteryzacja warstwy "layout"
+
+if (layoutGroup) {
+    const layoutElements = Array.from(layoutGroup.children);
+    layoutElements.forEach((element) => {
+      const path2d = svgElementToPath2D(element, scale);
+      if (path2d) {
+        const className = element.getAttribute('class');
+        if (className) {
+          const styleSheet = doc.querySelector('style');
+          const rules = styleSheet.innerHTML.split('}');
+          const rule = rules.find(rule => rule.includes(`.${className}`));
+          if (rule) {
+            const fillValue = rule.match(/fill:\s*([^;]+)/);
+            if (fillValue) {
+              worldCtx.fillStyle = fillValue[1];
+            } else {
+              worldCtx.fillStyle = 'black';
+            }
+          } else {
+            worldCtx.fillStyle = 'black';
+          }
+        } else {
+          worldCtx.fillStyle = 'black';
+        }
+        worldCtx.fill(path2d);
+      }
+    });
+  }
+
+// ...
 
 
   // Przygotuj canvas do rasteryzacji

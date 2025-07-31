@@ -5,6 +5,7 @@ import { tileSize } from "./main.js";
 import { SkidMarks } from "./skidMarks.js";
 import { preloadWorldTextures } from "./textureManager.js";
 import { getControlState } from "./controlsManager.js";
+import { updateSkidMarks } from "./skidMarksManager.js";
 
 let skidMarks = null;
 let skidMarksEnabled = true;
@@ -97,7 +98,7 @@ export class GameScene extends window.Phaser.Scene {
       const hudObjects = [this.hudInfoText];
       this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, "hud");
       this.cameras.main.ignore(hudObjects);
-      this.hudCamera.ignore(this.children.list.filter(function(obj) {
+      this.hudCamera.ignore(this.children.list.filter(function (obj) {
         return hudObjects.indexOf(obj) === -1;
       }));
       this.hudCamera.setScroll(0, 0);
@@ -122,38 +123,7 @@ export class GameScene extends window.Phaser.Scene {
     this.world.drawTiles(carPos.x, carPos.y);
 
     if (skidMarks && skidMarks.enabled) {
-      const steerAngle = this.carController.getSteerAngle();
-      const carMass = this.carController.carMass;
-      const dirtyTiles = new Set();
-
-      for (let i = 0; i < 4; i++) {
-        const slip = this.carController.getWheelSlip(i);
-        const curr = this.carController.getWheelWorldPosition(i);
-        const surfaceType = this.world.getSurfaceTypeAt(curr.x, curr.y);
-        let grip = 1.0;
-        if (this.world.worldData.surfaceParams &&
-            this.world.worldData.surfaceParams[surfaceType] &&
-            typeof this.world.worldData.surfaceParams[surfaceType].grip === 'number') {
-          grip = this.world.worldData.surfaceParams[surfaceType].grip;
-        }
-
-        const maxSpeed = this.carController.maxSpeed;
-        const wheelDirtyTiles = skidMarks.update(
-          i, curr, slip, steerAngle,
-          this.world.tilePool, tileSize,
-          this.carController.getLocalSpeed(), grip,
-          carMass, throttle, maxSpeed
-        );
-        if (wheelDirtyTiles && wheelDirtyTiles.forEach) {
-          wheelDirtyTiles.forEach(function(tile) {
-            dirtyTiles.add(tile);
-          });
-        }
-      }
-
-      dirtyTiles.forEach(function(tile) {
-        if (tile && tile.texture) tile.texture.refresh();
-      });
+      updateSkidMarks(this, tileSize, skidMarks, throttle);
     }
 
     if (this.minimapa && this.world) {

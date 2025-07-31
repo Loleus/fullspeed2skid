@@ -3,6 +3,8 @@ import { Car } from "./car.js";
 import { World } from "./world.js";
 import { tileSize } from "./main.js";
 import { SkidMarks } from "./skidMarks.js";
+import { preloadWorldTextures } from "./textureManager.js";
+import { getControlState } from "./controlsManager.js";
 
 let skidMarks = null;
 let skidMarksEnabled = true;
@@ -14,12 +16,7 @@ export class GameScene extends window.Phaser.Scene {
   }
 
   create() {
-    // existing create code...
-
-    // Emit custom event on start
     this.events.emit("game-scene-start");
-
-    // Listen for shutdown event and emit custom event
     this.events.once("shutdown", () => {
       this.events.emit("game-scene-shutdown");
     });
@@ -36,18 +33,7 @@ export class GameScene extends window.Phaser.Scene {
 
   preload() {
     if (window._worldData && window._worldData.tiles) {
-      for (const tile of window._worldData.tiles) {
-        if (this.textures.exists(tile.id)) {
-          this.textures.remove(tile.id);
-        }
-      }
-      for (const tile of window._worldData.tiles) {
-        const cropped = document.createElement("canvas");
-        cropped.width = tileSize;
-        cropped.height = tileSize;
-        cropped.getContext("2d").drawImage(tile.canvas, 0, 0, tileSize, tileSize, 0, 0, tileSize, tileSize);
-        this.textures.addCanvas(tile.id, cropped);
-      }
+      preloadWorldTextures(this, window._worldData.tiles, tileSize);
     }
     this.load.image("car", "assets/images/car.png");
   }
@@ -83,15 +69,9 @@ export class GameScene extends window.Phaser.Scene {
       this.control = {};
       this.game.events.on("hud-control", (control) => {
         this.control = control;
-        if (control.v) {
-          this.cameraManager.toggle();
-        }
-        if (control.r) {
-          this.resetGame();
-        }
-        if (control.x) {
-          this.exitToMenu();
-        }
+        if (control.v) this.cameraManager.toggle();
+        if (control.r) this.resetGame();
+        if (control.x) this.exitToMenu();
       });
       this.hudInfoText = this.control;
     } else {
@@ -108,9 +88,7 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     this.world = new World(this, worldData, tileSize, viewW, viewH);
-    if (worldData.worldSize) {
-      this.worldSize = worldData.worldSize;
-    }
+    if (worldData.worldSize) this.worldSize = worldData.worldSize;
 
     if (this.minimapa) {
       this.cameras.main.ignore([this.hudInfoText]);
@@ -119,7 +97,9 @@ export class GameScene extends window.Phaser.Scene {
       const hudObjects = [this.hudInfoText];
       this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, "hud");
       this.cameras.main.ignore(hudObjects);
-      this.hudCamera.ignore(this.children.list.filter((obj) => !hudObjects.includes(obj)));
+      this.hudCamera.ignore(this.children.list.filter(function(obj) {
+        return hudObjects.indexOf(obj) === -1;
+      }));
       this.hudCamera.setScroll(0, 0);
       this.hudCamera.setRotation(0);
     }
@@ -131,18 +111,12 @@ export class GameScene extends window.Phaser.Scene {
   update(time, dt) {
     dt = dt / 1000;
 
-    if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) {
-      this.cameraManager.toggle();
-    }
-    if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) {
-      this.resetGame();
-    }
-    if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) {
-      this.exitToMenu();
-    }
+    if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
+    if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
+    if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
 
-    const control = this.getControlState();
-    const { throttle } = this.carController.updateInput(control);
+    const control = getControlState(this);
+    const throttle = this.carController.updateInput(control).throttle;
     this.carController.update(dt, control, this.worldSize, this.worldSize);
     const carPos = this.carController.getPosition();
     this.world.drawTiles(carPos.x, carPos.y);
@@ -156,16 +130,29 @@ export class GameScene extends window.Phaser.Scene {
         const slip = this.carController.getWheelSlip(i);
         const curr = this.carController.getWheelWorldPosition(i);
         const surfaceType = this.world.getSurfaceTypeAt(curr.x, curr.y);
-        const grip = this.world.worldData.surfaceParams?.[surfaceType]?.grip ?? 1.0;
+        let grip = 1.0;
+        if (this.world.worldData.surfaceParams &&
+            this.world.worldData.surfaceParams[surfaceType] &&
+            typeof this.world.worldData.surfaceParams[surfaceType].grip === 'number') {
+          grip = this.world.worldData.surfaceParams[surfaceType].grip;
+        }
+
         const maxSpeed = this.carController.maxSpeed;
-        const wheelDirtyTiles = skidMarks.update(i, curr, slip, steerAngle, this.world.tilePool, tileSize, this.carController.getLocalSpeed(), grip, carMass, throttle, maxSpeed);
-        wheelDirtyTiles && wheelDirtyTiles.forEach((tile) => dirtyTiles.add(tile));
+        const wheelDirtyTiles = skidMarks.update(
+          i, curr, slip, steerAngle,
+          this.world.tilePool, tileSize,
+          this.carController.getLocalSpeed(), grip,
+          carMass, throttle, maxSpeed
+        );
+        if (wheelDirtyTiles && wheelDirtyTiles.forEach) {
+          wheelDirtyTiles.forEach(function(tile) {
+            dirtyTiles.add(tile);
+          });
+        }
       }
 
-      dirtyTiles.forEach((tile) => {
-        if (tile && tile.texture) {
-          tile.texture.refresh();
-        }
+      dirtyTiles.forEach(function(tile) {
+        if (tile && tile.texture) tile.texture.refresh();
       });
     }
 
@@ -173,50 +160,11 @@ export class GameScene extends window.Phaser.Scene {
       this.world.drawMinimap(carPos, this.worldSize, this.worldSize);
     }
 
-    if (this.cameraManager) {
-      this.cameraManager.update(dt);
-    }
-
-    if (this.hudCamera) {
-      this.hudCamera.setRotation(0);
-    }
-    if (this.hudContainer) {
-      this.hudContainer.rotation = 0;
-    }
-    if (this.gasBtn) {
-      this.gasBtn.rotation = 0;
-    }
-    if (this.brakeBtn) {
-      this.brakeBtn.rotation = 0;
-    }
-  }
-
-  getControlState() {
-    let upPressed = this.cursors.up.isDown || this.wasdKeys.up.isDown;
-    let downPressed = this.cursors.down.isDown || this.wasdKeys.down.isDown;
-    let leftPressed = this.cursors.left.isDown || this.wasdKeys.left.isDown;
-    let rightPressed = this.cursors.right.isDown || this.wasdKeys.right.isDown;
-
-    if (this.isMobile()) {
-      upPressed = !!(this.control && this.control.up);
-      downPressed = !!(this.control && this.control.down);
-
-      if (window._gyroControl) {
-        leftPressed = leftPressed || window._gyroControl.left;
-        rightPressed = rightPressed || window._gyroControl.right;
-      }
-      if (this.control) {
-        leftPressed = leftPressed || !!this.control.left;
-        rightPressed = rightPressed || !!this.control.right;
-      }
-    }
-
-    return {
-      up: upPressed,
-      down: downPressed,
-      left: leftPressed,
-      right: rightPressed,
-    };
+    if (this.cameraManager) this.cameraManager.update(dt);
+    if (this.hudCamera) this.hudCamera.setRotation(0);
+    if (this.hudContainer) this.hudContainer.rotation = 0;
+    if (this.gasBtn) this.gasBtn.rotation = 0;
+    if (this.brakeBtn) this.brakeBtn.rotation = 0;
   }
 
   resetGame() {
@@ -228,18 +176,14 @@ export class GameScene extends window.Phaser.Scene {
 
     if (this.world) {
       this.world.trackTiles = [];
-      for (const [tileId, tileObj] of this.world.tilePool.entries()) {
+      for (const pair of this.world.tilePool.entries()) {
+        const tileObj = pair[1];
         tileObj.setVisible(false);
       }
     }
 
-    if (this.cameraManager) {
-      this.cameraManager.reset();
-    }
-
-    if (skidMarks) {
-      skidMarks.clear();
-    }
+    if (this.cameraManager) this.cameraManager.reset();
+    if (skidMarks) skidMarks.clear();
   }
 
   exitToMenu() {

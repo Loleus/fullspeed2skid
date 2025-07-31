@@ -6,6 +6,7 @@ import { SkidMarks } from "./skidMarks.js";
 import { preloadWorldTextures } from "./textureManager.js";
 import { getControlState } from "./controlsManager.js";
 import { updateSkidMarks } from "./skidMarksManager.js";
+import { createKeyboardBindings } from "./keyboardManager.js";
 
 let skidMarks = null;
 let skidMarksEnabled = true;
@@ -52,19 +53,14 @@ export class GameScene extends window.Phaser.Scene {
     this.carController = new Car(this, this.car, worldData);
     this.carController.resetState(start.x, start.y + startYOffset);
 
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.wasdKeys = this.input.keyboard.addKeys({
-      up: window.Phaser.Input.Keyboard.KeyCodes.W,
-      down: window.Phaser.Input.Keyboard.KeyCodes.S,
-      left: window.Phaser.Input.Keyboard.KeyCodes.A,
-      right: window.Phaser.Input.Keyboard.KeyCodes.D,
-    });
+    const keys = createKeyboardBindings(this);
+    this.cursors = keys.cursors;
+    this.wasdKeys = keys.wasdKeys;
+    this.vKey = keys.vKey;
+    this.rKey = keys.rKey;
+    this.xKey = keys.xKey;
 
     this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
-
-    this.vKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.V);
-    this.rKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.R);
-    this.xKey = this.input.keyboard.addKey(window.Phaser.Input.Keyboard.KeyCodes.X);
 
     if (this.isMobile()) {
       this.control = {};

@@ -46,8 +46,6 @@ export class Car {
       return { cos: Math.cos(angle), sin: Math.sin(angle) };
     });
   }
-
-  
   // Resetuj stan auta
   resetState(startX, startY, startAngle = -Math.PI / 2) {
     this.carX = startX;
@@ -64,7 +62,6 @@ export class Car {
     this.carSprite.y = this.carY;
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
   }
-  
   // Pobierz rogi auta dla kolizji
   getCarCorners(x, y, rot, width, height) {
     const hw = width / 2, hh = height / 2;
@@ -79,7 +76,6 @@ export class Car {
       y: y + c.x * Math.sin(rot) + c.y * Math.cos(rot)
     }));
   }
-  
   // Aktualizuj fizykę auta
   updatePhysics(dt, steerInput, throttle, surface) {
     // Pobierz parametry nawierzchni
@@ -167,7 +163,6 @@ export class Car {
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
     this.carSprite.steerAngle = this.steerAngle;
   }
-  
   // Sprawdź kolizje z przeszkodami (elipsa)
   checkEllipseCollision() {
     const speedMagnitude = Math.sqrt(this.v_x * this.v_x + this.v_y * this.v_y);
@@ -206,7 +201,6 @@ export class Car {
     
     return false;
   }
-  
   // Sprawdź kolizje z krawędziami świata
   checkWorldEdgeCollision(worldW, worldH) {
     const carCorners = this.getCarCorners(this.carX, this.carY, this.carAngle, this.CAR_HEIGHT, this.CAR_WIDTH);
@@ -217,7 +211,6 @@ export class Car {
     }
     return false;
   }
-  
   // Obsłuż kolizję
   handleCollision(prevX, prevY, worldW, worldH) {
     if (this.collisionCount >= this.MAX_COLLISIONS_PER_FRAME) {
@@ -269,7 +262,6 @@ export class Car {
     this.throttleLock = true;
     this.collisionImmunity = 0.2; // sekundy
   }
-  
   // Aktualizuj sterowanie
   updateInput(control) {
     // Reset licznika kolizji
@@ -288,7 +280,6 @@ export class Car {
     this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
     return { throttle, steerInput: this.steerInput };
   }
-  
   // Główna aktualizacja
   update(dt, control, worldW, worldH) {
     // Pobierz sterowanie
@@ -321,28 +312,22 @@ export class Car {
       }
     }
   }
-  
   // Gettery dla pozycji i stanu
   getPosition() {
     return { x: this.carX, y: this.carY };
   }
-  
   getVelocity() {
     return { v_x: this.v_x, v_y: this.v_y };
   }
-  
   getAngle() {
     return this.carAngle;
   }
-  
   getSteerAngle() {
     return this.steerAngle;
   }
-  
   getSprite() {
     return this.carSprite;
   }
-
   // Zwraca pozycję środka koła (0: FL, 1: FR, 2: RL, 3: RR)
   getWheelWorldPosition(i) {
     // Szerokość auta to oś Y (przód-tył), długość auta to oś X (lewo-prawo)
@@ -366,13 +351,11 @@ export class Car {
       y: this.carY + off.x * sinA + off.y * cosA
     };
   }
-
   // Zwraca siłę poślizgu dla koła (na razie uproszczona: v_y dla wszystkich)
   getWheelSlip(i) {
     // Można rozbudować o indywidualne koła, na razie v_y jako proxy poślizgu
     return Math.min(1, Math.abs(this.v_y) / 200); // normalizacja do 0-1
   }
-
   getLocalSpeed() {
     // Zwraca prędkość wzdłużną auta względem osi przód-tył (v_x)
     return this.v_x;

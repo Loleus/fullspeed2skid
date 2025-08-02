@@ -23,6 +23,7 @@ const ASSETS = [
   '/fullspeed2skid/src/skidMarksManager.js',
   '/fullspeed2skid/src/keyboardManager.js',
   '/fullspeed2skid/src/hudManager.js',
+  '/fullspeed2skid/src/carConfig.js',
   '/fullspeed2skid/assets/style/style.css',
   '/fullspeed2skid/assets/fonts/Stormfaze.otf',
   '/fullspeed2skid/assets/fonts/skid.ttf',

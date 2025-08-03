@@ -1,5 +1,5 @@
 export class SkidMarks {
-  constructor({ enabled = true, wheelWidth = 12 } = {}) {
+  constructor({ enabled = true, wheelWidth = 6 } = {}) {
     this.enabled = enabled;
     this.wheelWidth = wheelWidth;
     this.lastWheelPos = [null, null, null, null];
@@ -31,10 +31,10 @@ export class SkidMarks {
               const ctx = tileObj.texture.getSourceImage().getContext('2d');
 
               // Dynamiczna alfa bazująca na sile poślizgu
-              const minSlip = 0.3;    // Próg, od którego zaczyna się rysowanie
+              const minSlip = 0.4;    // Próg, od którego zaczyna się rysowanie
               const maxSlip = 1.0;    // Maksymalna normalizowana wartość poślizgu
               const minAlpha = 0.05;  // Minimalna widoczność śladu
-              const maxAlpha = 0.22;  // Maksymalna widoczność śladu
+              const maxAlpha = 0.20;  // Maksymalna widoczność śladu
 
               const slipRatio = (slip - minSlip) / (maxSlip - minSlip);
               const finalAlpha = minAlpha + slipRatio * (maxAlpha - minAlpha);
@@ -42,7 +42,7 @@ export class SkidMarks {
               ctx.save();
               ctx.strokeStyle = 'black';
               ctx.globalAlpha = Phaser.Math.Clamp(finalAlpha, minAlpha, maxAlpha);
-              ctx.lineWidth = Math.max(1, this.wheelWidth - 5);
+              ctx.lineWidth = Math.max(1, this.wheelWidth - 6);
               ctx.lineCap = 'round';
               ctx.beginPath();
               ctx.moveTo(p1.x - tileX * tileSize, p1.y - tileY * tileSize);
@@ -132,7 +132,7 @@ export class SkidMarks {
                 ctx.save();
                 // Kolor jak w bocznych śladach:
                 ctx.strokeStyle = '#222';
-                const minAlpha = 0.08, maxAlpha = 0.22;
+                const minAlpha = 0.04, maxAlpha = 0.5;
                 const alpha = maxAlpha - (localSpeed / (0.5 * maxSpeed)) * (maxAlpha - minAlpha);
                 ctx.globalAlpha = alpha;
                 ctx.lineWidth = Math.max(1, this.wheelWidth - 6);

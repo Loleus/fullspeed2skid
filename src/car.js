@@ -86,10 +86,10 @@ export class Car {
     let localSlipBase = this.slipBase; // Siła poślizgu NIE zależy od gripu
     // Dynamiczne tłumienie boczne: na bardzo śliskich nawierzchniach (grip < 0.5) auto praktycznie nie trzyma się drogi
     this.sideFrictionMultiplier = grip < 0.5 ? 0.2 : 3;
-    
+
     // Sterowanie skrętem
     if (Math.abs(steerInput) > this.steerInputThreshold) {
-      this.steerAngle += steerInput * this.steerSpeed * dt;
+      window._gyroTil ? this.steerAngle += steerInput * Math.abs(window._gyroTil.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
       this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);

@@ -7,7 +7,7 @@ import { HudScene } from './HudScene.js';
 // Rozmiar pojedynczego kafelka (używany np. w mapach)
 const tileSize  = 256;
 // Wysokość świata gry (możliwe do przewijania poziomy itp.)
-const worldH    = 4096;
+const worldH    = 2048;
 
 // Konfiguracja silnika Phaser
 const config = {

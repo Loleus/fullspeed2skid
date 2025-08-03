@@ -1,4 +1,5 @@
 // Sprawdzenie czy użytkownik korzysta z urządzenia mobilnego, na którym możliwe jest wykorzystanie żyroskopu
+window._gyroTilt = 0;
 export function isMobileGyro() {
   return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(navigator.userAgent);
 }
@@ -72,16 +73,19 @@ export async function handleGyroPermission(startGameCallback) {
 
 // Funkcja podłączająca zdarzenie orientacji urządzenia — odczyt danych żyroskopu
 function setupGyroEvents() {
-  window._gyroControl = { left: false, right: false }; // stany sterowania: czy skręcamy w lewo lub prawo
-  window._gyroCalib = null; // punkt odniesienia do kalibracji beta (pochylenie w osi X)
+  window._gyroControl = { left: false, right: false };
+  window._gyroCalib = null;
+  window._gyroTilt = 0; // ✅ dodane
 
-  // Nasłuchuj zmiany orientacji urządzenia
   window.addEventListener("deviceorientation", function (event) {
     if (window._gyroCalib === null) {
-      window._gyroCalib = event.beta; // pierwszy odczyt traktujemy jako punkt odniesienia
+      window._gyroCalib = event.beta;
     }
-    const tilt = event.beta - window._gyroCalib; // oblicz aktualne odchylenie od punktu kalibracji
-    window._gyroControl.left = tilt > 10;  // jeśli odchylenie w prawo — skręć w lewo
-    window._gyroControl.right = tilt < -10; // jeśli odchylenie w lewo — skręć w prawo
+    const tilt = event.beta - window._gyroCalib;
+    window._gyroTilt = tilt; // ✅ dodane
+
+    window._gyroControl.left = tilt > 1;
+    window._gyroControl.right = tilt < -1;
   });
 }
+

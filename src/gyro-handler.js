@@ -77,7 +77,7 @@ function setupGyroEvents() {
   window._gyroCalib = null;
   window._gyroTilt = 0;
   let _lastGyroSample = 0;
-  const _minGyroInterval = 1000 / 50; // 50 Hz
+  const _minGyroInterval = 1000 / 30; // 50 Hz
   window.addEventListener("deviceorientation", function (event) {
     const now = performance.now();
     if (now - _lastGyroSample < _minGyroInterval) return;

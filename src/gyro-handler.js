@@ -75,17 +75,20 @@ export async function handleGyroPermission(startGameCallback) {
 function setupGyroEvents() {
   window._gyroControl = { left: false, right: false };
   window._gyroCalib = null;
-  window._gyroTilt = 0; // ✅ dodane
-
+  window._gyroTilt = 0;
+  let _lastGyroSample = 0;
+  const _minGyroInterval = 1000 / 50; // 50 Hz
   window.addEventListener("deviceorientation", function (event) {
+    const now = performance.now();
+    if (now - _lastGyroSample < _minGyroInterval) return;
+    _lastGyroSample = now;
     if (window._gyroCalib === null) {
       window._gyroCalib = event.beta;
     }
     const tilt = event.beta - window._gyroCalib;
-    window._gyroTilt = tilt; // ✅ dodane
-
-    window._gyroControl.left = tilt > 1;
-    window._gyroControl.right = tilt < -1;
+    window._gyroTilt = tilt;
+    const _gyroDeadzone = 0.5;
+    window._gyroControl.left = tilt > _gyroDeadzone;
+    window._gyroControl.right = tilt < -_gyroDeadzone;
   });
 }
-

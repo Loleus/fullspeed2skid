@@ -89,7 +89,7 @@ export class Car {
 
     // Sterowanie skrętem
     if (Math.abs(steerInput) > this.steerInputThreshold) {
-      window._gyroTil ? this.steerAngle += steerInput * Math.abs(window._gyroTil.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
+      window._gyroTilt ? this.steerAngle = steerInput * Math.abs(window._gyroTilt.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
       this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);

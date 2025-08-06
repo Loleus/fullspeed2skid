@@ -39,7 +39,7 @@ export class GameScene extends window.Phaser.Scene {
     const viewW = this.sys.game.config.width;
     const viewH = this.sys.game.config.height;
     const start = worldData.startPos;
-    const startYOffset = (viewH * 3) / 10;
+    const startYOffset = 0;
 
     this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car");
     this.car.setOrigin(0.5).setDepth(2);

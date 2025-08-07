@@ -5,7 +5,7 @@ export class Car {
     this.scene = scene;
     this.carSprite = carSprite;
     this.worldData = worldData;
-
+    this.body = carSprite.body;
     // Importuj parametry z configa
     Object.assign(this, carConfig);
 

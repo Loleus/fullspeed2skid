@@ -392,7 +392,177 @@ if (layoutGroup) {
     return surfaceAreaMap[ix + iy * collisionMapSize];
   }
 
-  return { tiles, getSurfaceTypeAt, obstaclePolys, startPos, surfaceParams, worldSize };
+  const drivePathElem = svgElem.querySelector('#drive');
+  const waypoints = [];
+
+  if (drivePathElem) {
+    const d = drivePathElem.getAttribute('d');
+    if (d) {
+      const numberRegex = /[+\-]?(?:[0-9]*\.)?[0-9]+(?:[eE][+\-]?[0-9]+)?/g;
+      const commands = d.match(/[MCLcml][^MCLcml]*/g);
+      let currentX = 0;
+      let currentY = 0;
+      let lastCommandType = null;
+      let lastControlX = null;
+      let lastControlY = null;
+
+      commands.forEach(cmd => {
+        const type = cmd[0];
+        const paramStr = cmd.substring(1).trim();
+        const params = (paramStr.match(numberRegex) || []).map(Number);
+
+        let reflectedControlX = currentX;
+        let reflectedControlY = currentY;
+
+        // Calculate reflected control point for 'S' and 's' commands
+        if (lastCommandType === 'C' || lastCommandType === 'c' || lastCommandType === 'S' || lastCommandType === 's') {
+          if (lastControlX !== null && lastControlY !== null) {
+            reflectedControlX = currentX + (currentX - lastControlX);
+            reflectedControlY = currentY + (currentY - lastControlY);
+          }
+        }
+
+        switch (type) {
+          case 'M': // Moveto (absolute)
+            currentX = params[0];
+            currentY = params[1];
+            waypoints.push({ x: currentX * scale, y: currentY * scale });
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          case 'm': // Moveto (relative)
+            currentX += params[0];
+            currentY += params[1];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          case 'C': // Cubic Bézier curve (absolute)
+            // C x1 y1 x2 y2 x y
+            lastControlX = params[2]; // Second control point
+            lastControlY = params[3];
+            currentX = params[4]; // End point
+            currentY = params[5];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            break;
+          case 'c': // Cubic Bézier curve (relative)
+            // c dx1 dy1 dx2 dy2 dx dy
+            lastControlX = currentX + params[2]; // Second control point (relative to currentX)
+            lastControlY = currentY + params[3]; // Second control point (relative to currentY)
+            currentX += params[4]; // End point (relative)
+            currentY += params[5];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            break;
+          case 'S': // Shorthand smooth cubic Bezier (absolute)
+            // S x2 y2 x y
+            // The first control point is the reflection of the second control point of the previous command.
+            lastControlX = params[0]; // Second control point
+            lastControlY = params[1];
+            currentX = params[2]; // End point
+            currentY = params[3];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            break;
+          case 's': // Shorthand smooth cubic Bezier (relative)
+            // s dx2 dy2 dx dy
+            // The first control point is the reflection of the second control point of the previous command.
+            lastControlX = currentX + params[0]; // Second control point (relative)
+            lastControlY = currentY + params[1]; // Second control point (relative)
+            currentX += params[2]; // End point (relative)
+            currentY += params[3];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            break;
+          case 'L': // Lineto (absolute)
+            currentX = params[0];
+            currentY = params[1];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            lastControlX = null; // Reset control point for non-Bezier commands
+            lastControlY = null;
+            break;
+          case 'l': // Lineto (relative)
+            currentX += params[0];
+            currentY += params[1];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          case 'H': // Horizontal lineto (absolute)
+            currentX = params[0];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          case 'h': // Horizontal lineto (relative)
+            currentX += params[0];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          case 'V': // Vertical lineto (absolute)
+            currentY = params[0];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          case 'v': // Vertical lineto (relative)
+            currentY += params[0];
+            waypoints.push({
+              x: Math.ceil(currentX * scale * 100) / 100,
+              y: Math.ceil(currentY * scale * 100) / 100
+            });
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          case 'Z': // Close path
+          case 'z':
+            // Z/z closes the path to the starting point of the current subpath.
+            // For waypoints, we might not need to add a point here if the path naturally leads back.
+            // For simplicity, we'll just reset control points and not add a waypoint.
+            lastControlX = null;
+            lastControlY = null;
+            break;
+          default:
+            console.warn('Unhandled SVG path command:', type, params);
+            lastControlX = null;
+            lastControlY = null;
+            break;
+        }
+        lastCommandType = type; // Update last command type for 'S' and 's'
+      });
+    }
+    console.log(waypoints);
+  }
+
+  return { tiles, getSurfaceTypeAt, obstaclePolys, startPos, surfaceParams, worldSize, waypoints };
 }
 
 // ===================== MINIMAPA: generowanie tekstury z SVG =====================

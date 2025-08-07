@@ -134,7 +134,7 @@ export class GameScene extends window.Phaser.Scene {
 		const start = worldData.startPos;
 		const startYOffset = (viewH * 3) / 10;
 
-		this.carController.resetState(start.x, start.y + startYOffset);
+		this.carController.resetState(start.x, start.y);
 
 		if (this.world) {
 			this.world.trackTiles = [];

@@ -1,95 +1,128 @@
+// AICar.js
 import { Car } from "./car.js";
 import { carConfig } from "./carConfig.js";
 
 export class AICar extends Car {
-    constructor(scene, carSprite, worldData, waypoints) {
-        super(scene, carSprite, worldData);
-        this.waypoints = waypoints;
-        this.currentWaypointIndex = 0;
-        this.reachedThreshold = 20;
+  constructor(scene, carSprite, worldData, waypoints) {
+    super(scene, carSprite, worldData);
 
-        // Parametry z carConfig
-        this.steerSmoothFactor = carConfig.steerSmoothFactor;
-        this.steerInputThreshold = carConfig.steerInputThreshold;
-        this.maxSteerRad = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
-        this.steerSpeedRad = Phaser.Math.DegToRad(carConfig.STEER_SPEED_DEG);
-        this.steerReturnSpeedRad = Phaser.Math.DegToRad(carConfig.STEER_RETURN_SPEED_DEG);
-        this.speedThresholdForSteerReturn = carConfig.speedThresholdForSteerReturn;
+    // trasa i waypointy
+    this.waypoints            = waypoints;
+    this.currentWaypointIndex = 0;
+    this.reachedThreshold     = 20;
+
+    // Pure Pursuit – parametry
+    this.lookAheadDistance = 50;     // początkowa odległość look-ahead
+    this.minLookAhead      = 30;
+    this.maxLookAhead      = 80;
+    this.curvatureGain     = 1.0;
+
+    // sterowanie
+    this.steerSmoothFactor = carConfig.steerSmoothFactor;
+    this.maxSteerRad       = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
+    this.steerInput        = 0;
+
+    // throttling
+    this.minThrottle = 0.2;
+    this.maxThrottle = 1.0;
+  }
+
+  updateAI(dt, worldW, worldH) {
+    const px = this.carX;
+    const py = this.carY;
+
+    // 0) dynamiczne dostosowanie lookAheadDistance do prędkości
+    if (this.carSpeed != null) {
+      this.lookAheadDistance = Phaser.Math.Clamp(
+        this.carSpeed * 1.5,
+        this.minLookAhead,
+        this.maxLookAhead
+      );
     }
 
-    updateAI(dt, worldW, worldH) {
-        // Reset kolizji
-        this.collisionCount = 0;
+    // 1) wybór look-ahead point spośród waypointów przed autem
+    let lookPoint = null;
+    for (let i = 0; i < this.waypoints.length; i++) {
+      const idx = (this.currentWaypointIndex + i) % this.waypoints.length;
+      const wp  = this.waypoints[idx];
+      const d   = Phaser.Math.Distance.Between(px, py, wp.x, wp.y);
+      if (d < this.lookAheadDistance) continue;
 
-        // Nawierzchnia
-        let dx = Math.abs(this.carX - (this.lastSurfaceCheckX ?? this.carX));
-        let dy = Math.abs(this.carY - (this.lastSurfaceCheckY ?? this.carY));
-        if (dx > this.surfaceCheckThreshold || dy > this.surfaceCheckThreshold || this.lastSurfaceType === null) {
-            this.lastSurfaceType = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
-            this.lastSurfaceCheckX = this.carX;
-            this.lastSurfaceCheckY = this.carY;
-        }
+      const angToWP = Phaser.Math.Angle.Between(px, py, wp.x, wp.y);
+      const alpha   = Phaser.Math.Angle.Wrap(angToWP - this.carAngle);
+      // pomijamy punkty zza pleców
+      if (Math.abs(alpha) > Math.PI / 2) continue;
 
-        // Zapamiętaj pozycję przed ruchem
-        let prevCarX = this.carX;
-        let prevCarY = this.carY;
-
-        // Waypoint
-        const target = this.waypoints[this.currentWaypointIndex];
-        if (!target) return;
-
-        const dxTarget = target.x - this.carX;
-        const dyTarget = target.y - this.carY;
-        const distance = Math.sqrt(dxTarget * dxTarget + dyTarget * dyTarget);
-
-        if (distance < this.reachedThreshold) {
-            this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
-        }
-
-        // Kierunek do celu
-        const toTarget = new Phaser.Math.Vector2(dxTarget, dyTarget);
-        const targetAngle = toTarget.angle();
-
-        // Wektor ruchu
-        const velocityVector = new Phaser.Math.Vector2(this.body.velocity.x, this.body.velocity.y);
-        const movementAngle = velocityVector.length() > 0.1 ? velocityVector.angle() : this.carAngle;
-
-        // Różnica kąta
-        let angleDiff = Phaser.Math.Angle.Wrap(targetAngle - movementAngle);
-
-        // Sterowanie AI
-        let steerInput = 0;
-        const steerStrength = 0.3;
-
-        if (Math.abs(angleDiff) > this.steerInputThreshold) {
-            const steerDirection = Math.sign(angleDiff);
-            steerInput = steerDirection * steerStrength;
-        }
-
-        // Płynne przejście
-        this.steerInput = this.steerInput * this.steerSmoothFactor + steerInput * (1 - this.steerSmoothFactor);
-
-        // Ograniczenie kąta skrętu
-        this.steerInput = Phaser.Math.Clamp(this.steerInput, -this.maxSteerRad, this.maxSteerRad);
-
-        // Throttle
-        const throttle = Math.abs(angleDiff) < Math.PI / 4 ? 1 : 0.5;
-
-        // Aktualizacja fizyki
-        this.updatePhysics(dt, this.steerInput, throttle, this.lastSurfaceType);
-
-        // Kolizje
-        if (this.collisionImmunity > 0) {
-            this.collisionImmunity -= dt;
-            if (this.collisionImmunity < 0) this.collisionImmunity = 0;
-        }
-        if (this.collisionImmunity <= 0) {
-            if (this.checkEllipseCollision()) {
-                this.handleCollision(prevCarX, prevCarY, worldW, worldH);
-            }
-            if (this.checkWorldEdgeCollision(worldW, worldH)) {
-                this.handleCollision(prevCarX, prevCarY, worldW, worldH);
-            }
-        }
+      lookPoint = wp;
+      break;
     }
+    // fallback na kolejny waypoint
+    if (!lookPoint) {
+      lookPoint = this.waypoints[
+        (this.currentWaypointIndex + 1) % this.waypoints.length
+      ];
+    }
+
+    // 2) przełącz waypoint gdy jesteśmy blisko bieżącego
+    const currentWP = this.waypoints[this.currentWaypointIndex];
+    if (
+      Phaser.Math.Distance.Between(px, py, currentWP.x, currentWP.y) <
+      this.reachedThreshold
+    ) {
+      this.currentWaypointIndex =
+        (this.currentWaypointIndex + 1) % this.waypoints.length;
+    }
+
+    // 3) obliczenie błędu kątowego (alpha)
+    const targetAngle = Phaser.Math.Angle.Between(px, py, lookPoint.x, lookPoint.y);
+    const heading     = this.carAngle;
+    const alpha       = Phaser.Math.Angle.Wrap(targetAngle - heading);
+
+    // 4) obliczenie krzywizny łuku
+    const curvature = (2 * Math.sin(alpha)) / this.lookAheadDistance;
+
+    // 5) sygnał sterowania
+    let rawSteer = curvature * this.curvatureGain;
+    // limit do zakresu [-1,1]
+    rawSteer = Phaser.Math.Clamp(rawSteer, -1, 1);
+
+    // 6) wygładzanie sterowania
+    this.steerInput =
+      this.steerInput * this.steerSmoothFactor +
+      rawSteer * (1 - this.steerSmoothFactor);
+
+    // 7) throttle zależny od kąta alpha
+    let throttle = this.maxThrottle * (1 - Math.abs(alpha) / Math.PI);
+    throttle     = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
+
+    // 8) update fizyki
+    this.updatePhysics(
+      dt,
+      this.steerInput,
+      throttle,
+      this.worldData.getSurfaceTypeAt(px, py)
+    );
+
+    // 9) obsługa kolizji
+    if (this.collisionImmunity > 0) {
+      this.collisionImmunity -= dt;
+      if (this.collisionImmunity < 0) this.collisionImmunity = 0;
+    }
+    if (this.collisionImmunity <= 0) {
+      const collided =
+        this.checkEllipseCollision() || this.checkWorldEdgeCollision(worldW, worldH);
+      if (collided) {
+        this.handleCollision(px, py, worldW, worldH);
+      }
+    }
+
+    // Debug (opcjonalnie):
+    // console.log(
+    //   "WP idx:", this.currentWaypointIndex,
+    //   "alpha:", alpha.toFixed(2),
+    //   "lookDist:", this.lookAheadDistance.toFixed(0),
+    //   "steer:", this.steerInput.toFixed(2),
+    //   "thr:", throttle.toFixed(2)
+    // );
+  }
 }

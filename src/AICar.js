@@ -1005,22 +1005,22 @@ export class AICar extends Car {
     this.lookAheadDistance = this.minLookAhead;
     this.LdLPAlpha = 0.3;
 
-    this.baseCurvatureGain = 3.4;
+    this.baseCurvatureGain = 2.6;
     this.kStanley = 1.1;
     this.stanleyV0 = 2.0;
 
     this.steerInput = 0;
     this.steerVelocity = 0;
     this.steerVelocityLimit = Phaser.Math.DegToRad(130);
-    this.steerSpringFactor = 6.0;
-    this.steerDampingFactor = 3.5;
+    this.steerSpringFactor = 10.0;
+    this.steerDampingFactor = 4.0;
     this.maxSteerRad = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
 
-    this.alphaDeadzone = Phaser.Math.DegToRad(carConfig.steerInputThreshold);
-    this.steerReturnSpeedRad = Phaser.Math.DegToRad(carConfig.STEER_RETURN_SPEED_DEG);
+    this.alphaDeadzone = Phaser.Math.DegToRad(2.5);
+    this.steerReturnSpeedRad = Phaser.Math.DegToRad(80);
 
-    this.minThrottle = 0.1;
-    this.maxThrottle = 0.7;
+    this.minThrottle = 0.2;
+    this.maxThrottle = 0.8;
 
     this.prevAlpha = 0;
     this.switchDist = 18;
@@ -1031,7 +1031,13 @@ export class AICar extends Car {
     this.lookScanStep = 6;
     this.kAlphaRate = 0.16;
 
-    this.throttleLock = false; // nie zabijaj gazu
+    this.throttleLock = false;
+
+    this.hairpinVisibilityRatio = 0.65;
+    this.tangentForwardThresh = 0.2;
+    this.hairpinAngleDeg = 120;
+    this.hairpinClampLd = 18;
+    this.hairpinWindow = 60;
   }
 
   _buildPathMetrics() {
@@ -1083,7 +1089,7 @@ export class AICar extends Car {
     return { x: p.x, y: p.y, segIndex, t };
   }
 
-  _closestPointOnPath(px, py) {
+    _closestPointOnPath(px, py) {
     const n = this.waypoints.length;
     let best = { dist2: Infinity, x: 0, y: 0, segIndex: 0, t: 0, s: 0, crossTrack: 0 };
     for (let k = this.currentSegmentIndex - 2; k <= this.currentSegmentIndex + 2; k++) {
@@ -1112,29 +1118,50 @@ export class AICar extends Car {
     return best;
   }
 
-_findLookPointForward(px, py, carAngle, sStart, maxAhead) {
-  const fx = Math.cos(carAngle);
-  const fy = Math.sin(carAngle);
-  const steps = Math.ceil(maxAhead / this.lookScanStep);
-
-  for (let j = 0; j < steps; j++) {
-    const s = this._wrapS(sStart + j * this.lookScanStep);
-    const p = this._pointAtS(s);
-    const vx = p.x - px;
-    const vy = p.y - py;
-
-    const dot = vx * fx + vy * fy;
-    if (dot <= 0) continue;
-
-    const alpha = Phaser.Math.Angle.Wrap(
-      Phaser.Math.Angle.Between(px, py, p.x, p.y) - carAngle
-    );
-    if (Math.abs(alpha) >= this.alphaMinRad) return p;
+  _forwardDistance(s0, s1) {
+    let d = s1 - s0;
+    if (d < 0) d += this.totalLen;
+    return d;
   }
 
-  return this._pointAtS(sStart);
-}
+  _tangentAtS(s) {
+    const p = this._pointAtS(s);
+    const a = this.waypoints[p.segIndex];
+    const b = this.waypoints[(p.segIndex + 1) % this.waypoints.length];
+    let tx = b.x - a.x, ty = b.y - a.y;
+    const len = Math.hypot(tx, ty) || 1e-6;
+    return { x: p.x, y: p.y, segIndex: p.segIndex, t: p.t, tx: tx / len, ty: ty / len };
+  }
 
+  _findLookPointForward(px, py, carAngle, nearestS, sStart, maxAhead) {
+    const fx = Math.cos(carAngle);
+    const fy = Math.sin(carAngle);
+    const steps = Math.ceil(maxAhead / this.lookScanStep);
+
+    for (let j = 0; j < steps; j++) {
+      const s = this._wrapS(sStart + j * this.lookScanStep);
+      const tp = this._tangentAtS(s);
+
+      const dx = tp.x - px, dy = tp.y - py;
+      const dotPos = dx * fx + dy * fy;
+      if (dotPos <= 0) continue;
+
+      const dotTan = tp.tx * fx + tp.ty * fy;
+      if (dotTan < this.tangentForwardThresh) continue;
+
+      const pathDist = this._forwardDistance(nearestS, s);
+      const euclid = Math.hypot(dx, dy);
+      if (pathDist > 1 && euclid / pathDist < this.hairpinVisibilityRatio) continue;
+
+      const alpha = Phaser.Math.Angle.Wrap(Phaser.Math.Angle.Between(px, py, tp.x, tp.y) - carAngle);
+      if (Math.abs(alpha) < this.alphaMinRad) continue;
+
+      return { x: tp.x, y: tp.y, s };
+    }
+
+    const p0 = this._pointAtS(sStart);
+    return { x: p0.x, y: p0.y, s: sStart };
+  }
 
   updateAI(dt, worldW, worldH) {
     const px = this.carX;
@@ -1147,28 +1174,65 @@ _findLookPointForward(px, py, carAngle, sStart, maxAhead) {
     const nearest = this._closestPointOnPath(px, py);
     this.currentSegmentIndex = nearest.segIndex;
 
-    const sLA = this._wrapS(nearest.s + this.lookAheadDistance);
+    const a = this.waypoints[this.currentSegmentIndex];
+    const b = this.waypoints[(this.currentSegmentIndex + 1) % this.waypoints.length];
+    const c = this.waypoints[(this.currentSegmentIndex + 2) % this.waypoints.length];
 
-    let look = this._findLookPointForward(px, py, this.carAngle, sLA, this.lookAheadDistance * 1.6);
+    const abx = b.x - a.x, aby = b.y - a.y;
+    const bcx = c.x - b.x, bcy = c.y - b.y;
+    const lab = Math.hypot(abx, aby) || 1e-6;
+    const lbc = Math.hypot(bcx, bcy) || 1e-6;
+    const dot = (abx * bcx + aby * bcy) / (lab * lbc);
+    const turnDeg = Math.abs(Phaser.Math.RadToDeg(Math.acos(Phaser.Math.Clamp(dot, -1, 1))));
+    const distToNext = Math.hypot(px - b.x, py - b.y);
+    if (turnDeg >= this.hairpinAngleDeg && distToNext < this.hairpinWindow) {
+      const LdTargetHard = Math.min(this.lookAheadDistance, this.hairpinClampLd);
+      this.lookAheadDistance = Phaser.Math.Linear(this.lookAheadDistance, LdTargetHard, 0.7);
+    }
+
+    const sLA = this._wrapS(nearest.s + this.lookAheadDistance);
+    const lookP = this._findLookPointForward(px, py, this.carAngle, nearest.s, sLA, this.lookAheadDistance * 1.6);
 
     let sumAlpha = 0, cnt = 0;
+    const fx = Math.cos(this.carAngle), fy = Math.sin(this.carAngle);
     for (let i = 0; i < this.alphaAvgSamples; i++) {
-      const lp = this._pointAtS(this._wrapS(sLA + i * this.alphaSampleSpacing));
-      const ang = Phaser.Math.Angle.Between(px, py, lp.x, lp.y);
-      const a = Phaser.Math.Angle.Wrap(ang - this.carAngle);
-      const fx = Math.cos(this.carAngle), fy = Math.sin(this.carAngle);
-      const dot = (lp.x - px) * fx + (lp.y - py) * fy;
-      if (dot > 0) { sumAlpha += a; cnt++; }
-      if (i === 0) look = lp;
-    }
-    const alphaMean = cnt > 0 ? sumAlpha / cnt : Phaser.Math.Angle.Wrap(Phaser.Math.Angle.Between(px, py, look.x, look.y) - this.carAngle);
+      const sSi = this._wrapS(sLA + i * this.alphaSampleSpacing);
+      const tp = this._tangentAtS(sSi);
+      const dx = tp.x - px, dy = tp.y - py;
+      const dotPos = dx * fx + dy * fy;
+      if (dotPos <= 0) break;
+      const dotTan = tp.tx * fx + tp.ty * fy;
+      if (dotTan < this.tangentForwardThresh) break;
 
-    const stanley = Math.atan2(-this.kStanley * nearest.crossTrack, this.stanleyV0 + Math.abs(v)); // odwrócony znak
+      const pathDist = this._forwardDistance(nearest.s, sSi);
+      const euclid = Math.hypot(dx, dy);
+      if (pathDist > 1 && euclid / pathDist < this.hairpinVisibilityRatio) break;
+
+      const ang = Phaser.Math.Angle.Between(px, py, tp.x, tp.y);
+      const a = Phaser.Math.Angle.Wrap(ang - this.carAngle);
+      sumAlpha += a; cnt++;
+    }
+
+    const alphaMean = cnt > 0
+      ? sumAlpha / cnt
+      : Phaser.Math.Angle.Wrap(Phaser.Math.Angle.Between(px, py, lookP.x, lookP.y) - this.carAngle);
+
+    const stanley = Math.atan2(-this.kStanley * nearest.crossTrack, this.stanleyV0 + Math.abs(v));
     const alphaRate = (alphaMean - this.prevAlpha) / Math.max(dt, 1e-3);
     const alphaEff = Phaser.Math.Angle.Wrap(alphaMean + stanley + this.kAlphaRate * alphaRate);
 
     const curvature = (2 * Math.sin(alphaEff)) / Math.max(this.lookAheadDistance, 1e-3);
-    const rawSteer = Phaser.Math.Clamp(curvature * this.baseCurvatureGain, -1, 1);
+    const vSteerScale = 1 / (1 + 0.015 * Math.max(0, v));
+    const rawSteer = Phaser.Math.Clamp(curvature * this.baseCurvatureGain * vSteerScale, -1, 1);
+
+    if (alphaRate < 0 && Math.abs(alphaEff) < Phaser.Math.DegToRad(15)) {
+      this.steerVelocity *= 0.7;
+      this.steerInput *= 0.85;
+    }
+    if (Math.abs(alphaEff) < this.alphaDeadzone * 0.8 && Math.abs(this.steerInput) > 0.3) {
+      const steerRelease = 1.8 * dt;
+      this.steerInput -= Math.sign(this.steerInput) * steerRelease;
+    }
 
     const steerForce = (rawSteer - this.steerInput) * this.steerSpringFactor;
     const steerDamping = -this.steerVelocity * this.steerDampingFactor;
@@ -1195,14 +1259,15 @@ _findLookPointForward(px, py, carAngle, sStart, maxAhead) {
     if (v < 20) throttle = Math.max(throttle, this.minThrottle + 0.4 * (this.maxThrottle - this.minThrottle));
     throttle = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
 
-    const a = this.waypoints[this.currentSegmentIndex];
-    const b = this.waypoints[(this.currentSegmentIndex + 1) % this.waypoints.length];
-    const distToNext = Math.hypot(px - b.x, py - b.y);
-    if (distToNext <= this.switchDist || nearest.t >= 0.98) {
+    const tx = b.x - a.x, ty = b.y - a.y;
+    const forwardToNext = tx * fx + ty * fy;
+
+    if ((distToNext <= this.switchDist || nearest.t >= 0.98) && forwardToNext > 0) {
       this.currentSegmentIndex = (this.currentSegmentIndex + 1) % this.waypoints.length;
     }
 
-    if (this.throttleLock && this.collisionImmunity <= 0 && !this.checkEllipseCollision() && !this.checkWorldEdgeCollision(worldW, worldH)) {
+    if (this.throttleLock && this.collisionImmunity <= 0 &&
+      !this.checkEllipseCollision() && !this.checkWorldEdgeCollision(worldW, worldH)) {
       this.updateInput({ up: false, down: false });
     }
 

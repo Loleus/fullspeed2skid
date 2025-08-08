@@ -132,7 +132,6 @@ export class GameScene extends window.Phaser.Scene {
 		const worldData = this.worldData || window._worldData;
 		const viewH = this.sys.game.config.height;
 		const start = worldData.startPos;
-		const startYOffset = (viewH * 3) / 10;
 
 		this.carController.resetState(start.x, start.y);
 

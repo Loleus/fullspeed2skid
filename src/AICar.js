@@ -783,172 +783,426 @@
 
 
 
-// src/AICar.js
+// // src/AICar.js
+// import { Car } from "./car.js";
+// import { carConfig } from "./carConfig.js";
+
+// export class AICar extends Car {
+//   constructor(scene, carSprite, worldData, waypoints) {
+//     super(scene, carSprite, worldData);
+
+//     // waypointy i trasa
+//     this.waypoints            = waypoints;
+//     this.currentWaypointIndex = 0;
+//     this.reachedThreshold     = 0.2;
+
+//     // parametry Pure Pursuit
+//     this.minLookAhead      = 10;
+//     this.maxLookAhead      = 20;
+//     this.lookAheadDistance = this.minLookAhead;
+//     this.baseCurvatureGain = 10.0;
+
+//     // deadzone i smoothing z configu
+//     this.alphaDeadzone   = Phaser.Math.DegToRad(carConfig.steerInputThreshold);
+//     this.baseSteerSmooth = carConfig.steerSmoothFactor;
+
+//     // sterowanie
+//     this.maxSteerRad         = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
+//     this.steerRateLimit      = Phaser.Math.DegToRad(carConfig.STEER_SPEED_DEG);
+//     this.steerReturnSpeedRad = Phaser.Math.DegToRad(carConfig.STEER_RETURN_SPEED_DEG);
+//     this.steerInput          = 0;
+
+//     // throttle
+//     this.minThrottle = 0.1;
+//     this.maxThrottle = 0.3;
+
+//     //  — NOWE: szybkie obracanie samochodu w kierunku lookPoint
+//     // ile razy mnożymy błąd kąta, by uzyskać angularVelocity:
+//     this.rotateResponse    = 3.0;                  // tuning: większe = szybsze obracanie
+//     // ograniczenie prędkości obrotu (radiany na sekundę):
+//     this.maxAngularSpeed   = Phaser.Math.DegToRad(180);
+//   }
+
+//   updateAI(dt, worldW, worldH) {
+//     const px = this.carX;
+//     const py = this.carY;
+//     const v  = this.carSpeed || 0;
+
+//     // dynamiczne look-ahead
+//     this.lookAheadDistance = Phaser.Math.Clamp(
+//       v * 1.2,
+//       this.minLookAhead,
+//       this.maxLookAhead
+//     );
+
+//     // wybór punktu lookPoint
+//     let lookPoint = null;
+//     let bestDelta = Infinity;
+//     let bestWP    = null;
+//     for (let off = 1; off < this.waypoints.length; off++) {
+//       const idx = (this.currentWaypointIndex + off) % this.waypoints.length;
+//       const wp  = this.waypoints[idx];
+//       const dx  = wp.x - px;
+//       const dy  = wp.y - py;
+//       const d   = Math.hypot(dx, dy);
+
+//       const ang = Phaser.Math.Angle.Between(px, py, wp.x, wp.y);
+//       const rel = Phaser.Math.Angle.Wrap(ang - this.carAngle);
+//       if (Math.abs(rel) > Math.PI / 2) continue;
+
+//       if (d >= this.lookAheadDistance) {
+//         lookPoint = wp;
+//         break;
+//       }
+
+//       const delta = Math.abs(d - this.lookAheadDistance);
+//       if (delta < bestDelta) {
+//         bestDelta = delta;
+//         bestWP    = wp;
+//       }
+//     }
+//     lookPoint = lookPoint || bestWP || this.waypoints[this.currentWaypointIndex];
+
+//     // przełączenie segmentu
+//     {
+//       const cur  = this.waypoints[this.currentWaypointIndex];
+//       const next = this.waypoints[(this.currentWaypointIndex + 1) % this.waypoints.length];
+//       const vx   = next.x - cur.x;
+//       const vy   = next.y - cur.y;
+//       const wx   = px    - cur.x;
+//       const wy   = py    - cur.y;
+//       const proj = (vx * wx + vy * wy) / (vx * vx + vy * vy);
+//       if (proj > this.reachedThreshold) {
+//         this.currentWaypointIndex =
+//           (this.currentWaypointIndex + 1) % this.waypoints.length;
+//       }
+//     }
+
+//     // feed-forward na nadchodzący zakręt
+//     const i0       = this.currentWaypointIndex;
+//     const i1       = (i0 + 1) % this.waypoints.length;
+//     const i2       = (i0 + 2) % this.waypoints.length;
+//     const ang1     = Phaser.Math.Angle.Between(
+//                       this.waypoints[i0].x, this.waypoints[i0].y,
+//                       this.waypoints[i1].x, this.waypoints[i1].y
+//                     );
+//     const ang2     = Phaser.Math.Angle.Between(
+//                       this.waypoints[i1].x, this.waypoints[i1].y,
+//                       this.waypoints[i2].x, this.waypoints[i2].y
+//                     );
+//     const turnDiff = Math.abs(Phaser.Math.Angle.Wrap(ang2 - ang1));
+//     const ffGain   = 1 + Math.min(turnDiff / (Math.PI / 2), 1) * 0.5;
+
+//     // obliczenie curvature i rawSteer
+//     const targetAng = Phaser.Math.Angle.Between(px, py, lookPoint.x, lookPoint.y);
+//     const alpha     = Phaser.Math.Angle.Wrap(targetAng - this.carAngle);
+//     const curvature = (2 * Math.sin(alpha)) / this.lookAheadDistance;
+//     let rawSteer    = Phaser.Math.Clamp(
+//                         curvature * this.baseCurvatureGain * ffGain,
+//                         -1,
+//                         1
+//                       );
+
+//     // — NOWE: szybkie obracanie samochodu
+//     // wyliczamy docelową prędkość kątową [rad/s]
+//     const angleError    = Phaser.Math.Angle.Wrap(targetAng - this.carAngle);
+//     const angularVel    = Phaser.Math.Clamp(
+//                              angleError * this.rotateResponse,
+//                              -this.maxAngularSpeed,
+//                              this.maxAngularSpeed
+//                            );
+//     // Phaser Arcade Body angularVelocity jest w stopniach/s
+//     this.carSprite.angularVelocity = Phaser.Math.RadToDeg(angularVel);
+
+//     // rate limiting zmiany układu sterowania
+//     const maxDelta = this.steerRateLimit * dt;
+//     let delta       = rawSteer - this.steerInput;
+//     delta           = Phaser.Math.Clamp(delta, -maxDelta, maxDelta);
+//     this.steerInput += delta;
+
+//     // płynny powrót kierownicy w deadzone
+//     if (Math.abs(alpha) < this.alphaDeadzone) {
+//       const retDelta = this.steerReturnSpeedRad * dt;
+//       if (Math.abs(this.steerInput) <= retDelta) {
+//         this.steerInput = 0;
+//       } else {
+//         this.steerInput -= Math.sign(this.steerInput) * retDelta;
+//       }
+//     }
+
+//     // konwersja na radiany
+//     const steerRad = Phaser.Math.Clamp(
+//       this.steerInput * this.maxSteerRad,
+//       -this.maxSteerRad,
+//       this.maxSteerRad
+//     );
+
+//     // throttle z interpolacją liniową
+//     let throttle = this.maxThrottle
+//       - (Math.min(Math.abs(alpha) / Math.PI, 1) * (this.maxThrottle - this.minThrottle));
+//     throttle     = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
+
+//     // kolizje i fizyka
+//     if (
+//       this.throttleLock &&
+//       this.collisionImmunity <= 0 &&
+//       !this.checkEllipseCollision() &&
+//       !this.checkWorldEdgeCollision(worldW, worldH)
+//     ) {
+//       this.updateInput({ up: false, down: false });
+//     }
+
+//     this.updatePhysics(
+//       dt,
+//       steerRad,
+//       throttle,
+//       this.worldData.getSurfaceTypeAt(px, py)
+//     );
+
+//     if (this.collisionImmunity > 0) {
+//       this.collisionImmunity = Math.max(0, this.collisionImmunity - dt);
+//     } else if (
+//       this.checkEllipseCollision() ||
+//       this.checkWorldEdgeCollision(worldW, worldH)
+//     ) {
+//       this.handleCollision(px, py, worldW, worldH);
+//     }
+
+//     // debug
+//     console.log(
+//       "WP idx:", this.currentWaypointIndex,
+//       "α:", alpha.toFixed(2),
+//       "steerIn:", this.steerInput.toFixed(2),
+//       "thr:", throttle.toFixed(2)
+//     );
+//   }
+// }
+
+
+
+
+
+
+
+
+
+
+
 import { Car } from "./car.js";
 import { carConfig } from "./carConfig.js";
 
 export class AICar extends Car {
   constructor(scene, carSprite, worldData, waypoints) {
     super(scene, carSprite, worldData);
+    this.waypoints = waypoints;
+    this.currentSegmentIndex = 0;
+    this.isLoop = true;
 
-    // waypointy i trasa
-    this.waypoints            = waypoints;
-    this.currentWaypointIndex = 0;
-    this.reachedThreshold     = 0.2;
+    this._buildPathMetrics();
 
-    // parametry Pure Pursuit
-    this.minLookAhead      = 1;
-    this.maxLookAhead      = 20;
+    this.minLookAhead = 12;
+    this.maxLookAhead = 45;
     this.lookAheadDistance = this.minLookAhead;
-    this.baseCurvatureGain = 10.0;
+    this.LdLPAlpha = 0.3;
 
-    // deadzone i smoothing z configu
-    this.alphaDeadzone   = Phaser.Math.DegToRad(carConfig.steerInputThreshold);
-    this.baseSteerSmooth = carConfig.steerSmoothFactor;
+    this.baseCurvatureGain = 3.4;
+    this.kStanley = 1.1;
+    this.stanleyV0 = 2.0;
 
-    // sterowanie
-    this.maxSteerRad         = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
-    this.steerRateLimit      = Phaser.Math.DegToRad(carConfig.STEER_SPEED_DEG);
+    this.steerInput = 0;
+    this.steerVelocity = 0;
+    this.steerVelocityLimit = Phaser.Math.DegToRad(130);
+    this.steerSpringFactor = 6.0;
+    this.steerDampingFactor = 3.5;
+    this.maxSteerRad = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
+
+    this.alphaDeadzone = Phaser.Math.DegToRad(carConfig.steerInputThreshold);
     this.steerReturnSpeedRad = Phaser.Math.DegToRad(carConfig.STEER_RETURN_SPEED_DEG);
-    this.steerInput          = 0;
 
-    // throttle
     this.minThrottle = 0.1;
-    this.maxThrottle = 0.3;
+    this.maxThrottle = 0.7;
 
-    //  — NOWE: szybkie obracanie samochodu w kierunku lookPoint
-    // ile razy mnożymy błąd kąta, by uzyskać angularVelocity:
-    this.rotateResponse    = 3.0;                  // tuning: większe = szybsze obracanie
-    // ograniczenie prędkości obrotu (radiany na sekundę):
-    this.maxAngularSpeed   = Phaser.Math.DegToRad(180);
+    this.prevAlpha = 0;
+    this.switchDist = 18;
+
+    this.alphaAvgSamples = 3;
+    this.alphaSampleSpacing = 16;
+    this.alphaMinRad = Phaser.Math.DegToRad(10);
+    this.lookScanStep = 6;
+    this.kAlphaRate = 0.16;
+
+    this.throttleLock = false; // nie zabijaj gazu
   }
+
+  _buildPathMetrics() {
+    this.segLen = [];
+    this.cumLen = [0];
+    let total = 0;
+    for (let i = 0; i < this.waypoints.length; i++) {
+      const a = this.waypoints[i];
+      const b = this.waypoints[(i + 1) % this.waypoints.length];
+      const len = Math.hypot(b.x - a.x, b.y - a.y);
+      this.segLen.push(len);
+      total += len;
+      this.cumLen.push(total);
+    }
+    this.totalLen = total;
+  }
+
+  _wrapIndex(i) {
+    const n = this.waypoints.length;
+    return ((i % n) + n) % n;
+  }
+
+  _pointOnSegment(ax, ay, bx, by, t) {
+    return { x: ax + (bx - ax) * t, y: ay + (by - ay) * t };
+  }
+
+  _wrapS(s) {
+    if (!this.isLoop) return Phaser.Math.Clamp(s, 0, this.totalLen);
+    s %= this.totalLen;
+    if (s < 0) s += this.totalLen;
+    return s;
+  }
+
+  _pointAtS(s) {
+    s = this._wrapS(s);
+    let lo = 0, hi = this.cumLen.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (this.cumLen[mid] <= s) lo = mid + 1;
+      else hi = mid;
+    }
+    const segIndex = Phaser.Math.Clamp(lo - 1, 0, this.segLen.length - 1);
+    const s0 = this.cumLen[segIndex];
+    const segL = this.segLen[segIndex] || 1e-6;
+    const t = Phaser.Math.Clamp((s - s0) / segL, 0, 1);
+    const a = this.waypoints[segIndex];
+    const b = this.waypoints[(segIndex + 1) % this.waypoints.length];
+    const p = this._pointOnSegment(a.x, a.y, b.x, b.y, t);
+    return { x: p.x, y: p.y, segIndex, t };
+  }
+
+  _closestPointOnPath(px, py) {
+    const n = this.waypoints.length;
+    let best = { dist2: Infinity, x: 0, y: 0, segIndex: 0, t: 0, s: 0, crossTrack: 0 };
+    for (let k = this.currentSegmentIndex - 2; k <= this.currentSegmentIndex + 2; k++) {
+      const i = this._wrapIndex(k);
+      const a = this.waypoints[i];
+      const b = this.waypoints[(i + 1) % n];
+      const vx = b.x - a.x;
+      const vy = b.y - a.y;
+      const wx = px - a.x;
+      const wy = py - a.y;
+      const segL2 = vx * vx + vy * vy || 1e-6;
+      let t = (vx * wx + vy * wy) / segL2;
+      t = Phaser.Math.Clamp(t, 0, 1);
+      const cx = a.x + vx * t;
+      const cy = a.y + vy * t;
+      const dx = px - cx;
+      const dy = py - cy;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < best.dist2) {
+        const crossZ = vx * (py - a.y) - vy * (px - a.x);
+        const sign = Math.sign(crossZ) || 0;
+        const s = this.cumLen[i] + Math.hypot(vx * t, vy * t);
+        best = { dist2: d2, x: cx, y: cy, segIndex: i, t, s, crossTrack: Math.sqrt(d2) * sign };
+      }
+    }
+    return best;
+  }
+
+_findLookPointForward(px, py, carAngle, sStart, maxAhead) {
+  const fx = Math.cos(carAngle);
+  const fy = Math.sin(carAngle);
+  const steps = Math.ceil(maxAhead / this.lookScanStep);
+
+  for (let j = 0; j < steps; j++) {
+    const s = this._wrapS(sStart + j * this.lookScanStep);
+    const p = this._pointAtS(s);
+    const vx = p.x - px;
+    const vy = p.y - py;
+
+    const dot = vx * fx + vy * fy;
+    if (dot <= 0) continue;
+
+    const alpha = Phaser.Math.Angle.Wrap(
+      Phaser.Math.Angle.Between(px, py, p.x, p.y) - carAngle
+    );
+    if (Math.abs(alpha) >= this.alphaMinRad) return p;
+  }
+
+  return this._pointAtS(sStart);
+}
+
 
   updateAI(dt, worldW, worldH) {
     const px = this.carX;
     const py = this.carY;
-    const v  = this.carSpeed || 0;
+    const v = this.carSpeed || 0;
 
-    // dynamiczne look-ahead
-    this.lookAheadDistance = Phaser.Math.Clamp(
-      v * 1.2,
-      this.minLookAhead,
-      this.maxLookAhead
-    );
+    const LdTarget = Phaser.Math.Clamp(14 + v * 0.7, this.minLookAhead, this.maxLookAhead);
+    this.lookAheadDistance = Phaser.Math.Linear(this.lookAheadDistance, LdTarget, this.LdLPAlpha);
 
-    // wybór punktu lookPoint
-    let lookPoint = null;
-    let bestDelta = Infinity;
-    let bestWP    = null;
-    for (let off = 1; off < this.waypoints.length; off++) {
-      const idx = (this.currentWaypointIndex + off) % this.waypoints.length;
-      const wp  = this.waypoints[idx];
-      const dx  = wp.x - px;
-      const dy  = wp.y - py;
-      const d   = Math.hypot(dx, dy);
+    const nearest = this._closestPointOnPath(px, py);
+    this.currentSegmentIndex = nearest.segIndex;
 
-      const ang = Phaser.Math.Angle.Between(px, py, wp.x, wp.y);
-      const rel = Phaser.Math.Angle.Wrap(ang - this.carAngle);
-      if (Math.abs(rel) > Math.PI / 2) continue;
+    const sLA = this._wrapS(nearest.s + this.lookAheadDistance);
 
-      if (d >= this.lookAheadDistance) {
-        lookPoint = wp;
-        break;
-      }
+    let look = this._findLookPointForward(px, py, this.carAngle, sLA, this.lookAheadDistance * 1.6);
 
-      const delta = Math.abs(d - this.lookAheadDistance);
-      if (delta < bestDelta) {
-        bestDelta = delta;
-        bestWP    = wp;
-      }
+    let sumAlpha = 0, cnt = 0;
+    for (let i = 0; i < this.alphaAvgSamples; i++) {
+      const lp = this._pointAtS(this._wrapS(sLA + i * this.alphaSampleSpacing));
+      const ang = Phaser.Math.Angle.Between(px, py, lp.x, lp.y);
+      const a = Phaser.Math.Angle.Wrap(ang - this.carAngle);
+      const fx = Math.cos(this.carAngle), fy = Math.sin(this.carAngle);
+      const dot = (lp.x - px) * fx + (lp.y - py) * fy;
+      if (dot > 0) { sumAlpha += a; cnt++; }
+      if (i === 0) look = lp;
     }
-    lookPoint = lookPoint || bestWP || this.waypoints[this.currentWaypointIndex];
+    const alphaMean = cnt > 0 ? sumAlpha / cnt : Phaser.Math.Angle.Wrap(Phaser.Math.Angle.Between(px, py, look.x, look.y) - this.carAngle);
 
-    // przełączenie segmentu
-    {
-      const cur  = this.waypoints[this.currentWaypointIndex];
-      const next = this.waypoints[(this.currentWaypointIndex + 1) % this.waypoints.length];
-      const vx   = next.x - cur.x;
-      const vy   = next.y - cur.y;
-      const wx   = px    - cur.x;
-      const wy   = py    - cur.y;
-      const proj = (vx * wx + vy * wy) / (vx * vx + vy * vy);
-      if (proj > this.reachedThreshold) {
-        this.currentWaypointIndex =
-          (this.currentWaypointIndex + 1) % this.waypoints.length;
-      }
-    }
+    const stanley = Math.atan2(-this.kStanley * nearest.crossTrack, this.stanleyV0 + Math.abs(v)); // odwrócony znak
+    const alphaRate = (alphaMean - this.prevAlpha) / Math.max(dt, 1e-3);
+    const alphaEff = Phaser.Math.Angle.Wrap(alphaMean + stanley + this.kAlphaRate * alphaRate);
 
-    // feed-forward na nadchodzący zakręt
-    const i0       = this.currentWaypointIndex;
-    const i1       = (i0 + 1) % this.waypoints.length;
-    const i2       = (i0 + 2) % this.waypoints.length;
-    const ang1     = Phaser.Math.Angle.Between(
-                      this.waypoints[i0].x, this.waypoints[i0].y,
-                      this.waypoints[i1].x, this.waypoints[i1].y
-                    );
-    const ang2     = Phaser.Math.Angle.Between(
-                      this.waypoints[i1].x, this.waypoints[i1].y,
-                      this.waypoints[i2].x, this.waypoints[i2].y
-                    );
-    const turnDiff = Math.abs(Phaser.Math.Angle.Wrap(ang2 - ang1));
-    const ffGain   = 1 + Math.min(turnDiff / (Math.PI / 2), 1) * 0.5;
+    const curvature = (2 * Math.sin(alphaEff)) / Math.max(this.lookAheadDistance, 1e-3);
+    const rawSteer = Phaser.Math.Clamp(curvature * this.baseCurvatureGain, -1, 1);
 
-    // obliczenie curvature i rawSteer
-    const targetAng = Phaser.Math.Angle.Between(px, py, lookPoint.x, lookPoint.y);
-    const alpha     = Phaser.Math.Angle.Wrap(targetAng - this.carAngle);
-    const curvature = (2 * Math.sin(alpha)) / this.lookAheadDistance;
-    let rawSteer    = Phaser.Math.Clamp(
-                        curvature * this.baseCurvatureGain * ffGain,
-                        -1,
-                        1
-                      );
+    const steerForce = (rawSteer - this.steerInput) * this.steerSpringFactor;
+    const steerDamping = -this.steerVelocity * this.steerDampingFactor;
+    const steerAccel = steerForce + steerDamping;
 
-    // — NOWE: szybkie obracanie samochodu
-    // wyliczamy docelową prędkość kątową [rad/s]
-    const angleError    = Phaser.Math.Angle.Wrap(targetAng - this.carAngle);
-    const angularVel    = Phaser.Math.Clamp(
-                             angleError * this.rotateResponse,
-                             -this.maxAngularSpeed,
-                             this.maxAngularSpeed
-                           );
-    // Phaser Arcade Body angularVelocity jest w stopniach/s
-    this.sprite.body.angularVelocity = Phaser.Math.RadToDeg(angularVel);
+    this.steerVelocity += steerAccel * dt;
+    this.steerVelocity = Phaser.Math.Clamp(this.steerVelocity, -this.steerVelocityLimit, this.steerVelocityLimit);
+    this.steerInput += this.steerVelocity * dt;
 
-    // rate limiting zmiany układu sterowania
-    const maxDelta = this.steerRateLimit * dt;
-    let delta       = rawSteer - this.steerInput;
-    delta           = Phaser.Math.Clamp(delta, -maxDelta, maxDelta);
-    this.steerInput += delta;
-
-    // płynny powrót kierownicy w deadzone
-    if (Math.abs(alpha) < this.alphaDeadzone) {
+    if (Math.abs(alphaEff) < this.alphaDeadzone * 0.7) {
       const retDelta = this.steerReturnSpeedRad * dt;
-      if (Math.abs(this.steerInput) <= retDelta) {
-        this.steerInput = 0;
-      } else {
-        this.steerInput -= Math.sign(this.steerInput) * retDelta;
-      }
+      this.steerInput = Math.abs(this.steerInput) <= retDelta
+        ? 0
+        : this.steerInput - Math.sign(this.steerInput) * retDelta;
     }
 
-    // konwersja na radiany
     const steerRad = Phaser.Math.Clamp(
       this.steerInput * this.maxSteerRad,
       -this.maxSteerRad,
       this.maxSteerRad
     );
 
-    // throttle z interpolacją liniową
-    let throttle = this.maxThrottle
-      - (Math.min(Math.abs(alpha) / Math.PI, 1) * (this.maxThrottle - this.minThrottle));
-    throttle     = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
+    let throttle = this.maxThrottle - (Math.min(Math.abs(alphaEff) / (Math.PI * 0.5), 1) * (this.maxThrottle - this.minThrottle));
+    if (v < 20) throttle = Math.max(throttle, this.minThrottle + 0.4 * (this.maxThrottle - this.minThrottle));
+    throttle = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
 
-    // kolizje i fizyka
-    if (
-      this.throttleLock &&
-      this.collisionImmunity <= 0 &&
-      !this.checkEllipseCollision() &&
-      !this.checkWorldEdgeCollision(worldW, worldH)
-    ) {
+    const a = this.waypoints[this.currentSegmentIndex];
+    const b = this.waypoints[(this.currentSegmentIndex + 1) % this.waypoints.length];
+    const distToNext = Math.hypot(px - b.x, py - b.y);
+    if (distToNext <= this.switchDist || nearest.t >= 0.98) {
+      this.currentSegmentIndex = (this.currentSegmentIndex + 1) % this.waypoints.length;
+    }
+
+    if (this.throttleLock && this.collisionImmunity <= 0 && !this.checkEllipseCollision() && !this.checkWorldEdgeCollision(worldW, worldH)) {
       this.updateInput({ up: false, down: false });
     }
 
@@ -961,19 +1215,10 @@ export class AICar extends Car {
 
     if (this.collisionImmunity > 0) {
       this.collisionImmunity = Math.max(0, this.collisionImmunity - dt);
-    } else if (
-      this.checkEllipseCollision() ||
-      this.checkWorldEdgeCollision(worldW, worldH)
-    ) {
+    } else if (this.checkEllipseCollision() || this.checkWorldEdgeCollision(worldW, worldH)) {
       this.handleCollision(px, py, worldW, worldH);
     }
 
-    // debug
-    console.log(
-      "WP idx:", this.currentWaypointIndex,
-      "α:", alpha.toFixed(2),
-      "steerIn:", this.steerInput.toFixed(2),
-      "thr:", throttle.toFixed(2)
-    );
+    this.prevAlpha = alphaMean;
   }
 }

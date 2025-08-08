@@ -1003,40 +1003,40 @@ export class AICar extends Car {
     this.minLookAhead = 12;
     this.maxLookAhead = 45;
     this.lookAheadDistance = this.minLookAhead;
-    this.LdLPAlpha = 0.3;
+    this.LdLPAlpha = 0.8;
 
-    this.baseCurvatureGain = 2.6;
-    this.kStanley = 1.1;
+    this.baseCurvatureGain = 3;
+    this.kStanley = 0.8;
     this.stanleyV0 = 2.0;
 
     this.steerInput = 0;
     this.steerVelocity = 0;
-    this.steerVelocityLimit = Phaser.Math.DegToRad(130);
+    this.steerVelocityLimit = Phaser.Math.DegToRad(180);
     this.steerSpringFactor = 10.0;
     this.steerDampingFactor = 4.0;
     this.maxSteerRad = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
 
-    this.alphaDeadzone = Phaser.Math.DegToRad(2.5);
-    this.steerReturnSpeedRad = Phaser.Math.DegToRad(80);
+    this.alphaDeadzone = Phaser.Math.DegToRad(0.5);
+    this.steerReturnSpeedRad = Phaser.Math.DegToRad(10);
 
-    this.minThrottle = 0.2;
-    this.maxThrottle = 0.8;
+    this.minThrottle = 0.15;
+    this.maxThrottle = 0.65;
 
     this.prevAlpha = 0;
     this.switchDist = 18;
 
-    this.alphaAvgSamples = 3;
-    this.alphaSampleSpacing = 16;
-    this.alphaMinRad = Phaser.Math.DegToRad(10);
+    this.alphaAvgSamples = 1;
+    this.alphaSampleSpacing = 12;
+    this.alphaMinRad = Phaser.Math.DegToRad(8);
     this.lookScanStep = 6;
-    this.kAlphaRate = 0.16;
+    this.kAlphaRate = 0.0;
 
     this.throttleLock = false;
 
-    this.hairpinVisibilityRatio = 0.65;
-    this.tangentForwardThresh = 0.2;
+    this.hairpinVisibilityRatio = 0.0;
+    this.tangentForwardThresh = -0.2;
     this.hairpinAngleDeg = 120;
-    this.hairpinClampLd = 18;
+    this.hairpinClampLd = 10;
     this.hairpinWindow = 60;
   }
 
@@ -1225,14 +1225,14 @@ export class AICar extends Car {
     const vSteerScale = 1 / (1 + 0.015 * Math.max(0, v));
     const rawSteer = Phaser.Math.Clamp(curvature * this.baseCurvatureGain * vSteerScale, -1, 1);
 
-    if (alphaRate < 0 && Math.abs(alphaEff) < Phaser.Math.DegToRad(15)) {
-      this.steerVelocity *= 0.7;
-      this.steerInput *= 0.85;
-    }
-    if (Math.abs(alphaEff) < this.alphaDeadzone * 0.8 && Math.abs(this.steerInput) > 0.3) {
-      const steerRelease = 1.8 * dt;
-      this.steerInput -= Math.sign(this.steerInput) * steerRelease;
-    }
+    // if (alphaRate < 0 && Math.abs(alphaEff) < Phaser.Math.DegToRad(15)) {
+    //   this.steerVelocity *= 0.7;
+    //   this.steerInput *= 0.85;
+    // }
+    // if (Math.abs(alphaEff) < this.alphaDeadzone * 0.8 && Math.abs(this.steerInput) > 0.3) {
+    //   const steerRelease = 1.8 * dt;
+    //   this.steerInput -= Math.sign(this.steerInput) * steerRelease;
+    // }
 
     const steerForce = (rawSteer - this.steerInput) * this.steerSpringFactor;
     const steerDamping = -this.steerVelocity * this.steerDampingFactor;

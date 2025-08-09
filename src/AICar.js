@@ -289,8 +289,8 @@
 //   // pomocnicza projekcja na odcinek AB
 //   _proj(px, py, A, B) {
 //     const vx = B.x - A.x, vy = B.y - A.y;
-//     const wx = px - A.x, wy = py - A.y;
-//     return (vx * wx + vy * wy) / (vx * vx + vy * vy);
+//     const wx = px - A.x,   wy = py - A.y;
+//     return (vx * wx + vy * wy) / (vx*vx + vy*vy);
 //   }
 // }
 
@@ -787,209 +787,6 @@
 
 
 
-// // src/AICar.js
-// import { Car } from "./car.js";
-// import { carConfig } from "./carConfig.js";
-
-// export class AICar extends Car {
-//   constructor(scene, carSprite, worldData, waypoints) {
-//     super(scene, carSprite, worldData);
-
-//     // waypointy i trasa
-//     this.waypoints            = waypoints;
-//     this.currentWaypointIndex = 0;
-//     this.reachedThreshold     = 0.2;
-
-//     // parametry Pure Pursuit
-//     this.minLookAhead      = 10;
-//     this.maxLookAhead      = 20;
-//     this.lookAheadDistance = this.minLookAhead;
-//     this.baseCurvatureGain = 10.0;
-
-//     // deadzone i smoothing z configu
-//     this.alphaDeadzone   = Phaser.Math.DegToRad(carConfig.steerInputThreshold);
-//     this.baseSteerSmooth = carConfig.steerSmoothFactor;
-
-//     // sterowanie
-//     this.maxSteerRad         = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
-//     this.steerRateLimit      = Phaser.Math.DegToRad(carConfig.STEER_SPEED_DEG);
-//     this.steerReturnSpeedRad = Phaser.Math.DegToRad(carConfig.STEER_RETURN_SPEED_DEG);
-//     this.steerInput          = 0;
-
-//     // throttle
-//     this.minThrottle = 0.1;
-//     this.maxThrottle = 0.3;
-
-//     //  — NOWE: szybkie obracanie samochodu w kierunku lookPoint
-//     // ile razy mnożymy błąd kąta, by uzyskać angularVelocity:
-//     this.rotateResponse    = 3.0;                  // tuning: większe = szybsze obracanie
-//     // ograniczenie prędkości obrotu (radiany na sekundę):
-//     this.maxAngularSpeed   = Phaser.Math.DegToRad(180);
-//   }
-
-//   updateAI(dt, worldW, worldH) {
-//     const px = this.carX;
-//     const py = this.carY;
-//     const v  = this.carSpeed || 0;
-
-//     // dynamiczne look-ahead
-//     this.lookAheadDistance = Phaser.Math.Clamp(
-//       v * 1.2,
-//       this.minLookAhead,
-//       this.maxLookAhead
-//     );
-
-//     // wybór punktu lookPoint
-//     let lookPoint = null;
-//     let bestDelta = Infinity;
-//     let bestWP    = null;
-//     for (let off = 1; off < this.waypoints.length; off++) {
-//       const idx = (this.currentWaypointIndex + off) % this.waypoints.length;
-//       const wp  = this.waypoints[idx];
-//       const dx  = wp.x - px;
-//       const dy  = wp.y - py;
-//       const d   = Math.hypot(dx, dy);
-
-//       const ang = Phaser.Math.Angle.Between(px, py, wp.x, wp.y);
-//       const rel = Phaser.Math.Angle.Wrap(ang - this.carAngle);
-//       if (Math.abs(rel) > Math.PI / 2) continue;
-
-//       if (d >= this.lookAheadDistance) {
-//         lookPoint = wp;
-//         break;
-//       }
-
-//       const delta = Math.abs(d - this.lookAheadDistance);
-//       if (delta < bestDelta) {
-//         bestDelta = delta;
-//         bestWP    = wp;
-//       }
-//     }
-//     lookPoint = lookPoint || bestWP || this.waypoints[this.currentWaypointIndex];
-
-//     // przełączenie segmentu
-//     {
-//       const cur  = this.waypoints[this.currentWaypointIndex];
-//       const next = this.waypoints[(this.currentWaypointIndex + 1) % this.waypoints.length];
-//       const vx   = next.x - cur.x;
-//       const vy   = next.y - cur.y;
-//       const wx   = px    - cur.x;
-//       const wy   = py    - cur.y;
-//       const proj = (vx * wx + vy * wy) / (vx * vx + vy * vy);
-//       if (proj > this.reachedThreshold) {
-//         this.currentWaypointIndex =
-//           (this.currentWaypointIndex + 1) % this.waypoints.length;
-//       }
-//     }
-
-//     // feed-forward na nadchodzący zakręt
-//     const i0       = this.currentWaypointIndex;
-//     const i1       = (i0 + 1) % this.waypoints.length;
-//     const i2       = (i0 + 2) % this.waypoints.length;
-//     const ang1     = Phaser.Math.Angle.Between(
-//                       this.waypoints[i0].x, this.waypoints[i0].y,
-//                       this.waypoints[i1].x, this.waypoints[i1].y
-//                     );
-//     const ang2     = Phaser.Math.Angle.Between(
-//                       this.waypoints[i1].x, this.waypoints[i1].y,
-//                       this.waypoints[i2].x, this.waypoints[i2].y
-//                     );
-//     const turnDiff = Math.abs(Phaser.Math.Angle.Wrap(ang2 - ang1));
-//     const ffGain   = 1 + Math.min(turnDiff / (Math.PI / 2), 1) * 0.5;
-
-//     // obliczenie curvature i rawSteer
-//     const targetAng = Phaser.Math.Angle.Between(px, py, lookPoint.x, lookPoint.y);
-//     const alpha     = Phaser.Math.Angle.Wrap(targetAng - this.carAngle);
-//     const curvature = (2 * Math.sin(alpha)) / this.lookAheadDistance;
-//     let rawSteer    = Phaser.Math.Clamp(
-//                         curvature * this.baseCurvatureGain * ffGain,
-//                         -1,
-//                         1
-//                       );
-
-//     // — NOWE: szybkie obracanie samochodu
-//     // wyliczamy docelową prędkość kątową [rad/s]
-//     const angleError    = Phaser.Math.Angle.Wrap(targetAng - this.carAngle);
-//     const angularVel    = Phaser.Math.Clamp(
-//                              angleError * this.rotateResponse,
-//                              -this.maxAngularSpeed,
-//                              this.maxAngularSpeed
-//                            );
-//     // Phaser Arcade Body angularVelocity jest w stopniach/s
-//     this.carSprite.angularVelocity = Phaser.Math.RadToDeg(angularVel);
-
-//     // rate limiting zmiany układu sterowania
-//     const maxDelta = this.steerRateLimit * dt;
-//     let delta       = rawSteer - this.steerInput;
-//     delta           = Phaser.Math.Clamp(delta, -maxDelta, maxDelta);
-//     this.steerInput += delta;
-
-//     // płynny powrót kierownicy w deadzone
-//     if (Math.abs(alpha) < this.alphaDeadzone) {
-//       const retDelta = this.steerReturnSpeedRad * dt;
-//       if (Math.abs(this.steerInput) <= retDelta) {
-//         this.steerInput = 0;
-//       } else {
-//         this.steerInput -= Math.sign(this.steerInput) * retDelta;
-//       }
-//     }
-
-//     // konwersja na radiany
-//     const steerRad = Phaser.Math.Clamp(
-//       this.steerInput * this.maxSteerRad,
-//       -this.maxSteerRad,
-//       this.maxSteerRad
-//     );
-
-//     // throttle z interpolacją liniową
-//     let throttle = this.maxThrottle
-//       - (Math.min(Math.abs(alpha) / Math.PI, 1) * (this.maxThrottle - this.minThrottle));
-//     throttle     = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
-
-//     // kolizje i fizyka
-//     if (
-//       this.throttleLock &&
-//       this.collisionImmunity <= 0 &&
-//       !this.checkEllipseCollision() &&
-//       !this.checkWorldEdgeCollision(worldW, worldH)
-//     ) {
-//       this.updateInput({ up: false, down: false });
-//     }
-
-//     this.updatePhysics(
-//       dt,
-//       steerRad,
-//       throttle,
-//       this.worldData.getSurfaceTypeAt(px, py)
-//     );
-
-//     if (this.collisionImmunity > 0) {
-//       this.collisionImmunity = Math.max(0, this.collisionImmunity - dt);
-//     } else if (
-//       this.checkEllipseCollision() ||
-//       this.checkWorldEdgeCollision(worldW, worldH)
-//     ) {
-//       this.handleCollision(px, py, worldW, worldH);
-//     }
-
-//     // debug
-//     console.log(
-//       "WP idx:", this.currentWaypointIndex,
-//       "α:", alpha.toFixed(2),
-//       "steerIn:", this.steerInput.toFixed(2),
-//       "thr:", throttle.toFixed(2)
-//     );
-//   }
-// }
-
-
-
-
-
-
-
-
-
 
 
 import { Car } from "./car.js";
@@ -1040,6 +837,13 @@ export class AICar extends Car {
     this.alphaMinRad = Phaser.Math.DegToRad(3);
     this.lookScanStep = 6;
     this.kAlphaRate = 0.0;
+
+    // Slip-aware steering parameters
+    this.kVelHeadingMix = 0.7;            // how much to use velocity heading vs body heading
+    this.kCounterSteer = 0.4;             // countersteer gain vs slip angle beta
+    this.kSlipReduce = 2.0;               // steering reduction with slip
+    this.betaRef = Phaser.Math.DegToRad(25);
+    this.kThrottleSlip = 0.5;             // throttle reduction with slip
 
     this.throttleLock = false;
 
@@ -1181,7 +985,8 @@ export class AICar extends Car {
   updateAI(dt, worldW, worldH) {
     const px = this.carX;
     const py = this.carY;
-    const v = this.carSpeed || 0;
+    // Use local velocity to avoid relying on external carSpeed
+    const v = Math.hypot(this.v_x, this.v_y);
 
     // Adaptive lookahead: longer for earlier, smoother turns
     const LdTarget = Phaser.Math.Clamp(20 + v * 1.0, this.minLookAhead, this.maxLookAhead);
@@ -1206,19 +1011,27 @@ export class AICar extends Car {
       this.lookAheadDistance = Phaser.Math.Linear(this.lookAheadDistance, LdTargetHard, 0.7);
     }
 
-    // Recovery mode after collision: ensure throttle and align to path direction
+    // Slip angle beta and mixed heading (account for 4 wheels and wheel/body angle difference)
+    const beta = Math.atan2(this.v_y, Math.max(1e-3, this.v_x));
+    const headingEff = this.carAngle + this.kVelHeadingMix * beta;
+
+    // Recovery mode after collision
     if (this.postCollisionTimer > 0) {
       this.postCollisionTimer -= dt;
 
-      const fx = Math.cos(this.carAngle), fy = Math.sin(this.carAngle);
       const tan = this._tangentAtS(nearest.s);
       const pathAngle = Math.atan2(tan.ty, tan.tx);
       const targetAngle = this.recoverTargetAngle ?? pathAngle;
-      const alphaRecover = Phaser.Math.Angle.Wrap(targetAngle - this.carAngle);
+      const alphaRecover = Phaser.Math.Angle.Wrap(targetAngle - headingEff);
 
-      // Gentle steering toward path direction
-      const curvatureRecover = (2 * Math.sin(alphaRecover)) / Math.max(this.lookAheadDistance, 1e-3);
-      const rawSteer = Phaser.Math.Clamp(curvatureRecover * (this.baseCurvatureGain * 0.8), -1, 1);
+      // Bicycle model: desired front wheel steer
+      let deltaDesired = Math.atan2(2 * this.wheelBase * Math.sin(alphaRecover), Math.max(this.lookAheadDistance, 1e-3));
+      // Countersteer and slip reduction
+      deltaDesired -= this.kCounterSteer * beta;
+      const slipFactor = Phaser.Math.Clamp(1 / (1 + this.kSlipReduce * Math.abs(beta) / this.betaRef), 0.5, 1.0);
+      deltaDesired *= slipFactor;
+
+      const rawSteer = Phaser.Math.Clamp(deltaDesired / this.maxSteerRad, -1, 1);
 
       const steerForce = (rawSteer - this.steerInput) * (this.steerSpringFactor * 0.8);
       const steerDamping = -this.steerVelocity * (this.steerDampingFactor * 1.2);
@@ -1240,14 +1053,16 @@ export class AICar extends Car {
         this.maxSteerRad
       );
 
-      // Reapply gas after bounce, but avoid pushing hard when facing backwards
-      const forwardDot = tan.tx * fx + tan.ty * fy;
+      // Reapply gas after bounce; cut under high slip
+      const forwardDot = tan.tx * Math.cos(headingEff) + tan.ty * Math.sin(headingEff);
       let throttle = this.minThrottle + 0.5 * (this.maxThrottle - this.minThrottle);
+      const slipCut = Phaser.Math.Clamp(Math.abs(beta) / this.betaRef, 0, 1);
+      throttle *= (1 - this.kThrottleSlip * slipCut);
       if (forwardDot < 0 && Math.abs(v) > 10) {
-        throttle = this.minThrottle; // give time to rotate if going opposite
+        throttle = this.minThrottle; // allow rotation if going opposite
       }
+      throttle = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
 
-      // Ensure throttle lock is released quickly after collision
       if (this.throttleLock && this.collisionImmunity <= 0 && !this.checkEllipseCollision() && !this.checkWorldEdgeCollision(worldW, worldH)) {
         this.updateInput({ up: false, down: false });
       }
@@ -1259,7 +1074,6 @@ export class AICar extends Car {
         this.worldData.getSurfaceTypeAt(px, py)
       );
 
-      // Normal collision processing
       if (this.collisionImmunity > 0) {
         this.collisionImmunity = Math.max(0, this.collisionImmunity - dt);
       } else if (this.checkEllipseCollision() || this.checkWorldEdgeCollision(worldW, worldH)) {
@@ -1274,7 +1088,7 @@ export class AICar extends Car {
     const lookP = this._findLookPointForward(px, py, this.carAngle, nearest.s, sLA, this.lookAheadDistance * 1.6);
 
     let sumAlpha = 0, cnt = 0;
-    const fx = Math.cos(this.carAngle), fy = Math.sin(this.carAngle);
+    const fx = Math.cos(headingEff), fy = Math.sin(headingEff);
     for (let i = 0; i < this.alphaAvgSamples; i++) {
       const sSi = this._wrapS(sLA + i * this.alphaSampleSpacing);
       const tp = this._tangentAtS(sSi);
@@ -1289,21 +1103,26 @@ export class AICar extends Car {
       if (pathDist > 1 && euclid / pathDist < this.hairpinVisibilityRatio) break;
 
       const ang = Phaser.Math.Angle.Between(px, py, tp.x, tp.y);
-      const a = Phaser.Math.Angle.Wrap(ang - this.carAngle);
+      const a = Phaser.Math.Angle.Wrap(ang - headingEff);
       sumAlpha += a; cnt++;
     }
 
     const alphaMean = cnt > 0
       ? sumAlpha / cnt
-      : Phaser.Math.Angle.Wrap(Phaser.Math.Angle.Between(px, py, lookP.x, lookP.y) - this.carAngle);
+      : Phaser.Math.Angle.Wrap(Phaser.Math.Angle.Between(px, py, lookP.x, lookP.y) - headingEff);
 
     const stanley = Math.atan2(-this.kStanley * nearest.crossTrack, this.stanleyV0 + Math.abs(v));
     const alphaRate = (alphaMean - this.prevAlpha) / Math.max(dt, 1e-3);
     const alphaEff = Phaser.Math.Angle.Wrap(alphaMean + stanley + this.kAlphaRate * alphaRate);
 
-    const curvature = (2 * Math.sin(alphaEff)) / Math.max(this.lookAheadDistance, 1e-3);
-    const vSteerScale = 1 / (1 + 0.015 * Math.max(0, v));
-    const rawSteer = Phaser.Math.Clamp(curvature * this.baseCurvatureGain * vSteerScale, -1, 1);
+    // Bicycle model: compute desired front wheel angle (delta)
+    let deltaDesired = Math.atan2(2 * this.wheelBase * Math.sin(alphaEff), Math.max(this.lookAheadDistance, 1e-3));
+    // Countersteer and slip reduction
+    deltaDesired -= this.kCounterSteer * beta;
+    const slipFactor = Phaser.Math.Clamp(1 / (1 + this.kSlipReduce * Math.abs(beta) / this.betaRef), 0.5, 1.0);
+    deltaDesired *= slipFactor;
+
+    const rawSteer = Phaser.Math.Clamp(deltaDesired / this.maxSteerRad, -1, 1);
 
     const steerForce = (rawSteer - this.steerInput) * this.steerSpringFactor;
     const steerDamping = -this.steerVelocity * this.steerDampingFactor;
@@ -1326,7 +1145,10 @@ export class AICar extends Car {
       this.maxSteerRad
     );
 
+    // Throttle: reduce on big angle and with slip beta
     let throttle = this.maxThrottle - (Math.min(Math.abs(alphaEff) / (Math.PI * 0.5), 1) * (this.maxThrottle - this.minThrottle));
+    const slipCut = Phaser.Math.Clamp(Math.abs(beta) / this.betaRef, 0, 1);
+    throttle *= (1 - this.kThrottleSlip * slipCut);
     if (v < 20) throttle = Math.max(throttle, this.minThrottle + 0.4 * (this.maxThrottle - this.minThrottle));
     throttle = Phaser.Math.Clamp(throttle, this.minThrottle, this.maxThrottle);
 

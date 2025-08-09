@@ -301,6 +301,8 @@
 
 
 
+
+
 // src/AICar.js
 // import { Car } from "./car.js";
 // import { carConfig } from "./carConfig.js";
@@ -421,8 +423,10 @@
 //     );
 //     if (this.collisionImmunity > 0) {
 //       this.collisionImmunity = Math.max(0, this.collisionImmunity - dt);
-//     } else if (this.checkEllipseCollision()
-//                || this.checkWorldEdgeCollision(worldW, worldH)) {
+//     } else if (
+//       this.checkEllipseCollision() ||
+//       this.checkWorldEdgeCollision(worldW, worldH)
+//     ) {
 //       this.handleCollision(px, py, worldW, worldH);
 //     }
 //   }
@@ -1000,34 +1004,40 @@ export class AICar extends Car {
 
     this._buildPathMetrics();
 
-    this.minLookAhead = 12;
-    this.maxLookAhead = 45;
+    // Earlier and smoother anticipation
+    this.minLookAhead = 18;
+    this.maxLookAhead = 60;
     this.lookAheadDistance = this.minLookAhead;
-    this.LdLPAlpha = 0.8;
+    this.LdLPAlpha = 0.7;
 
-    this.baseCurvatureGain = 3;
-    this.kStanley = 0.8;
+    // Gentler curvature and cross-track correction
+    this.baseCurvatureGain = 2.2;
+    this.kStanley = 0.6;
     this.stanleyV0 = 2.0;
 
+    // Smoother steering dynamics
     this.steerInput = 0;
     this.steerVelocity = 0;
-    this.steerVelocityLimit = Phaser.Math.DegToRad(180);
-    this.steerSpringFactor = 10.0;
-    this.steerDampingFactor = 4.0;
+    this.steerVelocityLimit = Phaser.Math.DegToRad(120);
+    this.steerSpringFactor = 8.0;
+    this.steerDampingFactor = 6.0;
     this.maxSteerRad = Phaser.Math.DegToRad(carConfig.MAX_STEER_DEG);
 
-    this.alphaDeadzone = Phaser.Math.DegToRad(0.5);
-    this.steerReturnSpeedRad = Phaser.Math.DegToRad(10);
+    // Slightly larger deadzone and faster gentle return
+    this.alphaDeadzone = Phaser.Math.DegToRad(2);
+    this.steerReturnSpeedRad = Phaser.Math.DegToRad(15);
 
-    this.minThrottle = 0.15;
-    this.maxThrottle = 0.65;
+    // Slightly higher min throttle to recover speed better
+    this.minThrottle = 0.2;
+    this.maxThrottle = 0.7;
 
     this.prevAlpha = 0;
-    this.switchDist = 18;
+    this.switchDist = 25;
 
-    this.alphaAvgSamples = 1;
+    // Average a bit for stability and allow small early corrections
+    this.alphaAvgSamples = 2;
     this.alphaSampleSpacing = 12;
-    this.alphaMinRad = Phaser.Math.DegToRad(8);
+    this.alphaMinRad = Phaser.Math.DegToRad(3);
     this.lookScanStep = 6;
     this.kAlphaRate = 0.0;
 
@@ -1038,6 +1048,11 @@ export class AICar extends Car {
     this.hairpinAngleDeg = 120;
     this.hairpinClampLd = 10;
     this.hairpinWindow = 60;
+
+    // Post-collision recovery
+    this.postCollisionTimer = 0;
+    this.postCollisionMax = 0.6; // s
+    this.recoverTargetAngle = null;
   }
 
   _buildPathMetrics() {
@@ -1168,7 +1183,8 @@ export class AICar extends Car {
     const py = this.carY;
     const v = this.carSpeed || 0;
 
-    const LdTarget = Phaser.Math.Clamp(14 + v * 0.7, this.minLookAhead, this.maxLookAhead);
+    // Adaptive lookahead: longer for earlier, smoother turns
+    const LdTarget = Phaser.Math.Clamp(20 + v * 1.0, this.minLookAhead, this.maxLookAhead);
     this.lookAheadDistance = Phaser.Math.Linear(this.lookAheadDistance, LdTarget, this.LdLPAlpha);
 
     const nearest = this._closestPointOnPath(px, py);
@@ -1183,11 +1199,75 @@ export class AICar extends Car {
     const lab = Math.hypot(abx, aby) || 1e-6;
     const lbc = Math.hypot(bcx, bcy) || 1e-6;
     const dot = (abx * bcx + aby * bcy) / (lab * lbc);
-    const turnDeg = Math.abs(Phaser.Math.RadToDeg(Math.acos(Phaser.Math.Clamp(dot, -1, 1))));
+    const turnDeg = Math.abs(Phaser.Math.RadToDeg(Math.acos(Phaser.Math.Clamp(dot, -1, 1))))
     const distToNext = Math.hypot(px - b.x, py - b.y);
     if (turnDeg >= this.hairpinAngleDeg && distToNext < this.hairpinWindow) {
       const LdTargetHard = Math.min(this.lookAheadDistance, this.hairpinClampLd);
       this.lookAheadDistance = Phaser.Math.Linear(this.lookAheadDistance, LdTargetHard, 0.7);
+    }
+
+    // Recovery mode after collision: ensure throttle and align to path direction
+    if (this.postCollisionTimer > 0) {
+      this.postCollisionTimer -= dt;
+
+      const fx = Math.cos(this.carAngle), fy = Math.sin(this.carAngle);
+      const tan = this._tangentAtS(nearest.s);
+      const pathAngle = Math.atan2(tan.ty, tan.tx);
+      const targetAngle = this.recoverTargetAngle ?? pathAngle;
+      const alphaRecover = Phaser.Math.Angle.Wrap(targetAngle - this.carAngle);
+
+      // Gentle steering toward path direction
+      const curvatureRecover = (2 * Math.sin(alphaRecover)) / Math.max(this.lookAheadDistance, 1e-3);
+      const rawSteer = Phaser.Math.Clamp(curvatureRecover * (this.baseCurvatureGain * 0.8), -1, 1);
+
+      const steerForce = (rawSteer - this.steerInput) * (this.steerSpringFactor * 0.8);
+      const steerDamping = -this.steerVelocity * (this.steerDampingFactor * 1.2);
+      const steerAccel = steerForce + steerDamping;
+      this.steerVelocity += steerAccel * dt;
+      this.steerVelocity = Phaser.Math.Clamp(this.steerVelocity, -this.steerVelocityLimit, this.steerVelocityLimit);
+      this.steerInput += this.steerVelocity * dt;
+
+      if (Math.abs(alphaRecover) < this.alphaDeadzone * 0.7) {
+        const retDelta = this.steerReturnSpeedRad * dt;
+        this.steerInput = Math.abs(this.steerInput) <= retDelta
+          ? 0
+          : this.steerInput - Math.sign(this.steerInput) * retDelta;
+      }
+
+      const steerRad = Phaser.Math.Clamp(
+        this.steerInput * this.maxSteerRad,
+        -this.maxSteerRad,
+        this.maxSteerRad
+      );
+
+      // Reapply gas after bounce, but avoid pushing hard when facing backwards
+      const forwardDot = tan.tx * fx + tan.ty * fy;
+      let throttle = this.minThrottle + 0.5 * (this.maxThrottle - this.minThrottle);
+      if (forwardDot < 0 && Math.abs(v) > 10) {
+        throttle = this.minThrottle; // give time to rotate if going opposite
+      }
+
+      // Ensure throttle lock is released quickly after collision
+      if (this.throttleLock && this.collisionImmunity <= 0 && !this.checkEllipseCollision() && !this.checkWorldEdgeCollision(worldW, worldH)) {
+        this.updateInput({ up: false, down: false });
+      }
+
+      this.updatePhysics(
+        dt,
+        steerRad,
+        throttle,
+        this.worldData.getSurfaceTypeAt(px, py)
+      );
+
+      // Normal collision processing
+      if (this.collisionImmunity > 0) {
+        this.collisionImmunity = Math.max(0, this.collisionImmunity - dt);
+      } else if (this.checkEllipseCollision() || this.checkWorldEdgeCollision(worldW, worldH)) {
+        this.handleCollision(px, py, worldW, worldH);
+      }
+
+      this.prevAlpha = alphaRecover;
+      return;
     }
 
     const sLA = this._wrapS(nearest.s + this.lookAheadDistance);
@@ -1224,15 +1304,6 @@ export class AICar extends Car {
     const curvature = (2 * Math.sin(alphaEff)) / Math.max(this.lookAheadDistance, 1e-3);
     const vSteerScale = 1 / (1 + 0.015 * Math.max(0, v));
     const rawSteer = Phaser.Math.Clamp(curvature * this.baseCurvatureGain * vSteerScale, -1, 1);
-
-    // if (alphaRate < 0 && Math.abs(alphaEff) < Phaser.Math.DegToRad(15)) {
-    //   this.steerVelocity *= 0.7;
-    //   this.steerInput *= 0.85;
-    // }
-    // if (Math.abs(alphaEff) < this.alphaDeadzone * 0.8 && Math.abs(this.steerInput) > 0.3) {
-    //   const steerRelease = 1.8 * dt;
-    //   this.steerInput -= Math.sign(this.steerInput) * steerRelease;
-    // }
 
     const steerForce = (rawSteer - this.steerInput) * this.steerSpringFactor;
     const steerDamping = -this.steerVelocity * this.steerDampingFactor;
@@ -1285,5 +1356,14 @@ export class AICar extends Car {
     }
 
     this.prevAlpha = alphaMean;
+  }
+
+  handleCollision(prevX, prevY, worldW, worldH) {
+    // Call base collision and start recovery alignment
+    super.handleCollision(prevX, prevY, worldW, worldH);
+    this.postCollisionTimer = this.postCollisionMax;
+    const nearest = this._closestPointOnPath(this.carX, this.carY);
+    const tan = this._tangentAtS(nearest.s);
+    this.recoverTargetAngle = Math.atan2(tan.ty, tan.tx);
   }
 }

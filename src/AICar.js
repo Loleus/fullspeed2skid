@@ -783,8 +783,6 @@
 
 
 
-
-
 import { Car } from "./car.js";
 
 export class AICar extends Car {
@@ -794,140 +792,256 @@ export class AICar extends Car {
     this.currentWaypointIndex = 0;
     
     // Parametry sterowania
-    this.waypointSwitchDistance = 30;
-    this.lookAheadWaypoints = 2; // Ile waypointów do przodu patrzeć
+    this.waypointZoneRadius = 80; // Większy promień dla łatwiejszego zaliczania
     
-    // Parametry skrętu - bardziej agresywne dla zakrętów
-    this.steerP = 2.0; // Wzmocnienie proporcjonalne
-    this.maxSteerInput = 1.0;
+    // Parametry skrętu - umiarkowane
+    this.steerP = 0.6;
+    this.maxSteerInput = 0.25; // Mniej agresywne skręty
+    this.deadZoneAngle = 0.08;
     
     // Stan
     this.steerCommand = 0;
     this.debugAngle = 0;
     
-    // Post-collision
-    this.postCollisionTimer = 0;
-    this.postCollisionDuration = 1.0;
+    // Wykrywanie utknięcia
+    this.stuckDetector = {
+      lastWaypoint: 0,
+      sameWaypointTime: 0,
+      maxStuckTime: 3.0 // Po 3 sekundach na tym samym waypoint = utknięcie
+    };
+    
+    // Recovery
+    this.recoveryMode = false;
+    this.recoveryTimer = 0;
+    
+    // Debug
+    this.debugTimer = 0;
+    this.debugInterval = 1.0;
   }
 
   updateAI(dt, worldW, worldH) {
     const state = this.getFullState();
     
-    if (this.postCollisionTimer > 0) {
-      this.postCollisionTimer -= dt;
-      this._recoveryMode(dt, worldW, worldH, state);
-      return;
-    }
-
-    // Aktualny i docelowy waypoint
-    const currentWP = this.waypoints[this.currentWaypointIndex];
-    const targetIndex = (this.currentWaypointIndex + this.lookAheadWaypoints) % this.waypoints.length;
-    const targetWP = this.waypoints[targetIndex];
+    // Debug
+    this._updateDebug(dt, state);
     
-    // Sprawdź odległość do aktualnego waypointu
-    const distToCurrent = Math.hypot(
-      currentWP.x - this.carX,
-      currentWP.y - this.carY
-    );
-
-    // Przełącz na następny waypoint
-    if (distToCurrent < this.waypointSwitchDistance) {
-      this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
+    // Wykryj utknięcie na tym samym waypoint
+    this._detectStuck(dt);
+    
+    // Tryb recovery
+    if (this.recoveryMode) {
+      this.recoveryTimer -= dt;
+      
+      if (this.recoveryTimer <= 0) {
+        this.recoveryMode = false;
+        console.log('[AI] Recovery END');
+      } else {
+        // W recovery - cofaj i skręcaj
+        const nextWP = this.waypoints[(this.currentWaypointIndex + 1) % this.waypoints.length];
+        const angleToNext = Math.atan2(nextWP.y - this.carY, nextWP.x - this.carX);
+        const angleDiff = this._normalizeAngle(angleToNext - state.carAngle);
+        
+        const control = {
+          left: angleDiff < -0.3,
+          right: angleDiff > 0.3,
+          up: false,
+          down: true // Cofaj
+        };
+        
+        // Jeśli prędkość prawie zero, spróbuj jechać do przodu
+        if (Math.abs(state.v_x) < 20) {
+          control.up = true;
+          control.down = false;
+        }
+        
+        this.update(dt, control, worldW, worldH);
+        return;
+      }
+    }
+    
+    // Wykryj poślizg
+    if (Math.abs(state.v_y) > 120 && state.speed > 150) {
+      console.log(`[AI] SLIDE! v_y=${state.v_y.toFixed(0)}`);
+      // Nie wchodź w recovery, tylko zwolnij
     }
 
-    // Kąt do docelowego waypointu (patrzymy dalej do przodu)
+    // Sprawdź waypoint
+    this._checkCurrentWaypoint();
+    
+    // Pobierz cel
+    const targetWP = this.waypoints[this.currentWaypointIndex];
+    
+    // Odległość i kąt
+    const distToTarget = Math.hypot(
+      targetWP.x - this.carX,
+      targetWP.y - this.carY
+    );
+    
     const angleToTarget = Math.atan2(
       targetWP.y - this.carY,
       targetWP.x - this.carX
     );
     
-    // Normalizuj różnicę kątów
-    let angleDiff = angleToTarget - state.carAngle;
-    while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-    while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-    
+    let angleDiff = this._normalizeAngle(angleToTarget - state.carAngle);
     this.debugAngle = Phaser.Math.RadToDeg(angleDiff);
-
-    // Kontroler proporcjonalny dla sterowania
-    // Używamy różnicy kątów bezpośrednio jako sygnału sterującego
-    this.steerCommand = Phaser.Math.Clamp(
-      angleDiff * this.steerP,
-      -this.maxSteerInput,
-      this.maxSteerInput
-    );
-
-    // Próg martwej strefy - jeśli różnica bardzo mała, nie steruj
-    if (Math.abs(angleDiff) < 0.05) { // ~3 stopnie
-      this.steerCommand = 0;
-    }
-
-    // Throttle - zależny od kąta skrętu i różnicy kątów
-    let throttle = 1.0;
-    const absAngleDiff = Math.abs(angleDiff);
-    const absSteerAngle = Math.abs(state.steerAngleDeg);
     
-    // Zwalniaj na ostrych zakrętach
-    if (absAngleDiff > 1.0) { // > ~57 stopni
-      throttle = 0.2;
-    } else if (absAngleDiff > 0.5) { // > ~29 stopni
-      throttle = 0.4;
-    } else if (absSteerAngle > 15) { // Duży skręt kół
-      throttle = 0.6;
+    // Oblicz sterowanie
+    let steer = 0;
+    let throttle = 0.5; // Domyślnie umiarkowana prędkość
+    
+    const absAngleDiff = Math.abs(angleDiff);
+    
+    // Prosta logika sterowania
+    if (absAngleDiff < this.deadZoneAngle) {
+      // Jedź prosto
+      steer = 0;
+      throttle = 0.7;
+      
+    } else {
+      // Sterowanie proporcjonalne
+      steer = angleDiff * this.steerP;
+      
+      // Ogranicz maksymalne sterowanie
+      steer = Phaser.Math.Clamp(steer, -this.maxSteerInput, this.maxSteerInput);
+      
+      // Dostosuj prędkość do kąta skrętu
+      if (absAngleDiff > 1.5) { // > 86 stopni - bardzo ostry
+        throttle = 0.1;
+        // Zwiększ skręt dla ostrych zakrętów
+        steer = Math.sign(angleDiff) * 0.35;
+      } else if (absAngleDiff > 1.0) { // > 57 stopni
+        throttle = 0.2;
+      } else if (absAngleDiff > 0.5) { // > 29 stopni
+        throttle = 0.3;
+      } else if (absAngleDiff > 0.25) { // > 14 stopni
+        throttle = 0.45;
+      } else {
+        throttle = 0.6;
+      }
     }
-
-    // Sterowanie
+    
+    // Dodatkowe ograniczenia
+    if (state.speed > 350) {
+      throttle = Math.min(throttle, 0.3);
+    }
+    
+    // Anty-poślizg
+    if (Math.abs(state.v_y) > 80) {
+      throttle *= 0.5;
+      steer *= 0.8;
+    }
+    
+    this.steerCommand = steer;
+    
+    // Kontrola
     const control = {
-      left: this.steerCommand < -0.1,
-      right: this.steerCommand > 0.1,
+      left: steer < -0.02,
+      right: steer > 0.02,
       up: throttle > 0,
       down: false
     };
 
     this.update(dt, control, worldW, worldH);
   }
-
-  _recoveryMode(dt, worldW, worldH, state) {
-    // Znajdź najbliższy waypoint
-    let minDist = Infinity;
-    let closestIndex = 0;
-    
-    for (let i = 0; i < this.waypoints.length; i++) {
-      const dist = Math.hypot(
-        this.waypoints[i].x - this.carX,
-        this.waypoints[i].y - this.carY
-      );
-      if (dist < minDist) {
-        minDist = dist;
-        closestIndex = i;
+  
+  _normalizeAngle(angle) {
+    while (angle > Math.PI) angle -= 2 * Math.PI;
+    while (angle < -Math.PI) angle += 2 * Math.PI;
+    return angle;
+  }
+  
+  _detectStuck(dt) {
+    // Sprawdź czy nadal na tym samym waypoint
+    if (this.currentWaypointIndex === this.stuckDetector.lastWaypoint) {
+      this.stuckDetector.sameWaypointTime += dt;
+      
+      // Jeśli za długo na tym samym waypoint
+      if (this.stuckDetector.sameWaypointTime > this.stuckDetector.maxStuckTime) {
+        console.log(`[AI] STUCK on WP ${this.currentWaypointIndex}! Forcing skip`);
+        
+        // Przesuń się do następnego waypointa
+        this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
+        
+        // Włącz recovery mode
+        this.recoveryMode = true;
+        this.recoveryTimer = 1.5;
+        
+        // Reset licznika
+        this.stuckDetector.sameWaypointTime = 0;
+        this.stuckDetector.lastWaypoint = this.currentWaypointIndex;
       }
+    } else {
+      // Zmienił się waypoint - reset
+      this.stuckDetector.lastWaypoint = this.currentWaypointIndex;
+      this.stuckDetector.sameWaypointTime = 0;
     }
-    
-    this.currentWaypointIndex = closestIndex;
-    
-    // Cofaj i skręcaj w kierunku następnego waypointu
-    const nextWP = this.waypoints[(closestIndex + 1) % this.waypoints.length];
-    const angleToNext = Math.atan2(
-      nextWP.y - this.carY,
-      nextWP.x - this.carX
+  }
+  
+  _checkCurrentWaypoint() {
+    const currentWP = this.waypoints[this.currentWaypointIndex];
+    const dist = Math.hypot(
+      currentWP.x - this.carX,
+      currentWP.y - this.carY
     );
     
-    let angleDiff = angleToNext - state.carAngle;
-    while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
-    while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
-
-    const control = {
-      left: angleDiff < -0.3,
-      right: angleDiff > 0.3,
-      up: false,
-      down: true
-    };
-
-    this.update(dt, control, worldW, worldH);
+    // Zalicz waypoint - większy promień
+    if (dist < this.waypointZoneRadius) {
+      const prevIndex = this.currentWaypointIndex;
+      this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
+      console.log(`[AI] WP ${prevIndex} -> ${this.currentWaypointIndex}`);
+      return;
+    }
+    
+    // Sprawdź czy waypoint jest bardzo daleko za nami
+    const angleToWP = Math.atan2(
+      currentWP.y - this.carY,
+      currentWP.x - this.carX
+    );
+    const angleDiff = Math.abs(this._normalizeAngle(angleToWP - this.getAngle()));
+    
+    // Pomiń jeśli waypoint jest bardzo z tyłu i daleko
+    if (angleDiff > 2.8 && dist > 250) { // > 160 stopni i daleko
+      console.log(`[AI] WP ${this.currentWaypointIndex} far behind, skipping`);
+      this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
+    }
+  }
+  
+  _updateDebug(dt, state) {
+    this.debugTimer += dt;
+    
+    if (this.debugTimer >= this.debugInterval) {
+      const targetWP = this.waypoints[this.currentWaypointIndex];
+      const distToTarget = Math.hypot(targetWP.x - this.carX, targetWP.y - this.carY);
+      
+      const debugInfo = {
+        wp: this.currentWaypointIndex,
+        dist: distToTarget.toFixed(0),
+        angle: this.debugAngle.toFixed(1) + '°',
+        speed: state.speed.toFixed(0),
+        v_y: state.v_y.toFixed(0),
+        mode: this.recoveryMode ? 'RECOVERY' : 'DRIVE',
+        steer: this.steerCommand.toFixed(2),
+        stuck: this.stuckDetector.sameWaypointTime.toFixed(1)
+      };
+      
+      console.log('[AI]', JSON.stringify(debugInfo));
+      this.debugTimer = 0;
+    }
   }
 
   handleCollision(prevX, prevY, worldW, worldH) {
     super.handleCollision(prevX, prevY, worldW, worldH);
-    this.postCollisionTimer = this.postCollisionDuration;
+    
+    // Po kolizji przesuń do następnego waypointa
+    console.log(`[AI] Collision! Skip to next WP`);
+    this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
+    
+    // Włącz recovery
+    this.recoveryMode = true;
+    this.recoveryTimer = 2.0;
+    
+    // Reset stuck detector
+    this.stuckDetector.sameWaypointTime = 0;
   }
 
   getDebugInfo() {
@@ -935,9 +1049,10 @@ export class AICar extends Car {
     return {
       wp: `${this.currentWaypointIndex}/${this.waypoints.length}`,
       angle: this.debugAngle.toFixed(0) + '°',
-      steer: state.steerAngleDeg.toFixed(0) + '°',
-      cmd: this.steerCommand.toFixed(2),
-      speed: state.speed.toFixed(0)
+      speed: state.speed.toFixed(0),
+      mode: this.recoveryMode ? 'REC' : 'OK',
+      stuck: this.stuckDetector.sameWaypointTime > 1 ? 
+        `${this.stuckDetector.sameWaypointTime.toFixed(1)}s` : ''
     };
   }
 }

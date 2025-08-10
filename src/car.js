@@ -25,6 +25,7 @@ export class Car {
     this.collisionAngleStep = (Math.PI * 2) / this.collisionSteps;
 
     // Stan gry
+    this.throttle = 0;
     this.v_x = 0;
     this.v_y = 0;
     this.carAngle = 0;
@@ -79,6 +80,7 @@ export class Car {
   // Aktualizuj fizykę auta
   updatePhysics(dt, steerInput, throttle, surface) {
     // Pobierz parametry nawierzchni
+    this.throttle = throttle;
     let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
     let localMaxSpeed = this.maxSpeed * grip;
     let localMaxRevSpeed = this.maxRevSpeed * grip;
@@ -363,6 +365,9 @@ export class Car {
     // Zwraca prędkość wzdłużną auta względem osi przód-tył (v_x)
     return this.v_x;
   }
+  getThrottle() {
+  return this.throttle;
+}
   // Dodaj na końcu klasy Car:
   getFullState() {
     return {

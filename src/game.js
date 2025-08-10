@@ -11,6 +11,7 @@ import { createHUD } from "./hudManager.js";
 import { AICar } from "./AICar.js";
 
 let skidMarks = null;
+let skidMarksAI = null;
 let skidMarksEnabled = true;
 
 export class GameScene extends window.Phaser.Scene {
@@ -60,7 +61,7 @@ export class GameScene extends window.Phaser.Scene {
 
 		this.aiController = new AICar(this, this.aiCarSprite, this.worldData, this.worldData.waypoints);
 		this.aiController.resetState(aiStart.x, aiStart.y + aiStartYOffset);
-    console.log("Waypoints w game.js:", this.worldData.waypoints);
+		console.log("Waypoints w game.js:", this.worldData.waypoints);
 		const keys = createKeyboardBindings(this);
 		this.cursors = keys.cursors;
 		this.wasdKeys = keys.wasdKeys;
@@ -93,7 +94,10 @@ export class GameScene extends window.Phaser.Scene {
 		}
 
 		window.dispatchEvent(new Event("game-ready"));
+		// skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
 		skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+		skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+
 	}
 
 	update(time, dt) {
@@ -106,15 +110,21 @@ export class GameScene extends window.Phaser.Scene {
 		const control = getControlState(this);
 		const throttle = this.carController.updateInput(control).throttle;
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
-    if (this.aiController) {
-      this.aiController.updateAI(dt, this.worldSize, this.worldSize);
-    }
+		if (this.aiController) {
+			this.aiController.updateAI(dt, this.worldSize, this.worldSize);
+		}
 		const carPos = this.carController.getPosition();
 		this.world.drawTiles(carPos.x, carPos.y);
 
 		if (skidMarks?.enabled) {
-			updateSkidMarks(this, tileSize, skidMarks, throttle);
+			console.log("SkidMarks: update called");
+			updateSkidMarks(this, tileSize, [
+				{ controller: this.carController, skidMarks: skidMarks },
+				{ controller: this.aiController, skidMarks: skidMarksAI }
+			]);
+
 		}
+
 
 		if (this.minimapa && this.world) {
 			this.world.drawMinimap(carPos, this.worldSize, this.worldSize);

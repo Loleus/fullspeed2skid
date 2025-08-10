@@ -1,11 +1,16 @@
-export function updateSkidMarks(scene, tileSize, skidMarks, throttle) {
-    const steerAngle = scene.carController.getSteerAngle();
-    const carMass = scene.carController.carMass;
+    export function updateSkidMarks(scene, tileSize, pairs = []) {
     const dirtyTiles = new Set();
 
-    for (let i = 0; i < 4; i++) {
-        const slip = scene.carController.getWheelSlip(i);
-        const curr = scene.carController.getWheelWorldPosition(i);
+    for (const { controller, skidMarks } of pairs) {
+        const steerAngle = controller.getSteerAngle();
+        const carMass = controller.carMass;
+        const maxSpeed = controller.maxSpeed;
+        const localSpeed = controller.getLocalSpeed();
+        const throttle = controller.getThrottle?.() ?? 0;
+
+        for (let i = 0; i < 4; i++) {
+        const slip = controller.getWheelSlip(i);
+        const curr = controller.getWheelWorldPosition(i);
         const surfaceType = scene.world.getSurfaceTypeAt(curr.x, curr.y);
 
         let grip = 1.0;
@@ -18,7 +23,6 @@ export function updateSkidMarks(scene, tileSize, skidMarks, throttle) {
             grip = surfaceParams[surfaceType].grip;
         }
 
-        const maxSpeed = scene.carController.maxSpeed;
         const wheelDirtyTiles = skidMarks.update(
             i,
             curr,
@@ -26,7 +30,7 @@ export function updateSkidMarks(scene, tileSize, skidMarks, throttle) {
             steerAngle,
             scene.world.tilePool,
             tileSize,
-            scene.carController.getLocalSpeed(),
+            localSpeed,
             grip,
             carMass,
             throttle,
@@ -35,10 +39,12 @@ export function updateSkidMarks(scene, tileSize, skidMarks, throttle) {
 
         wheelDirtyTiles?.forEach((tile) => {
             if (tile?.texture) {
-                dirtyTiles.add(tile);
+            dirtyTiles.add(tile);
             }
         });
+        }
     }
 
     dirtyTiles.forEach((tile) => tile.texture.refresh());
-}
+    }
+    

@@ -60,7 +60,7 @@ export class AICar extends Car {
     const state = this.getFullState();
     
     // Debug
-    this._updateDebug(dt, state);
+    // this._updateDebug(dt, state);
     
     // Aktualizuj tryb desperacki
     this._updateDesperateMode(dt);
@@ -141,7 +141,7 @@ export class AICar extends Car {
     
     // Anty-poślizg - bardzo agresywny
     if (Math.abs(state.v_y) > 60) {
-      console.log(`[AI] SLIDE! v_y=${state.v_y.toFixed(0)}`);
+      // console.log(`[AI] SLIDE! v_y=${state.v_y.toFixed(0)}`);
       throttle *= 0.2;
       steer *= 0.3;
     } else if (Math.abs(state.v_y) > 40) {
@@ -353,7 +353,7 @@ export class AICar extends Car {
       const prevIndex = this.currentWaypointIndex;
       this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
       this.waypointStability.lastChangeTime = Date.now();
-      console.log(`[AI] WP ${prevIndex} -> ${this.currentWaypointIndex}`);
+      // console.log(`[AI] WP ${prevIndex} -> ${this.currentWaypointIndex}`);
     }
   }
   

@@ -453,4 +453,44 @@ export class AICar extends Car {
       zones: this.dangerZones.length > 0 ? `D${this.dangerZones.length}` : ''
     };
   }
+
+resetState(initialX, initialY) {
+    // Wywołaj reset stanu bazowej klasy Car
+    super.resetState(initialX, initialY);
+
+    // Zresetuj indeks waypointa
+    this.currentWaypointIndex = 0;
+
+    // Zresetuj parametry sterowania i stan
+    this.steerCommand = 0;
+    this.debugAngle = 0;
+
+    // Zresetuj detektor utknięcia
+    this.stuckDetector.stuckTime = 0;
+    this.stuckDetector.positionTimer = 0;
+    this.stuckDetector.lastPosition = { x: initialX, y: initialY }; // Ustaw na nowej pozycji
+
+    // Zresetuj tryb recovery
+    this.recoveryMode = false;
+    this.recoveryTimer = 0;
+    this.recoveryPhase = 'reverse';
+    this.recoveryAttempts = 0;
+
+    // Wyczyść strefy niebezpieczne
+    this.dangerZones = [];
+
+    // Zresetuj tryb desperacki
+    this.desperateMode = false;
+    this.desperateModeTimer = 0;
+
+    // Zresetuj timery debugowania i stabilizacji
+    this.debugTimer = 0;
+    this.waypointStability.lastChangeTime = 0;
+    
+    // Zatrzymaj auto fizycznie, aby nie "cofało" się po restarcie
+    this.body.setVelocity(0, 0);
+    this.body.setAngularVelocity(0);
+}
+
+
 }

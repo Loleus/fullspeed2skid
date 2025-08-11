@@ -229,7 +229,7 @@ export class GameScene extends window.Phaser.Scene {
 			this.aiController = new AICar(this, this.aiCarSprite, this.worldData, this.worldData.waypoints);
 			this.aiController.resetState(aiStart.x, aiStart.y + aiStartYOffset);
 			console.log("Waypoints w game.js:", this.worldData.waypoints);
-			
+
 			skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
 		}
 
@@ -278,21 +278,21 @@ export class GameScene extends window.Phaser.Scene {
 		const control = getControlState(this);
 		const throttle = this.carController.updateInput(control).throttle;
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
-		
+
 		if (this.aiController) {
 			this.aiController.updateAI(dt, this.worldSize, this.worldSize);
 		}
-		
+
 		const carPos = this.carController.getPosition();
 		this.world.drawTiles(carPos.x, carPos.y);
 
 		if (skidMarks?.enabled) {
 			const skidMarksList = [{ controller: this.carController, skidMarks: skidMarks }];
-			
+
 			if (this.aiController && skidMarksAI) {
 				skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
 			}
-			
+
 			updateSkidMarks(this, tileSize, skidMarksList);
 		}
 
@@ -310,17 +310,19 @@ export class GameScene extends window.Phaser.Scene {
 
 	resetGame() {
 		const worldData = this.worldData || window._worldData;
-		const viewH = this.sys.game.config.height;
 		const start = worldData.startPos;
 
+		// Reset gracza
 		this.carController.resetState(start.x, start.y);
 
+		// Reset AI - tu dzieje się magia!
 		if (this.aiController && this.worldData.waypoints && this.worldData.waypoints.length > 0) {
 			const aiStart = this.worldData.waypoints[0];
-			const aiStartYOffset = 80;
-			this.aiController.resetState(aiStart.x, aiStart.y + aiStartYOffset);
+			// Wywołujemy naszą nową metodę resetującą
+			this.aiController.resetState(aiStart.x, aiStart.y);
 		}
 
+		// Reset świata i efektów wizualnych
 		if (this.world) {
 			this.world.trackTiles = [];
 			for (const tileObj of this.world.tilePool.values()) {
@@ -334,6 +336,7 @@ export class GameScene extends window.Phaser.Scene {
 			skidMarksAI.clear();
 		}
 	}
+
 
 	exitToMenu() {
 		this.scene.start("MenuScene");

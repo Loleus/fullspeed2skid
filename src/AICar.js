@@ -1039,7 +1039,8 @@ export class AICar extends Car {
     super(scene, carSprite, worldData);
     this.waypoints = waypoints;
     this.currentWaypointIndex = 0;
-
+    this.recoverySubPhase = 'normal';
+    this.recoverySteer = 0;
     // Parametry sterowania - jeszcze bardziej konserwatywne
     this.waypointZoneRadius = 150; // Zwiększono
     this.steerP = 0.2; // Zmniejszono
@@ -1107,7 +1108,7 @@ export class AICar extends Car {
 
     // Tryb recovery
     if (this.recoveryMode) {
-      const recoveryControl = this._handleSmartRecovery(dt, state);
+      const recoveryControl = this._handleSmarterRecovery(dt, state);
       this.update(dt, recoveryControl, worldW, worldH);
       return;
     }
@@ -1201,40 +1202,40 @@ export class AICar extends Car {
     this.update(dt, control, worldW, worldH);
   }
 
-_getSafeTarget() {
-  // Najpierw sprawdź czy obecny waypoint jest bezpieczny
-  const currentWP = this.waypoints[this.currentWaypointIndex];
-  if (!this._isWaypointInDangerZone(currentWP)) {
-    return currentWP; // Jeśli obecny waypoint jest OK, używaj go
-  }
-  
-  // Szukaj bezpiecznego waypointa z ograniczeniem przeskoku
-  const maxSkip = 3; // Nie przeskakuj więcej niż 3 waypointy naprzód
-  
-  for (let i = 1; i <= maxSkip; i++) {
-    const index = (this.currentWaypointIndex + i) % this.waypoints.length;
-    const wp = this.waypoints[index];
-    
-    // Sprawdź czy waypoint nie jest w strefie niebezpiecznej
-    if (!this._isWaypointInDangerZone(wp)) {
-      // Sprawdź czy waypoint jest "przed" samochodem (kąt)
-      const angleToWP = Math.atan2(wp.y - this.carY, wp.x - this.carX);
-      const angleDiff = Math.abs(this._normalizeAngle(angleToWP - this.getAngle()));
-      
-      // Akceptuj tylko waypoint, który jest "przed" samochodem (±45 stopni)
-      if (angleDiff < 0.8) {
-        console.log(`[AI] Skipping to safe WP ${index} (${i} ahead)`);
-        this.currentWaypointIndex = index;
-        this.waypointStability.lastChangeTime = Date.now();
-        return wp;
+  _getSafeTarget() {
+    // Najpierw sprawdź czy obecny waypoint jest bezpieczny
+    const currentWP = this.waypoints[this.currentWaypointIndex];
+    if (!this._isWaypointInDangerZone(currentWP)) {
+      return currentWP; // Jeśli obecny waypoint jest OK, używaj go
+    }
+
+    // Szukaj bezpiecznego waypointa z ograniczeniem przeskoku
+    const maxSkip = 3; // Nie przeskakuj więcej niż 3 waypointy naprzód
+
+    for (let i = 1; i <= maxSkip; i++) {
+      const index = (this.currentWaypointIndex + i) % this.waypoints.length;
+      const wp = this.waypoints[index];
+
+      // Sprawdź czy waypoint nie jest w strefie niebezpiecznej
+      if (!this._isWaypointInDangerZone(wp)) {
+        // Sprawdź czy waypoint jest "przed" samochodem (kąt)
+        const angleToWP = Math.atan2(wp.y - this.carY, wp.x - this.carX);
+        const angleDiff = Math.abs(this._normalizeAngle(angleToWP - this.getAngle()));
+
+        // Akceptuj tylko waypoint, który jest "przed" samochodem (±45 stopni)
+        if (angleDiff < 0.8) {
+          console.log(`[AI] Skipping to safe WP ${index} (${i} ahead)`);
+          this.currentWaypointIndex = index;
+          this.waypointStability.lastChangeTime = Date.now();
+          return wp;
+        }
       }
     }
+
+    // Jeśli nie znaleziono bezpiecznego waypointa w przód, zostań przy obecnym
+    console.log('[AI] No safe WP found ahead, sticking to current');
+    return currentWP;
   }
-  
-  // Jeśli nie znaleziono bezpiecznego waypointa w przód, zostań przy obecnym
-  console.log('[AI] No safe WP found ahead, sticking to current');
-  return currentWP;
-}
 
   _isWaypointInDangerZone(waypoint) {
     for (const zone of this.dangerZones) {
@@ -1309,80 +1310,119 @@ _getSafeTarget() {
   }
 
   _handleDesperateMode(dt, state) {
-  // W trybie desperackim nie przeskakujemy za daleko
-  // Użyjmy dynamicznego lookahead bazującego na prędkości
-  const lookahead = Math.max(1, Math.min(3, Math.floor(state.speed / 60)));
-  const targetIndex = (this.currentWaypointIndex + lookahead) % this.waypoints.length;
-  const targetWP = this.waypoints[targetIndex];
-  
-  const angleToTarget = Math.atan2(targetWP.y - this.carY, targetWP.x - this.carX);
-  const angleDiff = this._normalizeAngle(angleToTarget - state.carAngle);
-  
-  // Bardzo ostrożna jazda
-  const steer = Phaser.Math.Clamp(angleDiff * 0.15, -0.1, 0.1);
-  
-  return {
-    left: steer < -0.01,
-    right: steer > 0.01,
-    up: true, // Zawsze jedź do przodu w trybie desperackim
-    down: false
-  };
-}
+    // W trybie desperackim nie przeskakujemy za daleko
+    // Użyjmy dynamicznego lookahead bazującego na prędkości
+    const lookahead = Math.max(1, Math.min(3, Math.floor(state.speed / 60)));
+    const targetIndex = (this.currentWaypointIndex + lookahead) % this.waypoints.length;
+    const targetWP = this.waypoints[targetIndex];
 
-  _handleSmartRecovery(dt, state) {
+    const angleToTarget = Math.atan2(targetWP.y - this.carY, targetWP.x - this.carX);
+    const angleDiff = this._normalizeAngle(angleToTarget - state.carAngle);
+
+    // Bardzo ostrożna jazda
+    const steer = Phaser.Math.Clamp(angleDiff * 0.15, -0.1, 0.1);
+
+    return {
+      left: steer < -0.01,
+      right: steer > 0.01,
+      up: true, // Zawsze jedź do przodu w trybie desperackim
+      down: false
+    };
+  }
+
+  _handleSmarterRecovery(dt, state) {
     this.recoveryTimer -= dt;
 
+    // Warunki wyjścia z recovery (np. po przegrzaniu silnika, itp.)
     if (this.recoveryTimer <= 0 || this.recoveryAttempts > this.maxRecoveryAttempts) {
+      console.log('[AI] Recovery FAILED - timeout or max attempts reached. Entering desperate mode.');
       this.recoveryMode = false;
       this.recoveryAttempts = 0;
-      console.log('[AI] Recovery END - entering normal mode');
+      this.recoverySubPhase = 'normal'; // Upewnij się, że wracamy do normalnego trybu
+      this._enterDesperateMode(); // Włącz tryb desperacki po nieudanym recovery
       return { left: false, right: false, up: false, down: false };
     }
 
-    // Faza cofania
-    if (this.recoveryPhase === 'reverse') {
-      if (this.recoveryTimer > 1.5) { // Cofaj przez 1.5 sekundy
-        return {
-          left: false,
-          right: false,
-          up: false,
-          down: true
-        };
-      } else {
-        this.recoveryPhase = 'reorient';
-        console.log('[AI] Recovery: reverse -> reorient');
-        // Ustal następny waypoint
-        this.currentWaypointIndex = (this.currentWaypointIndex + 1) % this.waypoints.length;
-      }
-    }
+    // --- FAZA 1: COFANIE Z KOREKTĄ KURSU ---
+    if (this.recoverySubPhase === 'reverse') {
+      console.log(`[AI] Recovery (REVERSE): Timer ${this.recoveryTimer.toFixed(1)}s, Steer: ${this.recoverySteer.toFixed(2)}`);
 
-    // Faza reorientacji
-    if (this.recoveryPhase === 'reorient') {
-      const targetWP = this.waypoints[this.currentWaypointIndex];
-      const angleToTarget = Math.atan2(targetWP.y - this.carY, targetWP.x - this.carX);
-      const angleDiff = this._normalizeAngle(angleToTarget - state.carAngle);
+      // Utrzymuj moc cofania
+      const reverseThrottle = 0.5; // Nie pełna moc, żeby mieć lepszą kontrolę
+
+      // Jeśli auto prawie stoi, zakończ fazę cofania i przejdź do wyprostowywania
+      if (Math.abs(state.speed) < 5) {
+        console.log('[AI] Recovery: Reverse phase complete. Starting reorientation.');
+        this.recoverySubPhase = 'reorient';
+        this.recoveryTimer = 1.5; // Daj trochę czasu na wykonanie skrętu
+        return { left: false, right: false, up: false, down: false }; // Na chwilę zatrzymaj
+      }
+
+      return {
+        left: this.recoverySteer < -0.01,
+        right: this.recoverySteer > 0.01,
+        up: false,
+        down: true, // Cofaj
+      };
+
+      // --- FAZA 2: WYPROSTOWYWANIE SIĘ W KIERUNKU CELU ---
+    } else if (this.recoverySubPhase === 'reorient') {
+      console.log(`[AI] Recovery (REORIENT): Timer ${this.recoveryTimer.toFixed(1)}s`);
+
+      // Cel: skierować się z powrotem na waypoint, który był docelowy PRZED kolizją
+      const prevWp = this.waypoints[(this.currentWaypointIndex - 1 + this.waypoints.length) % this.waypoints.length];
+      const angleToPrevWp = Math.atan2(prevWp.y - this.carY, prevWp.x - this.carX);
+      const angleDiff = this._normalizeAngle(angleToPrevWp - state.carAngle);
 
       let steer = angleDiff * this.steerP;
       steer = Phaser.Math.Clamp(steer, -this.maxSteerInput, this.maxSteerInput);
 
+      // Jeśli auto jest już wystarczająco wyprostowane i ma niską prędkość, zakończ recovery
+      if (this.recoveryTimer <= 0) {
+        console.log('[AI] Recovery (REORIENT): Timer expired. Assuming reorientation complete.');
+        this.recoverySubPhase = 'normal';
+        return { left: false, right: false, up: false, down: false };
+      }
+
+      // Jeśli auto jest już prawie skierowane we właściwą stronę, możemy delikatnie zacząć przyspieszać
+      const up = Math.abs(angleDiff) < 0.5; // Jeśli kąt różnicy jest mały, jedź do przodu
+
       return {
-        left: steer < -0.005,
-        right: steer > 0.005,
-        up: true, // Jedź do przodu po reorientacji
-        down: false
+        left: steer < -0.01,
+        right: steer > 0.01,
+        up: up,
+        down: false,
       };
     }
+
+    // --- FAZA 3: POWRÓT DO NORMALNEJ JAZDY ---
+    return { left: false, right: false, up: false, down: false };
   }
 
+  // ZASTĄP SWOJĄ FUNKCJĘ _startSmartRecovery TA WERSJĄ:
   _startSmartRecovery() {
+    // Definiuj localny state bezpośrednio w tej funkcji
+    const state = this.getFullState();
+
     this.recoveryMode = true;
-    this.recoveryTimer = 2.5;
-    this.recoveryPhase = 'reverse';
+    this.recoverySubPhase = 'reverse'; // Zacznij od cofania
+    this.recoveryTimer = 1.5; // Czas na cofnięcie
     this.recoveryAttempts++;
 
-    console.log(`[AI] Recovery started (attempt ${this.recoveryAttempts})`);
+    console.log(`[AI] Recovery STARTED (phase: reverse, attempt ${this.recoveryAttempts})`);
 
-    // Reset detektorów
+    // Heurystyka cofania w zależności od aktualnego stanu
+    // Używamy v_y (lateral velocity) lub ogólnego kierunku ruchu z state
+    const currentSpeed = Math.hypot(state.v_x, state.v_y);
+    if (currentSpeed > 10) {
+      // Jeśli porusza się, spróbuj cofnięcia ze skosem przeciwnym do kąta
+      this.recoverySteer = -Math.sign(state.carAngle);
+    } else {
+      // Jeśli auto stoi, cofaj prosto
+      this.recoverySteer = 0;
+    }
+
+    // Zresetuj detektory utknięcia
     this.stuckDetector.stuckTime = 0;
     this.stuckDetector.positionTimer = 0;
     this.stuckDetector.lastPosition = { x: this.carX, y: this.carY };
@@ -1465,29 +1505,29 @@ _getSafeTarget() {
   }
 
   handleCollision(prevX, prevY, worldW, worldH) {
-  super.handleCollision(prevX, prevY, worldW, worldH);
-  
-  // Dodaj miejsce kolizji jako strefę niebezpieczną
-  this._addDangerZone(this.carX, this.carY);
-  
-  // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze
-  const recentCollisionsInArea = this.dangerZones.filter(zone => {
-    const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);
-    const timeDiff = Date.now() - zone.time;
-    return dist < this.dangerZoneRadius && timeDiff < 10000; // 10 sekund
-  });
-  
-  if (recentCollisionsInArea.length >= 2) {
-    console.log(`[AI] Repeated collisions in area! Entering desperate mode`);
-    this._enterDesperateMode();
-    
-    // Ograniczony przeskok waypointów - tylko +2, nie więcej
-    this.currentWaypointIndex = (this.currentWaypointIndex + 2) % this.waypoints.length;
-  } else {
-    console.log(`[AI] Collision! Starting recovery (${this.dangerZones.length} danger zones)`);
-    this._startSmartRecovery();
+    super.handleCollision(prevX, prevY, worldW, worldH);
+
+    // Dodaj miejsce kolizji jako strefę niebezpieczną
+    this._addDangerZone(this.carX, this.carY);
+
+    // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze
+    const recentCollisionsInArea = this.dangerZones.filter(zone => {
+      const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);
+      const timeDiff = Date.now() - zone.time;
+      return dist < this.dangerZoneRadius && timeDiff < 10000; // 10 sekund
+    });
+
+    if (recentCollisionsInArea.length >= 2) {
+      console.log(`[AI] Repeated collisions in area! Entering desperate mode`);
+      this._enterDesperateMode();
+
+      // Ograniczony przeskok waypointów - tylko +2, nie więcej
+      this.currentWaypointIndex = (this.currentWaypointIndex + 2) % this.waypoints.length;
+    } else {
+      console.log(`[AI] Collision! Starting recovery (${this.dangerZones.length} danger zones)`);
+      this._startSmartRecovery();
+    }
   }
-}
 
   getDebugInfo() {
     const state = this.getFullState();

@@ -29,6 +29,7 @@ export class GameScene extends window.Phaser.Scene {
 		this.worldData = data.worldData;
 		this.gameMode = data.gameMode || 'PRACTICE';
 		window._worldData = data.worldData;
+		if (this.gameMode === 'PRACTICE') this.aiController = null;
 	}
 
 	preload() {

@@ -1330,74 +1330,68 @@ export class AICar extends Car {
     };
   }
 
-  _handleSmarterRecovery(dt, state) {
+_handleSmarterRecovery(dt, state) {
     this.recoveryTimer -= dt;
 
-    // Warunki wyjścia z recovery (np. po przegrzaniu silnika, itp.)
     if (this.recoveryTimer <= 0 || this.recoveryAttempts > this.maxRecoveryAttempts) {
-      console.log('[AI] Recovery FAILED - timeout or max attempts reached. Entering desperate mode.');
-      this.recoveryMode = false;
-      this.recoveryAttempts = 0;
-      this.recoverySubPhase = 'normal'; // Upewnij się, że wracamy do normalnego trybu
-      this._enterDesperateMode(); // Włącz tryb desperacki po nieudanym recovery
-      return { left: false, right: false, up: false, down: false };
+        console.log('[AI] Recovery FAILED - timeout or max attempts reached. Entering desperate mode.');
+        this.recoveryMode = false;
+        this.recoveryAttempts = 0;
+        this.recoverySubPhase = 'normal';
+        this._enterDesperateMode();
+        return { left: false, right: false, up: false, down: false };
     }
 
     // --- FAZA 1: COFANIE Z KOREKTĄ KURSU ---
     if (this.recoverySubPhase === 'reverse') {
-      console.log(`[AI] Recovery (REVERSE): Timer ${this.recoveryTimer.toFixed(1)}s, Steer: ${this.recoverySteer.toFixed(2)}`);
+        // Dynamiczne dostosowanie sterowania cofania
+        const reverseThrottle = 0.5;
+        const angleToPrevWp = Math.atan2(
+            this.waypoints[(this.currentWaypointIndex - 1 + this.waypoints.length) % this.waypoints.length].y - this.carY,
+            this.waypoints[(this.currentWaypointIndex - 1 + this.waypoints.length) % this.waypoints.length].x - this.carX
+        );
+        const angleDiff = this._normalizeAngle(angleToPrevWp - state.carAngle);
+        
+        // Skręć w kierunku poprzedniego waypointa
+        this.recoverySteer = Phaser.Math.Clamp(angleDiff * 0.5, -0.3, 0.3);
 
-      // Utrzymuj moc cofania
-      const reverseThrottle = 0.5; // Nie pełna moc, żeby mieć lepszą kontrolę
+        // Jeśli samochód się rusza do tyłu lub stoi, przejdź do wyprostowania
+        if (state.speed < 2 || Math.abs(state.speed) < 5) {
+            this.recoverySubPhase = 'reorient';
+            this.recoveryTimer = 1.5;
+            return { left: false, right: false, up: false, down: false };
+        }
 
-      // Jeśli auto prawie stoi, zakończ fazę cofania i przejdź do wyprostowywania
-      if (Math.abs(state.speed) < 5) {
-        console.log('[AI] Recovery: Reverse phase complete. Starting reorientation.');
-        this.recoverySubPhase = 'reorient';
-        this.recoveryTimer = 1.5; // Daj trochę czasu na wykonanie skrętu
-        return { left: false, right: false, up: false, down: false }; // Na chwilę zatrzymaj
-      }
+        return {
+            left: this.recoverySteer < -0.01,
+            right: this.recoverySteer > 0.01,
+            up: false,
+            down: true
+        };
+    }
+    // --- FAZA 2: WYPROSTOWYWANIE SIĘ ---
+    else if (this.recoverySubPhase === 'reorient') {
+        const targetWP = this.waypoints[this.currentWaypointIndex];
+        const angleToTarget = Math.atan2(targetWP.y - this.carY, targetWP.x - this.carX);
+        const angleDiff = this._normalizeAngle(angleToTarget - state.carAngle);
+        
+        const steer = Phaser.Math.Clamp(angleDiff * 0.3, -0.2, 0.2);
+        
+        if (this.recoveryTimer <= 0 || Math.abs(angleDiff) < 0.3) {
+            this.recoveryMode = false;
+            return { left: false, right: false, up: true, down: false };
+        }
 
-      return {
-        left: this.recoverySteer < -0.01,
-        right: this.recoverySteer > 0.01,
-        up: false,
-        down: true, // Cofaj
-      };
-
-      // --- FAZA 2: WYPROSTOWYWANIE SIĘ W KIERUNKU CELU ---
-    } else if (this.recoverySubPhase === 'reorient') {
-      console.log(`[AI] Recovery (REORIENT): Timer ${this.recoveryTimer.toFixed(1)}s`);
-
-      // Cel: skierować się z powrotem na waypoint, który był docelowy PRZED kolizją
-      const prevWp = this.waypoints[(this.currentWaypointIndex - 1 + this.waypoints.length) % this.waypoints.length];
-      const angleToPrevWp = Math.atan2(prevWp.y - this.carY, prevWp.x - this.carX);
-      const angleDiff = this._normalizeAngle(angleToPrevWp - state.carAngle);
-
-      let steer = angleDiff * this.steerP;
-      steer = Phaser.Math.Clamp(steer, -this.maxSteerInput, this.maxSteerInput);
-
-      // Jeśli auto jest już wystarczająco wyprostowane i ma niską prędkość, zakończ recovery
-      if (this.recoveryTimer <= 0) {
-        console.log('[AI] Recovery (REORIENT): Timer expired. Assuming reorientation complete.');
-        this.recoverySubPhase = 'normal';
-        return { left: false, right: false, up: false, down: false };
-      }
-
-      // Jeśli auto jest już prawie skierowane we właściwą stronę, możemy delikatnie zacząć przyspieszać
-      const up = Math.abs(angleDiff) < 0.5; // Jeśli kąt różnicy jest mały, jedź do przodu
-
-      return {
-        left: steer < -0.01,
-        right: steer > 0.01,
-        up: up,
-        down: false,
-      };
+        return {
+            left: steer < -0.01,
+            right: steer > 0.01,
+            up: Math.abs(angleDiff) < 0.5,
+            down: false
+        };
     }
 
-    // --- FAZA 3: POWRÓT DO NORMALNEJ JAZDY ---
     return { left: false, right: false, up: false, down: false };
-  }
+}
 
   // ZASTĄP SWOJĄ FUNKCJĘ _startSmartRecovery TA WERSJĄ:
   _startSmartRecovery() {

@@ -117,44 +117,53 @@ export class AICar extends Car {
     let angleDiff = this._normalizeAngle(angleToTarget - state.carAngle);
     this.debugAngle = Phaser.Math.RadToDeg(angleDiff);
 
-    // Oblicz sterowanie - bardzo ostrożne
+    // Oblicz sterowanie z użyciem nowych parametrów konfiguracyjnych
     let steer = 0;
-    let throttle = 0.2;
+    let throttle = this.config.speed.baseThrottle;
 
     const absAngleDiff = Math.abs(angleDiff);
 
     if (absAngleDiff < this.deadZoneAngle) {
       steer = 0;
-      throttle = 0.4;
+      throttle = this.config.speed.baseThrottle;
     } else {
-      steer = angleDiff * this.steerP;
+      // Podstawowe sterowanie z uwzględnieniem czułości
+      steer = angleDiff * this.config.steering.baseSensitivity;
       steer = Phaser.Math.Clamp(steer, -this.maxSteerInput, this.maxSteerInput);
 
-      if (absAngleDiff > 1.5) {
-        throttle = 0.03;
-      } else if (absAngleDiff > 1.0) {
-        throttle = 0.06;
-      } else if (absAngleDiff > 0.7) {
-        throttle = 0.1;
-      } else if (absAngleDiff > 0.4) {
-        throttle = 0.15;
+      // Dostosowanie throttle na podstawie kąta
+      const angleThresholds = this.config.waypointControl.angleThresholds;
+      const throttleMultipliers = this.config.waypointControl.throttleMultipliers;
+
+      if (absAngleDiff > angleThresholds.extreme) {
+        throttle = throttleMultipliers.extreme;
+      } else if (absAngleDiff > angleThresholds.high) {
+        throttle = throttleMultipliers.high;
+      } else if (absAngleDiff > angleThresholds.medium) {
+        throttle = throttleMultipliers.medium;
+      } else if (absAngleDiff > angleThresholds.small) {
+        throttle = throttleMultipliers.small;
       } else {
-        throttle = 0.25;
+        throttle = throttleMultipliers.optimal;
       }
     }
 
-    if (state.speed > 180) {
-      throttle = Math.min(throttle, 0.05);
-    } else if (state.speed > 120) {
-      throttle = Math.min(throttle, 0.1);
+    // Kontrola prędkości
+    const speedThresholds = this.config.speed.speedThresholds;
+    if (state.speed > speedThresholds.high) {
+      throttle = Math.min(throttle, speedThresholds.highSpeedThrottle);
+    } else if (state.speed > speedThresholds.medium) {
+      throttle = Math.min(throttle, speedThresholds.mediumSpeedThrottle);
     }
 
-    if (Math.abs(state.v_y) > 60) {
-      throttle *= 0.2;
-      steer *= 0.3;
-    } else if (Math.abs(state.v_y) > 40) {
-      throttle *= 0.5;
-      steer *= 0.6;
+    // Kontrola poślizgu bocznego
+    const lateralControl = this.config.lateralControl;
+    if (Math.abs(state.v_y) > lateralControl.severeSlipThreshold) {
+      throttle *= lateralControl.severeSlipThrottleMultiplier;
+      steer *= lateralControl.severeSlipSteerMultiplier;
+    } else if (Math.abs(state.v_y) > lateralControl.moderateSlipThreshold) {
+      throttle *= lateralControl.moderateSlipThrottleMultiplier;
+      steer *= lateralControl.moderateSlipSteerMultiplier;
     }
 
     if (this._isInDangerZone()) {

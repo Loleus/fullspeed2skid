@@ -125,7 +125,4 @@ class WebGLHandler {
 }
 
 const canvas = document.body.appendChild(document.createElement('canvas'));
-document.body.style.margin = "0";
-document.body.style.height = "100vh";
-canvas.style.display = "block";
 const webGL = new WebGLHandler(canvas, fragmentShaderSource);

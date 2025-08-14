@@ -14,18 +14,21 @@ export class LoadingScene extends window.Phaser.Scene {
   preload() {
     // Ładuj teksturę grass
     this.load.image('grass', 'assets/images/grass.jpg');
+    this.load.image('tile', 'assets/images/asphalt1.jpg'); // Ścieżka do pliku
   }
 
   async create() {
     const { width, height } = this.sys.game.canvas;
-    this.cameras.main.setBackgroundColor('#000');
+    // this.cameras.main.setBackgroundColor('#000');
+        this.add.tileSprite(0, 0, width, height, 'tile').setOrigin(0, 0);
     const btnWidth = 300;
     const btnHeight = 60;
     const padding = 5;
     // Tło przycisku
     this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, 0x444444, 1)
       .setStrokeStyle(2, 0x222222)
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .setAlpha(0.5);
     // Tekst
     const loadingText = this.add.text(width / 2, height / 2, 'loading...', {
       fontFamily: 'Stormfaze',

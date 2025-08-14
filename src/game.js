@@ -121,6 +121,7 @@ export class GameScene extends window.Phaser.Scene {
 		}
 
 		const carPos = this.carController.getPosition();
+		const aiCarPos = this.aiController ? this.aiController.getPosition() : null;
 		this.world.drawTiles(carPos.x, carPos.y);
 
 		if (skidMarks?.enabled) {
@@ -134,7 +135,7 @@ export class GameScene extends window.Phaser.Scene {
 		}
 
 		if (this.minimapa && this.world) {
-			this.world.drawMinimap(carPos, this.worldSize, this.worldSize);
+			this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
 		}
 
 		this.cameraManager?.update(dt);

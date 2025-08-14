@@ -88,7 +88,7 @@ export class World {
   }
 
   // Rysowanie pozycji auta na minimapie
-  drawMinimap(carPos, worldW, worldH) {
+  drawMinimap(aiCarPos, carPos, worldW, worldH) {
     // Ogranicz częstotliwość aktualizacji do 15 Hz
     const now = performance.now();
     if (now - this.minimapLastUpdate < 66) return;
@@ -97,12 +97,18 @@ export class World {
     this.minimapOverlay.clear();
     const px = Phaser.Math.Clamp(carPos.x, 0, worldW);
     const py = Phaser.Math.Clamp(carPos.y, 0, worldH);
+    const aipx = Phaser.Math.Clamp(aiCarPos.x, 0, worldW);
+    const aipy = Phaser.Math.Clamp(aiCarPos.y, 0, worldH);
     const minimapOffsetX = this.viewW - this.minimapSize - this.minimapMargin;
     const minimapOffsetY = this.minimapMargin;
     const carX = minimapOffsetX + (px / worldW * this.minimapSize);
     const carY = minimapOffsetY + (py / worldH * this.minimapSize);
+    const aicarX = minimapOffsetX + (aipx / worldW * this.minimapSize);
+    const aiCarY = minimapOffsetY + (aipy / worldH * this.minimapSize);
     this.minimapOverlay.fillStyle(0xffffff, 1);
     this.minimapOverlay.fillCircle(carX, carY, 3);
+    this.minimapOverlay.fillStyle(0xffff00, 1);
+    this.minimapOverlay.fillCircle(aicarX, aiCarY, 3);
     // this.minimapOverlay.lineStyle(1, 0xffffff, 1);
     // this.minimapOverlay.strokeCircle(carX, carY, 3);
   }

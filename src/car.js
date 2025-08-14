@@ -6,6 +6,7 @@ export class Car {
     this.carSprite = carSprite;
     this.worldData = worldData;
     this.body = carSprite.body;
+    this.isAI = false; // Flaga określająca czy to samochód AI
     // Importuj parametry z configa
     Object.assign(this, carConfig);
 
@@ -79,6 +80,7 @@ export class Car {
   }
   // Aktualizuj fizykę auta
   updatePhysics(dt, steerInput, throttle, surface) {
+    
     // Pobierz parametry nawierzchni
     this.throttle = throttle;
     let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
@@ -91,7 +93,13 @@ export class Car {
 
     // Sterowanie skrętem
     if (Math.abs(steerInput) > this.steerInputThreshold) {
-      window._gyroTilt ? this.steerAngle = steerInput * Math.abs(window._gyroTilt.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
+      // Dla AI zawsze używaj standardowego sterowania
+      if (this.isAI) {
+        this.steerAngle += steerInput * this.steerSpeed * dt;
+      } else {
+        // Dla gracza używaj odpowiedniego sterowania (żyroskop/standardowe)
+        window._gyroTilt ? this.steerAngle = steerInput * Math.abs(window._gyroTilt.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
+      }
       this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);

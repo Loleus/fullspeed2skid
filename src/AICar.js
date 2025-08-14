@@ -7,6 +7,7 @@ import { AIRecovery } from "./aiRecovery.js";
 export class AICar extends Car {
   constructor(scene, carSprite, worldData, waypoints) {
     super(scene, carSprite, worldData);
+    this.isAI = true; // Ustawiamy flagę AI
     this.config = aiConfig;
 
     this.waypoints = waypoints;

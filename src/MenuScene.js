@@ -5,7 +5,7 @@ export class MenuScene extends window.Phaser.Scene {
     // 🔧 Parametry stylu menu
     this.menuStyle = {
       buttonWidth: 300,
-      buttonHeight: 72,
+      buttonHeight: 62,
       buttonMargin: 10,
       buttonPadding: 8,
       buttonAlpha: 0.5,
@@ -16,7 +16,7 @@ export class MenuScene extends window.Phaser.Scene {
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#ccc',
       buttonDisabledColor: '#666',
-      offsetY: 40
+      offsetY: 72
     };
 
     // 🔧 Dane globalne

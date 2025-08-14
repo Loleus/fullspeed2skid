@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v0.3a';
+const CACHE_NAME = 'fullspeed2skid-v1';
 const ASSETS = [
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
@@ -24,11 +24,16 @@ const ASSETS = [
   '/fullspeed2skid/src/keyboardManager.js',
   '/fullspeed2skid/src/hudManager.js',
   '/fullspeed2skid/src/carConfig.js',
+  '/fullspeed2skid/src/aiRecovery.js',
+  '/fullspeed2skid/src/aiDriving.js',
+  '/fullspeed2skid/src/aiConfig.js',
+  '/fullspeed2skid/src/AICar.js',
   '/fullspeed2skid/assets/style/style.css',
   '/fullspeed2skid/assets/fonts/Stormfaze.otf',
   '/fullspeed2skid/assets/fonts/skid.ttf',
   '/fullspeed2skid/assets/fonts/punk_kid.ttf',
   '/fullspeed2skid/assets/images/car.png',
+  '/fullspeed2skid/assets/images/car_X.png',
   '/fullspeed2skid/assets/images/asphalt.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',
   '/fullspeed2skid/assets/images/stone.jpg',
@@ -39,8 +44,6 @@ const ASSETS = [
   '/fullspeed2skid/assets/levels/scene_2.svg',
   '/fullspeed2skid/assets/levels/scene_3.svg',
   '/fullspeed2skid/assets/levels/scene_4.svg',
-  '/fullspeed2skid/assets/levels/scene_5.svg',
-  '/fullspeed2skid/assets/levels/scene_6.svg',
 ];
 
 // Instalacja service workera

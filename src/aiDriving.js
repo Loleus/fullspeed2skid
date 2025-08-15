@@ -8,7 +8,7 @@ export class AIDriving {
   // Zwraca bezpieczny waypoint (kopia oryginalnej logiki)
   _getSafeTarget() {
     const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
-    if (!this._isWaypointInDangerZone(currentWP)) {
+    if (!this._isWaypointInDangerZone(currentWP) && this._isPathSafe(currentWP)) {
       return currentWP;
     }
 
@@ -18,7 +18,7 @@ export class AIDriving {
       const index = (this.ai.currentWaypointIndex + i) % this.ai.waypoints.length;
       const wp = this.ai.waypoints[index];
 
-      if (!this._isWaypointInDangerZone(wp)) {
+      if (!this._isWaypointInDangerZone(wp) && this._isPathSafe(wp)) {
         const angleToWP = Math.atan2(wp.y - this.ai.carY, wp.x - this.ai.carX);
         const angleDiff = Math.abs(this.ai._normalizeAngle(angleToWP - this.ai.getAngle()));
 
@@ -33,6 +33,28 @@ export class AIDriving {
 
     console.log('[AI] No safe WP found ahead, sticking to current');
     return currentWP;
+  }
+
+  // Sprawdza czy droga do waypointa jest bezpieczna
+  _isPathSafe(targetWP) {
+    const pathPoints = 5; // Sprawdź 5 punktów na drodze
+    const dx = (targetWP.x - this.ai.carX) / pathPoints;
+    const dy = (targetWP.y - this.ai.carY) / pathPoints;
+    
+    for (let i = 1; i <= pathPoints; i++) {
+      const checkX = this.ai.carX + dx * i;
+      const checkY = this.ai.carY + dy * i;
+      
+      // Sprawdź czy punkt na drodze jest w strefie niebezpiecznej
+      for (const zone of this.ai.dangerZones) {
+        const dist = Math.hypot(checkX - zone.x, checkY - zone.y);
+        if (dist < this.ai.dangerZoneRadius * 0.8) { // Mniejszy promień dla drogi
+          return false;
+        }
+      }
+    }
+    
+    return true;
   }
 
   _isWaypointInDangerZone(waypoint) {

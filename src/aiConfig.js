@@ -86,7 +86,7 @@ export const aiConfig = {
   // Desperate mode
   desperateMode: {
     timer: 5.0,
-    skipDistance: 5
+    skipDistance: 3
   },
 
   // Debug

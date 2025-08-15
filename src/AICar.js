@@ -181,7 +181,7 @@ export class AICar extends Car {
       down: false
     };
 
-    this.update(dt, control, worldW, worldH);
+    super.update(dt, control, worldW, worldH);
   }
 
   // --- Wrappery delegujące do modułów (metody mają te same nazwy jak oryginalnie) ---

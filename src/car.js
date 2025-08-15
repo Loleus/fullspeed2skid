@@ -80,7 +80,7 @@ export class Car {
   }
   // Aktualizuj fizykę auta
   updatePhysics(dt, steerInput, throttle, surface) {
-    
+
     // Pobierz parametry nawierzchni
     this.throttle = throttle;
     let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
@@ -193,6 +193,7 @@ export class Car {
     const a = this.COLLISION_HALF_WIDTH + baseSafetyMargin;
     const b = this.COLLISION_HALF_HEIGHT + baseSafetyMargin + slideMargin;
 
+
     // Sprawdź środek auta
     if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
       return true;
@@ -281,7 +282,12 @@ export class Car {
     if (!this.throttleLock) {
       throttle = control.up ? 1 : control.down ? -1 : 0;
     } else {
-      if (!control.up && !control.down) {
+      // Dla AI automatycznie odblokuj po czasie
+      if (this.isAI && this.collisionImmunity <= 0) {
+        this.throttleLock = false;
+        throttle = control.up ? 1 : control.down ? -1 : 0;
+      } else if (!control.up && !control.down) {
+        // Dla gracza wymagaj puszczenia gazu
         this.throttleLock = false;
       }
     }
@@ -293,6 +299,17 @@ export class Car {
     this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
     return { throttle, steerInput: this.steerInput };
   }
+  // Dodaj nową metodę
+checkCarCollision(otherCar) {
+    // Sprawdź czy mamy drugiego gracza do kolizji
+    const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
+    if (!opponent) return false;
+
+    const dx = this.carX - opponent.carX;
+    const dy = this.carY - opponent.carY;
+    const dist = Math.hypot(dx, dy);
+    return dist < (this.COLLISION_WIDTH + opponent.COLLISION_WIDTH) / 2;
+}
   // Główna aktualizacja
   update(dt, control, worldW, worldH) {
     // Pobierz sterowanie
@@ -310,11 +327,14 @@ export class Car {
     let prevCarY = this.carY;
     // Aktualizuj fizykę
     this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
+
+
     // Sprawdź kolizje z przeszkodami
     if (this.collisionImmunity > 0) {
       this.collisionImmunity -= dt;
       if (this.collisionImmunity < 0) this.collisionImmunity = 0;
     }
+    // Kolizje między autami sprawdzaj zawsze
     if (this.collisionImmunity <= 0) {
       if (this.checkEllipseCollision()) {
         this.handleCollision(prevCarX, prevCarY, worldW, worldH);
@@ -323,6 +343,14 @@ export class Car {
       if (this.checkWorldEdgeCollision(worldW, worldH)) {
         this.handleCollision(prevCarX, prevCarY, worldW, worldH);
       }
+            // Kolizje między autami
+    if (this.checkCarCollision()) {
+        const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
+        if (opponent) {
+            this.handleCollision(prevCarX, prevCarY, worldW, worldH);
+            opponent.handleCollision(opponent.carX, opponent.carY, worldW, worldH);
+        }
+    }
     }
   }
   // Gettery dla pozycji i stanu
@@ -374,8 +402,8 @@ export class Car {
     return this.v_x;
   }
   getThrottle() {
-  return this.throttle;
-}
+    return this.throttle;
+  }
   // Dodaj na końcu klasy Car:
   getFullState() {
     return {

@@ -72,8 +72,8 @@ export const aiConfig = {
   // Recovery
   recovery: {
     maxRecoveryAttempts: 2,
-    reverseTimer: 1.5,
-    reorientTimer: 1.5
+    reverseTimer: 2.5,
+    reorientTimer: 2.5
   },
 
   // Strefy niebezpieczne

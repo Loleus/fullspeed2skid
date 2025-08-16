@@ -6,13 +6,23 @@ export class AIDriving {
   }
 
   // Zwraca bezpieczny waypoint (kopia oryginalnej logiki)
-  _getSafeTarget() {
+_getSafeTarget() {
+    // --- KLUCZOWA POPRAWKA ---
+    // Jeśli to jest stan tuż po PIERWSZEJ kolizji (recoveryAttempts === 1),
+    // to ignorujemy wszystkie strefy zagrożenia i po prostu jedziemy prosto do celu.
+    // To zapobiegnie natychmiastowemu skręcaniu w celu "ominięcia" gracza/ściany.
+    if (this.ai.recoveryAttempts === 1) {
+        // console.log('[AI] Post-first-collision grace period. Ignoring danger zones, continuing straight.');
+        return this.ai.waypoints[this.ai.currentWaypointIndex];
+    }
+
+    // --- Poniższa logika unikania przeszkód działa tylko w trybie normalnej jazdy (recoveryAttempts === 0) ---
     const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
     if (!this._isWaypointInDangerZone(currentWP) && this._isPathSafe(currentWP)) {
       return currentWP;
     }
 
-    const maxSkip = 3; // zgodnie z oryginałem
+    const maxSkip = 3;
 
     for (let i = 1; i <= maxSkip; i++) {
       const index = (this.ai.currentWaypointIndex + i) % this.ai.waypoints.length;
@@ -31,7 +41,7 @@ export class AIDriving {
       }
     }
 
-    console.log('[AI] No safe WP found ahead, sticking to current');
+    // console.log('[AI] No safe WP found ahead, sticking to current');
     return currentWP;
   }
 

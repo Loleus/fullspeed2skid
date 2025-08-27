@@ -236,11 +236,6 @@ export class AICar extends Car {
     // Dodaj miejsce kolizji jako strefę niebezpieczną
     this._addDangerZone(this.carX, this.carY);
 
-    // Cofnij waypointy o 2-3 pozycje w tył po kolizji
-    const waypointsToGoBack = Math.min(3, Math.max(2, this.currentWaypointIndex));
-    this.currentWaypointIndex = (this.currentWaypointIndex - waypointsToGoBack + this.waypoints.length) % this.waypoints.length;
-    console.log(`[AI] Collision! Going back ${waypointsToGoBack} waypoints to ${this.currentWaypointIndex}`);
-
     // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze
     const recentCollisionsInArea = this.dangerZones.filter(zone => {
       const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);

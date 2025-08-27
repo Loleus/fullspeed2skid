@@ -1,146 +1,135 @@
 // aiRecovery.js
 export class AIRecovery {
-    constructor(ai) {
-        this.ai = ai;
+  constructor(ai) {
+    this.ai = ai;
+  }
+
+  _handleSmarterRecovery(dt, state) {
+    this.ai.recoveryTimer -= dt;
+
+    if (this.ai.recoveryTimer <= 0 || this.ai.recoveryAttempts > this.ai.maxRecoveryAttempts) {
+        console.log('[AI] Recovery FAILED - timeout or max attempts reached. Entering desperate mode.');
+        this.ai.recoveryMode = false;
+        this.ai.recoveryAttempts = 0;
+        this.ai.recoverySubPhase = 'normal';
+        this.ai._enterDesperateMode();
+        return { left: false, right: false, up: false, down: false };
     }
 
-    _handleSmarterRecovery(dt, state) {
-        this.ai.recoveryTimer -= dt;
-
-        // Sprawdź czy waypointy są w zasięgu
-        const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
-        const distToWP = Math.hypot(currentWP.x - this.ai.carX, currentWP.y - this.ai.carY);
-        const angleToWP = Math.atan2(currentWP.y - this.ai.carY, currentWP.x - this.ai.carX);
-        const angleDiff = this.ai._normalizeAngle(angleToWP - state.carAngle);
-
-        // Jeśli waypoint jest w zasięgu i droga jest prosta - wyjdź z recovery
-        if (distToWP < this.ai.lookaheadDistance * 2.0 && Math.abs(angleDiff) < Math.PI / 3) {
-            console.log(`[AI] Recovery EXIT - WP in range (${distToWP.toFixed(0)}px), angle=${Phaser.Math.RadToDeg(angleDiff).toFixed(1)}°`);
-            this.ai.recoveryMode = false;
-            this.ai.recoveryAttempts = 0;
+    // --- FAZA 1: COFANIE ---
+    if (this.ai.recoverySubPhase === 'reverse') {
+        // Najpierw zwolnij gaz aby wyłączyć throttleLock
+        if (this.ai.throttleLock) {
             return { left: false, right: false, up: false, down: false };
         }
 
-        if (this.ai.recoveryTimer <= 0 || this.ai.recoveryAttempts > this.ai.maxRecoveryAttempts) {
-            console.log('[AI] Recovery FAILED - timeout or max attempts reached. Entering desperate mode.');
-            this.ai.recoveryMode = false;
-            this.ai.recoveryAttempts = 0;
-            this.ai.recoverySubPhase = 'normal';
-            this.ai._enterDesperateMode();
-            return { left: false, right: false, up: false, down: false };
-        }
-
-        // --- FAZA 1: CZEKANIE ---
-        if (this.ai.recoverySubPhase === 'wait') {
-            console.log(`[AI] Recovery: czekanie, timer=${this.ai.recoveryTimer.toFixed(1)}`);
-
-            // Po zakończeniu czekania przejdź do cofania
-            if (this.ai.recoveryTimer <= 0) {
-                this.ai.recoverySubPhase = 'reverse';
-                this.ai.recoveryTimer = 2.0; // 2 sekundy cofania
-                console.log(`[AI] Recovery: przejście do cofania`);
+        // Szukaj wyższego waypointa w zasięgu widoczności
+        let bestWaypoint = null;
+        let maxDistance = 0;
+        
+        for (let i = 0; i < this.ai.waypoints.length; i++) {
+            const wp = this.ai.waypoints[i];
+            const dist = Math.hypot(wp.x - this.ai.carX, wp.y - this.ai.carY);
+            
+            // Sprawdź czy waypoint jest "wyżej" niż obecny
+            if (i > this.ai.currentWaypointIndex && dist > maxDistance && dist < this.ai.lookaheadDistance * 2) {
+                bestWaypoint = wp;
+                maxDistance = dist;
             }
-
-            return { left: false, right: false, up: false, down: false };
         }
-        // --- FAZA 2: COFANIE ---
-        else if (this.ai.recoverySubPhase === 'reverse') {
-            // Sprawdź kierunek do waypointa i skręć w odpowiednią stronę
-            const angleToWp = Math.atan2(currentWP.y - this.ai.carY, currentWP.x - this.ai.carX);
+
+        // Jeśli znaleziono lepszy waypoint, skręć w jego kierunku podczas cofania
+        if (bestWaypoint) {
+            const angleToWp = Math.atan2(
+                bestWaypoint.y - this.ai.carY,
+                bestWaypoint.x - this.ai.carX
+            );
             const angleDiff = this.ai._normalizeAngle(angleToWp - (state.carAngle + Math.PI)); // +PI bo cofamy
+            this.ai.recoverySteer = Phaser.Math.Clamp(angleDiff * 0.5, -0.3, 0.3);
+        } else {
+            // Jeśli nie znaleziono lepszego waypointa, po prostu cofaj prosto
+            this.ai.recoverySteer = 0;
+        }
 
-            // Łagodniejsze sterowanie podczas cofania
-            this.ai.recoverySteer = Phaser.Math.Clamp(angleDiff * 0.3, -0.2, 0.2);
-
-            console.log(`[AI] Recovery: cofanie, timer=${this.ai.recoveryTimer.toFixed(1)}, steer=${this.ai.recoverySteer.toFixed(2)}`);
-
-            // Po zakończeniu cofania przejdź do reorientacji
-            if (this.ai.recoveryTimer <= 0) {
-                this.ai.recoverySubPhase = 'reorient';
-                this.ai.recoveryTimer = 3.0; // 3 sekundy orientacji
-                console.log(`[AI] Recovery: przejście do reorientacji`);
-            }
-
+        // Sprawdź czy możemy zacząć cofać
+        if (Math.abs(state.speed) < 1) {  // Jeśli prawie się zatrzymaliśmy
             return {
                 left: this.ai.recoverySteer < -0.01,
                 right: this.ai.recoverySteer > 0.01,
                 up: false,
-                down: true  // Cofaj
+                down: true  // Rozpocznij cofanie
             };
         }
-        // --- FAZA 3: WYPROSTOWYWANIE SIĘ ---
-        else if (this.ai.recoverySubPhase === 'reorient') {
-            const targetWP = this.ai.waypoints[this.ai.currentWaypointIndex];
-            const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
-            const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
 
-            // Łagodniejsze sterowanie w trybie reorientacji
-            const steer = Phaser.Math.Clamp(angleDiff * 0.3, -0.2, 0.2);
+        // Zmień fazę jeśli cofnęliśmy wystarczająco
+        if (state.speed < -5) {  // Jeśli już cofamy z odpowiednią prędkością
+            this.ai.recoverySubPhase = 'reorient';
+            this.ai.recoveryTimer = this.ai.config.recovery.reorientTimer;
+            return { left: false, right: false, up: false, down: false };
+        }
 
-            // Bardziej restrykcyjne warunki wyjścia z recovery
-            if (this.ai.recoveryTimer <= 0 && Math.abs(angleDiff) < 0.2) {
-                this.ai.recoveryMode = false;
-                // Łagodniejsze przejście do normalnej jazdy
-                return {
-                    left: steer < -0.01,
-                    right: steer > 0.01,
-                    up: Math.abs(angleDiff) < 0.3, // Mniejszy kąt dla gazu
-                    down: false
-                };
-            }
-
+        // Domyślnie czekaj na zatrzymanie
+        return {
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
+    }
+    // --- FAZA 2: WYPROSTOWYWANIE SIĘ ---
+    else if (this.ai.recoverySubPhase === 'reorient') {
+        const targetWP = this.ai.waypoints[this.ai.currentWaypointIndex];
+        const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
+        const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
+        
+        // Zwiększamy czułość sterowania w trybie reorientacji
+        const steer = Phaser.Math.Clamp(angleDiff * 0.5, -0.4, 0.4);
+        
+        // Bardziej restrykcyjne warunki wyjścia z recovery
+        if (this.ai.recoveryTimer <= 0 && Math.abs(angleDiff) < 0.2) {
+            this.ai.recoveryMode = false;
+            // Łagodniejsze przejście do normalnej jazdy
             return {
                 left: steer < -0.01,
                 right: steer > 0.01,
-                up: Math.abs(angleDiff) < 0.4, // Większa tolerancja kąta podczas reorientacji
+                up: Math.abs(angleDiff) < 0.3, // Mniejszy kąt dla gazu
                 down: false
             };
         }
 
-        return { left: false, right: false, up: false, down: false };
+        return {
+            left: steer < -0.01,
+            right: steer > 0.01,
+            up: Math.abs(angleDiff) < 0.4, // Większa tolerancja kąta podczas reorientacji
+            down: false
+        };
     }
 
-    _startSmartRecovery() {
-        const state = this.ai.getFullState();
+    return { left: false, right: false, up: false, down: false };
+  }
 
-        const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
-        const distToWP = Math.hypot(currentWP.x - this.ai.carX, currentWP.y - this.ai.carY);
-        const angleToWP = Math.atan2(currentWP.y - this.ai.carY, currentWP.x - this.ai.carX);
-        const angleDiff = this.ai._normalizeAngle(angleToWP - state.carAngle);
+  _startSmartRecovery() {
+    const state = this.ai.getFullState();
 
-        // Jeśli waypoint jest w zasięgu i droga względnie prosta -> wracamy do normalnej jazdy
-        if (distToWP < this.ai.lookaheadDistance * 2.0 && Math.abs(angleDiff) < Math.PI / 3) {
-            console.log(`[AI] Recovery NOT NEEDED - waypoint ok`);
-            return { left: false, right: false, up: true, down: false };
-        }
+    this.ai.recoveryMode = true;
+    this.ai.recoverySubPhase = 'reverse';
+    this.ai.recoveryTimer = Math.max(2.0, this.ai.config.recovery.reverseTimer); // Minimum 2 sekundy cofania
+    this.ai.recoveryAttempts++;
 
-        // --- PIERWSZA KOLIZJA ---
-        if (this.ai.recoveryAttempts === 0) {
-            this.ai.recoveryAttempts = 1;
-            console.log('[AI] First collision - continue on normal path, no recovery triggered yet.');
-            // ➡️ tutaj po prostu jedziemy dalej na gaz!
-            return { left: false, right: false, up: true, down: false };
-        }
+    console.log(`[AI] Recovery STARTED (phase: reverse, attempt ${this.ai.recoveryAttempts})`);
 
-        // --- DRUGA KOLIZJA => recovery ---
-        this.ai.recoveryMode = true;
-        this.ai.recoveryAttempts++;
-
-        console.log(`[AI] Recovery STARTED (attempt ${this.ai.recoveryAttempts})`);
-
-        // Cofanie i reorientacja
-        this.ai.recoverySubPhase = 'reverse';
-        this.ai.recoveryTimer = this.ai.config.recovery.reverseTimer;
-
-        // **KLUCZOWA POPRAWKA** → przeskocz waypoint, który sprawia problem
-        this.ai.currentWaypointIndex = (this.ai.currentWaypointIndex + 1) % this.ai.waypoints.length;
-        console.log(`[AI] Skipping stuck waypoint, new WP index = ${this.ai.currentWaypointIndex}`);
-
-        // Reset stuck detektora, aby nie wrzucał od razu kolejnego recovery
-        this.ai.stuckDetector.stuckTime = 0;
-        this.ai.stuckDetector.positionTimer = 0;
-        this.ai.stuckDetector.lastPosition = { x: this.ai.carX, y: this.ai.carY };
-
-        return { left: false, right: false, up: false, down: true };
+    // Po drugim odbiciu natychmiast cofaj
+    if (this.ai.recoveryAttempts >= 2) {
+        return {
+            left: false,
+            right: false,
+            up: false,
+            down: true  // Od razu zacznij cofać
+        };
     }
+
+    this.ai.stuckDetector.stuckTime = 0;
+    this.ai.stuckDetector.positionTimer = 0;
+    this.ai.stuckDetector.lastPosition = { x: this.ai.carX, y: this.ai.carY };
+  }
 }

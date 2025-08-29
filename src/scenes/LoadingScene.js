@@ -1,5 +1,5 @@
-import { World } from './world.js';
-import { tileSize, worldH } from './main.js';
+import { World } from '../engine/world.js';
+import { tileSize, worldH } from '../app/main.js';
 
 export class LoadingScene extends window.Phaser.Scene {
   constructor() {

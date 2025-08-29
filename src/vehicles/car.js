@@ -43,6 +43,7 @@ export class Car {
     this.lastSurfaceCheckX = null;
     this.lastSurfaceCheckY = null;
     this.surfaceCheckThreshold = 1;
+    this.opponentController = null; // referencja do przeciwnika (AI lub drugi gracz)
     this.collisionCircle = Array(this.collisionSteps).fill().map((_, i) => {
       const angle = this.collisionAngleStep * i;
       return { cos: Math.cos(angle), sin: Math.sin(angle) };
@@ -300,11 +301,9 @@ export class Car {
     return { throttle, steerInput: this.steerInput };
   }
   // Dodaj nową metodę
-checkCarCollision(otherCar) {
-    // Sprawdź czy mamy drugiego gracza do kolizji
-    const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
+checkCarCollision() {
+    const opponent = this.opponentController || (this.isAI ? this.scene.carController : this.scene.aiController);
     if (!opponent) return false;
-
     const dx = this.carX - opponent.carX;
     const dy = this.carY - opponent.carY;
     const dist = Math.hypot(dx, dy);

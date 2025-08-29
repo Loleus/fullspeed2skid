@@ -1,14 +1,14 @@
-import { CameraManager } from "./cameras.js";
-import { Car } from "./car.js";
+import { CameraManager } from "../cameras/cameras.js";
+import { PlayerCar } from "../vehicles/PlayerCar.js";
 import { World } from "./world.js";
-import { tileSize } from "./main.js";
-import { SkidMarks } from "./skidMarks.js";
+import { tileSize } from "../app/main.js";
+import { SkidMarks } from "../rendering/skidMarks.js";
 import { preloadWorldTextures } from "./textureManager.js";
-import { getControlState } from "./controlsManager.js";
+import { getControlState } from "../input/controlsManager.js";
 import { updateSkidMarks } from "./skidMarksManager.js";
-import { createKeyboardBindings } from "./keyboardManager.js";
-import { createHUD } from "./hudManager.js";
-import { AICar } from "./AICar.js";
+import { createKeyboardBindings } from "../input/keyboardManager.js";
+import { createHUD } from "../ui/hudManager.js";
+import { AICar } from "../ai/AICar.js";
 
 let skidMarks = null;
 let skidMarksAI = null;
@@ -36,8 +36,8 @@ export class GameScene extends window.Phaser.Scene {
 		if (window._worldData?.tiles) {
 			preloadWorldTextures(this, window._worldData.tiles, tileSize);
 		}
-		this.load.image("car", "assets/images/car.png");
-		this.load.image("car_p", "assets/images/car_X.png");
+		this.load.image("car_p1", "assets/images/car.png");
+		this.load.image("car_p2", "assets/images/car_X.png");
 	}
 
 	async create() {
@@ -47,19 +47,20 @@ export class GameScene extends window.Phaser.Scene {
 		const start = worldData.startPos;
 		const startYOffset = 0;
 
-		this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car");
+		this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car_p1");
 		this.car.setOrigin(0.5).setDepth(2);
 		this.car.body.allowRotation = false;
 
-		this.carController = new Car(this, this.car, worldData);
+		this.carController = new PlayerCar(this, this.car, worldData, 1);
 		this.carController.resetState(start.x, start.y + startYOffset);
 
-		// === INICJALIZACJA AI tylko w trybie RACE ===
-		if (this.gameMode === 'RACE' && this.worldData.waypoints && this.worldData.waypoints.length > 0) {
+		// === INICJALIZACJA AI lub Drugiego Gracza ===
+		const twoPlayers = !!worldData?.twoPlayers;
+		if (!twoPlayers && this.gameMode === 'RACE' && this.worldData.waypoints && this.worldData.waypoints.length > 0) {
 			const aiStart = this.worldData.waypoints[0];
 			const aiStartYOffset = 80;
 
-			this.aiCarSprite = this.physics.add.sprite(aiStart.x, aiStart.y + aiStartYOffset, "car_p");
+			this.aiCarSprite = this.physics.add.sprite(aiStart.x, aiStart.y + aiStartYOffset, "car_p2");
 			this.aiCarSprite.setOrigin(0.5).setDepth(2);
 			this.aiCarSprite.body.allowRotation = false;
 
@@ -68,6 +69,20 @@ export class GameScene extends window.Phaser.Scene {
 			console.log("Waypoints w game.js:", this.worldData.waypoints);
 
 			skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+			this.carController.opponentController = this.aiController;
+			this.aiController.opponentController = this.carController;
+		} else if (twoPlayers) {
+			const p2YOffset = 80;
+			this.p2CarSprite = this.physics.add.sprite(start.x, start.y + p2YOffset, "car_p2");
+			this.p2CarSprite.setOrigin(0.5).setDepth(2);
+			this.p2CarSprite.body.allowRotation = false;
+
+			this.p2Controller = new PlayerCar(this, this.p2CarSprite, worldData, 2);
+			this.p2Controller.resetState(start.x, start.y + p2YOffset);
+
+			skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+			this.carController.opponentController = this.p2Controller;
+			this.p2Controller.opponentController = this.carController;
 		}
 
 		const keys = createKeyboardBindings(this);
@@ -113,23 +128,24 @@ export class GameScene extends window.Phaser.Scene {
 		if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
 
 		const control = getControlState(this);
-		const throttle = this.carController.updateInput(control).throttle;
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
+		if (this.p2Controller) {
+			const control2 = { up: this.cursors.up.isDown, down: this.cursors.down.isDown, left: this.cursors.left.isDown, right: this.cursors.right.isDown };
+			this.p2Controller.update(dt, control2, this.worldSize, this.worldSize);
+		}
 
 		if (this.aiController) {
 			this.aiController.updateAI(dt, this.worldSize, this.worldSize);
 		}
 
 		const carPos = this.carController.getPosition();
-		const aiCarPos = this.aiController ? this.aiController.getPosition() : null;
+		const aiCarPos = this.aiController ? this.aiController.getPosition() : (this.p2Controller ? this.p2Controller.getPosition() : null);
 		this.world.drawTiles(carPos.x, carPos.y);
 
 		if (skidMarks?.enabled) {
 			const skidMarksList = [{ controller: this.carController, skidMarks: skidMarks }];
-
-			if (this.aiController && skidMarksAI) {
-				skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
-			}
+			if (this.aiController && skidMarksAI) skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
+			if (this.p2Controller && skidMarksAI) skidMarksList.push({ controller: this.p2Controller, skidMarks: skidMarksAI });
 
 			updateSkidMarks(this, tileSize, skidMarksList);
 		}

@@ -3,31 +3,54 @@ const ASSETS = [
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
   '/fullspeed2skid/manifest.json',
+
+  // src/app
   '/fullspeed2skid/src/main.js',
+  '/fullspeed2skid/src/startup.js',
+
+  // src/engine
   '/fullspeed2skid/src/game.js',
-  '/fullspeed2skid/src/MenuScene.js',
-  '/fullspeed2skid/src/LoadingScene.js',
-  '/fullspeed2skid/src/phaser.js',
+  '/fullspeed2skid/src/skidMarksManager.js',
   '/fullspeed2skid/src/svgPhaserWorldLoader.js',
-  '/fullspeed2skid/src/car.js',
+  '/fullspeed2skid/src/textureManager.js',
   '/fullspeed2skid/src/world.js',
+
+  // src/scenes
+  '/fullspeed2skid/src/HudScene.js',
+  '/fullspeed2skid/src/LoadingScene.js',
+  '/fullspeed2skid/src/MenuScene.js',
+
+  // src/core
+  '/fullspeed2skid/src/phaser.js',
+
+  // src/cameras
   '/fullspeed2skid/src/cameras.js',
   '/fullspeed2skid/src/classicCamera.js',
   '/fullspeed2skid/src/fpvCamera.js',
+
+  // src/rendering
   '/fullspeed2skid/src/skidMarks.js',
-  '/fullspeed2skid/src/gyro-handler.js',
-  '/fullspeed2skid/src/startup.js',
-  '/fullspeed2skid/src/HudScene.js',
-  '/fullspeed2skid/src/textureManager.js',
+
+  // src/input
   '/fullspeed2skid/src/controlsManager.js',
-  '/fullspeed2skid/src/skidMarksManager.js',
+  '/fullspeed2skid/src/gyro-handler.js',
   '/fullspeed2skid/src/keyboardManager.js',
+
+  // src/ui
   '/fullspeed2skid/src/hudManager.js',
+
+  // src/vehicles
+  '/fullspeed2skid/src/car.js',
   '/fullspeed2skid/src/carConfig.js',
-  '/fullspeed2skid/src/aiRecovery.js',
-  '/fullspeed2skid/src/aiDriving.js',
-  '/fullspeed2skid/src/aiConfig.js',
+  '/fullspeed2skid/src/PlayerCar.js',
+
+  // src/ai
   '/fullspeed2skid/src/AICar.js',
+  '/fullspeed2skid/src/aiConfig.js',
+  '/fullspeed2skid/src/aiDriving.js',
+  '/fullspeed2skid/src/aiRecovery.js',
+
+  // assets
   '/fullspeed2skid/assets/style/style.css',
   '/fullspeed2skid/assets/fonts/Stormfaze.otf',
   '/fullspeed2skid/assets/fonts/skid.ttf',
@@ -82,12 +105,10 @@ self.addEventListener('activate', event => {
 
 // Interceptowanie żądań sieciowych
 self.addEventListener('fetch', event => {
-  // Obsługa tylko żądań GET
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // Ignoruj żądania do zewnętrznych API
   if (event.request.url.includes('chrome-extension') || 
       event.request.url.includes('extension') ||
       event.request.url.includes('devtools')) {
@@ -97,25 +118,20 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request, {ignoreSearch: true})
       .then(response => {
-        // Jeśli plik jest w cache, zwróć go
         if (response) {
           console.log('[SW] Serving from cache:', event.request.url);
           return response;
         }
 
-        // Jeśli nie ma w cache, pobierz z sieci
         console.log('[SW] Fetching from network:', event.request.url);
         return fetch(event.request)
           .then(response => {
-            // Sprawdź czy odpowiedź jest poprawna
             if (!response || response.status !== 200 || response.type !== 'basic') {
               return response;
             }
 
-            // Klonuj odpowiedź, bo może być użyta tylko raz
             const responseToCache = response.clone();
 
-            // Dodaj do cache dla przyszłych żądań
             caches.open(CACHE_NAME)
               .then(cache => {
                 cache.put(event.request, responseToCache);
@@ -126,7 +142,6 @@ self.addEventListener('fetch', event => {
           })
           .catch(error => {
             console.error('[SW] Fetch failed:', error);
-            // Możesz tu dodać fallback dla offline
             return new Response('Offline - Brak połączenia z internetem', {
               status: 503,
               statusText: 'Service Unavailable',
@@ -154,4 +169,4 @@ self.addEventListener('error', event => {
 // Obsługa nieobsłużonych promise rejections
 self.addEventListener('unhandledrejection', event => {
   console.error('[SW] Unhandled promise rejection:', event.reason);
-}); 
+});

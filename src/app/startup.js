@@ -1,5 +1,5 @@
 // Import funkcji do obsługi uprawnień żyroskopu, np. na urządzeniach mobilnych
-import { handleGyroPermission } from "./gyro-handler.js";
+import { handleGyroPermission } from "../input/gyro-handler.js";
 
 // Asynchroniczna funkcja wczytująca czcionki wymagane przez grę
 async function waitForFonts() {
@@ -32,7 +32,7 @@ function startGameNormally() {
   // Dynamically import główny plik gry jako moduł JS
   const script = document.createElement("script");
   script.type = "module";
-  script.src = "src/main.js";
+  script.src = "src/app/main.js";
   document.body.appendChild(script);
 }
 

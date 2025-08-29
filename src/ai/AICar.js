@@ -1,5 +1,5 @@
 // AICar.js
-import { Car } from "./car.js";
+import { Car } from "../vehicles/car.js";
 import { aiConfig } from "./aiConfig.js";
 import { AIDriving } from "./aiDriving.js";
 import { AIRecovery } from "./aiRecovery.js";

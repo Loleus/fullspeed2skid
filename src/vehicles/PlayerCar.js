@@ -28,12 +28,8 @@ export class PlayerCar extends Car {
 
     // Sterowanie skrętem - specyficzne dla gracza z obsługą żyroskopu
     if (Math.abs(steerInput) > this.steerInputThreshold) {
-      // Dla gracza używaj odpowiedniego sterowania (żyroskop/standardowe)
-      if (this.gyroEnabled && window._gyroTilt) {
-        this.steerAngle = steerInput * Math.abs(window._gyroTilt.toFixed(1)) * dt;
-      } else {
-        this.steerAngle += steerInput * this.steerSpeed * dt;
-      }
+      // Dla gracza używaj odpowiedniego sterowania (żyroskop/standardowe) - identycznie jak przed modularyzacją
+      window._gyroTilt ? this.steerAngle = steerInput * Math.abs(window._gyroTilt.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
       this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);

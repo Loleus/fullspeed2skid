@@ -7,6 +7,8 @@ export class Car {
     this.worldData = worldData;
     this.body = carSprite.body;
     this.isAI = false; // Flaga określająca czy to samochód AI
+    this.isPlayer = false; // Flaga określająca czy to samochód gracza
+    
     // Importuj parametry z configa
     Object.assign(this, carConfig);
 
@@ -49,6 +51,7 @@ export class Car {
       return { cos: Math.cos(angle), sin: Math.sin(angle) };
     });
   }
+
   // Resetuj stan auta
   resetState(startX, startY, startAngle = -Math.PI / 2) {
     this.carX = startX;
@@ -65,6 +68,7 @@ export class Car {
     this.carSprite.y = this.carY;
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
   }
+
   // Pobierz rogi auta dla kolizji
   getCarCorners(x, y, rot, width, height) {
     const hw = width / 2, hh = height / 2;
@@ -79,101 +83,13 @@ export class Car {
       y: y + c.x * Math.sin(rot) + c.y * Math.cos(rot)
     }));
   }
-  // Aktualizuj fizykę auta
+
+  // Aktualizuj fizykę auta - metoda bazowa do nadpisania
   updatePhysics(dt, steerInput, throttle, surface) {
-
-    // Pobierz parametry nawierzchni
-    this.throttle = throttle;
-    let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
-    let localMaxSpeed = this.maxSpeed * grip;
-    let localMaxRevSpeed = this.maxRevSpeed * grip;
-    let localSlipStartSpeed = this.SLIP_START_SPEED_RATIO * localMaxSpeed; // Próg poślizgu zależny od localMaxSpeed
-    let localSlipBase = this.slipBase; // Siła poślizgu NIE zależy od gripu
-    // Dynamiczne tłumienie boczne: na bardzo śliskich nawierzchniach (grip < 0.5) auto praktycznie nie trzyma się drogi
-    this.sideFrictionMultiplier = grip < 0.5 ? 0.2 : 3;
-
-    // Sterowanie skrętem
-    if (Math.abs(steerInput) > this.steerInputThreshold) {
-      // Dla AI zawsze używaj standardowego sterowania
-      if (this.isAI) {
-        this.steerAngle += steerInput * this.steerSpeed * dt;
-      } else {
-        // Dla gracza używaj odpowiedniego sterowania (żyroskop/standardowe)
-        window._gyroTilt ? this.steerAngle = steerInput * Math.abs(window._gyroTilt.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
-      }
-      this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
-    } else if (this.steerAngle !== 0) {
-      let speedAbs = Math.abs(this.v_x);
-      if (speedAbs > this.speedThresholdForSteerReturn) {
-        let factor = speedAbs / localMaxSpeed;
-        let steerReturn = this.steerReturnSpeed * factor;
-        if (this.steerAngle > 0) {
-          this.steerAngle -= steerReturn * dt;
-          if (this.steerAngle < 0) this.steerAngle = 0;
-        } else {
-          this.steerAngle += steerReturn * dt;
-          if (this.steerAngle > 0) this.steerAngle = 0;
-        }
-      }
-    }
-
-    // Przyspieszenie i opory
-    let force;
-    if (throttle >= 0) {
-      force = throttle * this.accel;
-    } else {
-      force = throttle * this.revAccel;
-    }
-    this.v_x += force * dt;
-    // Ograniczanie prędkości zależnie od kierunku
-    if (this.v_x >= 0) {
-      this.v_x = Phaser.Math.Clamp(this.v_x, 0, localMaxSpeed);
-    } else {
-      this.v_x = Phaser.Math.Clamp(this.v_x, -localMaxRevSpeed, 0);
-    }
-
-    // Model poślizgu: siła boczna (drift)
-    let steerAbs = Math.abs(this.steerAngle);
-    let speedAbs = Math.abs(this.v_x);
-    if (
-      speedAbs > localSlipStartSpeed &&
-      steerAbs > this._slipSteerThreshold
-    ) {
-      let slipSteerRatio = (steerAbs - this._slipSteerThreshold) / (this.maxSteer - this._slipSteerThreshold);
-      slipSteerRatio = Phaser.Math.Clamp(slipSteerRatio, 0, 1);
-      let slipSign = -Math.sign(this.steerAngle);
-      let slipStrength = localSlipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
-      this.v_y += slipStrength * dt;
-      const maxVy = localMaxSpeed * this.maxVyRatio;
-      if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
-    }
-
-    // Tłumienie boczne
-    this.v_y += -this.v_y * this.sideFrictionMultiplier * dt;
-
-    // Efekt skrętu: zmiana kierunku jazdy
-    // Wylicz sin/cos tylko raz
-    let cosA = Math.cos(this.carAngle);
-    let sinA = Math.sin(this.carAngle);
-    let angularVel = (this.v_x / this.wheelBase) * Math.tan(this.steerAngle);
-    this.carAngle += angularVel * dt;
-
-    // Aktualizacja pozycji
-    this.carX += (this.v_x * cosA - this.v_y * sinA) * dt;
-    this.carY += (this.v_x * sinA + this.v_y * cosA) * dt;
-
-    // Opory toczenia i aerodynamiczne
-    let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
-    let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
-    let F_total = F_drag + F_roll;
-    this.v_x -= (F_total / this.carMass) * dt;
-
-    // Aktualizuj sprite
-    this.carSprite.x = this.carX;
-    this.carSprite.y = this.carY;
-    this.carSprite.rotation = this.carAngle + Math.PI / 2;
-    this.carSprite.steerAngle = this.steerAngle;
+    // Implementacja bazowa - do nadpisania w klasach pochodnych
+    throw new Error('updatePhysics must be implemented in derived class');
   }
+
   // Sprawdź kolizje z przeszkodami (elipsa)
   checkEllipseCollision() {
     const speedMagnitude = Math.sqrt(this.v_x * this.v_x + this.v_y * this.v_y);
@@ -186,14 +102,12 @@ export class Car {
       baseSafetyMargin = this.safetyMarginSlow;
     }
 
-    // Dodatkowy margines na szerokość, proporcjonalny do prędkości bocznej.
-    // Zwiększa "wystawanie" auta na boki podczas poślizgu. Mnożnik do ewentualnego dostrojenia.
+    // Dodatkowy margines na szerokość, proporcjonalny do prędkości bocznej
     const slideMargin = Math.abs(this.v_y) * 0.02;
 
     // Półosie elipsy - DŁUGOŚĆ (a) i SZEROKOŚĆ (b)
     const a = this.COLLISION_HALF_WIDTH + baseSafetyMargin;
     const b = this.COLLISION_HALF_HEIGHT + baseSafetyMargin + slideMargin;
-
 
     // Sprawdź środek auta
     if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
@@ -213,6 +127,7 @@ export class Car {
 
     return false;
   }
+
   // Sprawdź kolizje z krawędziami świata
   checkWorldEdgeCollision(worldW, worldH) {
     const carCorners = this.getCarCorners(this.carX, this.carY, this.carAngle, this.CAR_HEIGHT, this.CAR_WIDTH);
@@ -223,7 +138,8 @@ export class Car {
     }
     return false;
   }
-  // Obsłuż kolizję
+
+  // Obsłuż kolizję - metoda bazowa
   handleCollision(prevX, prevY, worldW, worldH) {
     if (this.collisionCount >= this.MAX_COLLISIONS_PER_FRAME) {
       return;
@@ -267,53 +183,33 @@ export class Car {
       this.carSprite.y = this.carY;
     }
 
-    // Usunięto reset prędkości bocznej dla bardziej naturalnego odbicia
-    // this.v_y = 0;
-
     // Krótka nieczułość na kolizje
     this.throttleLock = true;
     this.collisionImmunity = 0.2; // sekundy
   }
-  // Aktualizuj sterowanie
+
+  // Aktualizuj sterowanie - metoda bazowa do nadpisania
   updateInput(control) {
-    // Reset licznika kolizji
-    this.collisionCount = 0;
-    // Gas
-    let throttle = 0;
-    if (!this.throttleLock) {
-      throttle = control.up ? 1 : control.down ? -1 : 0;
-    } else {
-      // Dla AI automatycznie odblokuj po czasie
-      if (this.isAI && this.collisionImmunity <= 0) {
-        this.throttleLock = false;
-        throttle = control.up ? 1 : control.down ? -1 : 0;
-      } else if (!control.up && !control.down) {
-        // Dla gracza wymagaj puszczenia gazu
-        this.throttleLock = false;
-      }
-    }
-    // Skręt
-    const steerRaw = control.left ? -1 : control.right ? 1 : 0;
-
-
-    // Wygładzanie
-    this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
-    return { throttle, steerInput: this.steerInput };
+    // Implementacja bazowa - do nadpisania w klasach pochodnych
+    throw new Error('updateInput must be implemented in derived class');
   }
-  // Dodaj nową metodę
-checkCarCollision() {
+
+  // Sprawdź kolizje między autami
+  checkCarCollision() {
     const opponent = this.opponentController || (this.isAI ? this.scene.carController : this.scene.aiController);
     if (!opponent) return false;
     const dx = this.carX - opponent.carX;
     const dy = this.carY - opponent.carY;
     const dist = Math.hypot(dx, dy);
     return dist < (this.COLLISION_WIDTH + opponent.COLLISION_WIDTH) / 2;
-}
-  // Główna aktualizacja
+  }
+
+  // Główna aktualizacja - metoda bazowa
   update(dt, control, worldW, worldH) {
     // Pobierz sterowanie
     const { throttle, steerInput } = this.updateInput(control);
-    // --- CACHE NAWIERZCHNI ---
+    
+    // Cache nawierzchni
     let dx = Math.abs((this.carX - (this.lastSurfaceCheckX ?? this.carX)));
     let dy = Math.abs((this.carY - (this.lastSurfaceCheckY ?? this.carY)));
     if (dx > this.surfaceCheckThreshold || dy > this.surfaceCheckThreshold || this.lastSurfaceType === null) {
@@ -321,18 +217,20 @@ checkCarCollision() {
       this.lastSurfaceCheckX = this.carX;
       this.lastSurfaceCheckY = this.carY;
     }
+    
     // Zapamiętaj pozycję przed ruchem
     let prevCarX = this.carX;
     let prevCarY = this.carY;
+    
     // Aktualizuj fizykę
     this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
-
 
     // Sprawdź kolizje z przeszkodami
     if (this.collisionImmunity > 0) {
       this.collisionImmunity -= dt;
       if (this.collisionImmunity < 0) this.collisionImmunity = 0;
     }
+    
     // Kolizje między autami sprawdzaj zawsze
     if (this.collisionImmunity <= 0) {
       if (this.checkEllipseCollision()) {
@@ -342,78 +240,85 @@ checkCarCollision() {
       if (this.checkWorldEdgeCollision(worldW, worldH)) {
         this.handleCollision(prevCarX, prevCarY, worldW, worldH);
       }
-            // Kolizje między autami
-    if (this.checkCarCollision()) {
+      // Kolizje między autami
+      if (this.checkCarCollision()) {
         const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
         if (opponent) {
-            this.handleCollision(prevCarX, prevCarY, worldW, worldH);
-            opponent.handleCollision(opponent.carX, opponent.carY, worldW, worldH);
+          this.handleCollision(prevCarX, prevCarY, worldW, worldH);
+          opponent.handleCollision(opponent.carX, opponent.carY, worldW, worldH);
         }
-    }
+      }
     }
   }
+
   // Gettery dla pozycji i stanu
   getPosition() {
     return { x: this.carX, y: this.carY };
   }
+
   getVelocity() {
     return { v_x: this.v_x, v_y: this.v_y };
   }
+
   getAngle() {
     return this.carAngle;
   }
+
   getSteerAngle() {
     return this.steerAngle;
   }
+
   getSprite() {
     return this.carSprite;
   }
+
   // Zwraca pozycję środka koła (0: FL, 1: FR, 2: RL, 3: RR)
   getWheelWorldPosition(i) {
-    // Szerokość auta to oś Y (przód-tył), długość auta to oś X (lewo-prawo)
-    const halfW = this.CAR_WIDTH / 2;   // 24
-    const halfH = this.CAR_HEIGHT / 2;  // 44
-    // Korekta: koła cofnięte do środka auta
+    const halfW = this.CAR_WIDTH / 2;
+    const halfH = this.CAR_HEIGHT / 2;
     const xOff = halfH - 8;
     const yOff = halfW - 8;
-    // 0: FL, 1: FR, 2: RL, 3: RR
+    
     const offsets = [
       { x: -xOff, y: -yOff }, // FL (lewy przód)
       { x: xOff, y: -yOff }, // FR (prawy przód)
       { x: -xOff, y: yOff }, // RL (lewy tył)
       { x: xOff, y: yOff }, // RR (prawy tył)
     ];
+    
     const off = offsets[i];
     const cosA = Math.cos(this.carAngle);
     const sinA = Math.sin(this.carAngle);
+    
     return {
       x: this.carX + off.x * cosA - off.y * sinA,
       y: this.carY + off.x * sinA + off.y * cosA
     };
   }
-  // Zwraca siłę poślizgu dla koła (na razie uproszczona: v_y dla wszystkich)
+
+  // Zwraca siłę poślizgu dla koła
   getWheelSlip(i) {
-    // Można rozbudować o indywidualne koła, na razie v_y jako proxy poślizgu
-    return Math.min(1, Math.abs(this.v_y) / 200); // normalizacja do 0-1
+    return Math.min(1, Math.abs(this.v_y) / 200);
   }
+
   getLocalSpeed() {
-    // Zwraca prędkość wzdłużną auta względem osi przód-tył (v_x)
     return this.v_x;
   }
+
   getThrottle() {
     return this.throttle;
   }
-  // Dodaj na końcu klasy Car:
+
   getFullState() {
     return {
-      steerAngle: this.steerAngle, // Aktualny kąt skrętu kół w radianach
-      steerAngleDeg: Phaser.Math.RadToDeg(this.steerAngle), // W stopniach
-      carAngle: this.carAngle, // Orientacja auta w radianach
-      carAngleDeg: Phaser.Math.RadToDeg(this.carAngle), // W stopniach
-      maxSteerDeg: this.MAX_STEER_DEG, // Maksymalny kąt skrętu
-      v_x: this.v_x, // Prędkość wzdłużna
-      v_y: this.v_y, // Prędkość boczna
-      speed: Math.hypot(this.v_x, this.v_y) // Prędkość całkowita
+      steerAngle: this.steerAngle,
+      steerAngleDeg: Phaser.Math.RadToDeg(this.steerAngle),
+      carAngle: this.carAngle,
+      carAngleDeg: Phaser.Math.RadToDeg(this.carAngle),
+      maxSteerDeg: this.MAX_STEER_DEG,
+      v_x: this.v_x,
+      v_y: this.v_y,
+      speed: Math.hypot(this.v_x, this.v_y)
     };
   }
 } 

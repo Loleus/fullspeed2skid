@@ -16,6 +16,25 @@ export class AIRecovery {
         return { left: false, right: false, up: false, down: false };
     }
 
+    // --- FAZA 0: SPRAWDZENIE WIDOCZNOŚCI ---
+    if (this.ai.recoverySubPhase === 'check_visibility') {
+        const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
+        
+        if (this._canSeeWaypoint(currentWP)) {
+            // Widzimy waypoint - możemy jechać normalnie
+            console.log('[AI] Can see waypoint, resuming normal driving');
+            this.ai.recoveryMode = false;
+            this.ai.recoverySubPhase = 'normal';
+            return { left: false, right: false, up: true, down: false };
+        } else {
+            // Nie widzimy waypointa - musimy się cofnąć
+            console.log('[AI] Cannot see waypoint, need to reverse');
+            this.ai.recoverySubPhase = 'reverse';
+            this.ai.recoveryTimer = this.ai.config.recovery.reverseTimer;
+            return { left: false, right: false, up: false, down: false };
+        }
+    }
+
     // --- FAZA 1: COFANIE ---
     if (this.ai.recoverySubPhase === 'reverse') {
         // Najpierw zwolnij gaz aby wyłączyć throttleLock
@@ -61,10 +80,10 @@ export class AIRecovery {
             };
         }
 
-        // Zmień fazę jeśli cofnęliśmy wystarczająco
-        if (state.speed < -5) {  // Jeśli już cofamy z odpowiednią prędkością
-            this.ai.recoverySubPhase = 'reorient';
-            this.ai.recoveryTimer = this.ai.config.recovery.reorientTimer;
+        // Po cofnięciu sprawdź ponownie widoczność
+        if (state.speed < -5) {
+            this.ai.recoverySubPhase = 'check_visibility';
+            this.ai.recoveryTimer = 0.5; // Krótkie sprawdzenie
             return { left: false, right: false, up: false, down: false };
         }
 
@@ -112,24 +131,25 @@ export class AIRecovery {
     const state = this.ai.getFullState();
 
     this.ai.recoveryMode = true;
-    this.ai.recoverySubPhase = 'reverse';
-    this.ai.recoveryTimer = Math.max(2.0, this.ai.config.recovery.reverseTimer); // Minimum 2 sekundy cofania
+    this.ai.recoverySubPhase = 'check_visibility'; // Zacznij od sprawdzenia
+    this.ai.recoveryTimer = 0.5; // Krótki czas na ocenę sytuacji
     this.ai.recoveryAttempts++;
 
-    console.log(`[AI] Recovery STARTED (phase: reverse, attempt ${this.ai.recoveryAttempts})`);
-
-    // Po drugim odbiciu natychmiast cofaj
-    if (this.ai.recoveryAttempts >= 2) {
-        return {
-            left: false,
-            right: false,
-            up: false,
-            down: true  // Od razu zacznij cofać
-        };
-    }
+    console.log(`[AI] Recovery STARTED (checking visibility first, attempt ${this.ai.recoveryAttempts})`);
 
     this.ai.stuckDetector.stuckTime = 0;
     this.ai.stuckDetector.positionTimer = 0;
     this.ai.stuckDetector.lastPosition = { x: this.ai.carX, y: this.ai.carY };
+  }
+
+  // Dodaj metodę sprawdzającą widoczność waypointa
+  _canSeeWaypoint(waypoint) {
+    const angleToWP = Math.atan2(waypoint.y - this.ai.carY, waypoint.x - this.ai.carX);
+    const angleDiff = Math.abs(this.ai._normalizeAngle(angleToWP - this.ai.carAngle));
+    
+    // Waypoint jest "widoczny" jeśli:
+    // 1. Jest w rozsądnym kącie przed nami (nie za plecami)
+    // 2. Ścieżka do niego jest czysta
+    return angleDiff < Math.PI/2 && this.ai.aiDriving._isPathSafe(waypoint);
   }
 }

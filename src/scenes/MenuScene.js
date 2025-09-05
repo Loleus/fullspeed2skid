@@ -8,14 +8,14 @@ export class MenuScene extends window.Phaser.Scene {
       buttonHeight: 62,
       buttonMargin: 10,
       buttonPadding: 8,
-      buttonAlpha: 0.67,
+      buttonAlpha: 0.72,
       buttonFillColor: 0x254334,
       shadowButtonFillColor: 0x000000,
       buttonHoverColor: 0x26503b,
       buttonStrokeColor: 0x222222,
       buttonFontSize: '24px',
       buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#87911fff',
+      buttonTextColor: '#65911fff',
       buttonDisabledColor: '#666',
       offsetY: 72
     };
@@ -96,32 +96,52 @@ export class MenuScene extends window.Phaser.Scene {
 
     // 🔹 Tworzenie przycisków
     buttons.forEach((btn) => {
-      const shadow = this.add.rectangle(
-        5 + width / 2, 5 + y + btnHeight / 2,
-        btnWidth, btnHeight,
-        shadowButtonFillColor, btn.disabled ? 0.5 : 1).setOrigin(0.5).setAlpha(0.7);
+      // 📝 Stworzenie cienia za pomocą Graphics (zaokrąglony prostokąt)
+      const shadowGraphics = this.add.graphics();
+      shadowGraphics.fillStyle(shadowButtonFillColor, btn.disabled ? 0.5 : 0.7);
+      // Prawidłowe obliczenie pozycji cienia względem środka
+      shadowGraphics.fillRoundedRect(
+        -btnWidth / 2 + 5, 
+        -btnHeight / 2 + 5, 
+        btnWidth, 
+        btnHeight, 
+        10
+      );
+      
+      // 📝 Stworzenie tła przycisku za pomocą Graphics (zaokrąglony prostokąt)
+      const bgGraphics = this.add.graphics();
+      this.drawButton(bgGraphics, buttonFillColor, buttonAlpha, buttonStrokeColor, btnWidth, btnHeight);
 
-      const bg = this.add.rectangle(
-        width / 2, y + btnHeight / 2,
-        btnWidth, btnHeight,
-        buttonFillColor, btn.disabled ? 0.5 : 1).setStrokeStyle(2, buttonStrokeColor).setOrigin(0.5).setAlpha(buttonAlpha);
-
-      const text = this.add.text(width / 2, y + btnHeight / 2, btn.label, {
+      const text = this.add.text(0, 0, btn.label, {
         fontFamily: buttonFontFamily,
         fontSize: buttonFontSize,
         color: btn.disabled ? buttonDisabledColor : buttonTextColor,
         align: 'center',
         padding: { left: padding, right: padding, top: padding, bottom: padding },
-      }).setOrigin(0.5);
+      }).setOrigin(0.5).setShadow(2, 2, '#000', 3, false, true);
+
+      // 📝 Tworzenie kontenera dla przycisku
+      const buttonContainer = this.add.container(width / 2, y + btnHeight / 2, [shadowGraphics, bgGraphics, text]);
 
       if (!btn.disabled) {
-        bg.setInteractive({ useHandCursor: true });
-        bg.on('pointerdown', () => this.handleButton(btn.key));
-        bg.on('pointerover', () => bg.setFillStyle(buttonHoverColor, 1));
-        bg.on('pointerout', () => bg.setFillStyle(buttonFillColor, 1));
+        buttonContainer.setSize(btnWidth, btnHeight)
+          .setInteractive({ useHandCursor: true });
+
+        // Zdarzenie najechania myszką
+        buttonContainer.on('pointerover', () => {
+          this.drawButton(bgGraphics, buttonHoverColor, 1, buttonStrokeColor, btnWidth, btnHeight);
+        });
+        
+        // Zdarzenie opuszczenia obszaru
+        buttonContainer.on('pointerout', () => {
+          this.drawButton(bgGraphics, buttonFillColor, buttonAlpha, buttonStrokeColor, btnWidth, btnHeight);
+        });
+
+        // Obsługa kliknięcia
+        buttonContainer.on('pointerdown', () => this.handleButton(btn.key));
       }
 
-      this.menuButtons.push({shadow, bg, text, key: btn.key });
+      this.menuButtons.push({container: buttonContainer, key: btn.key });
       y += btnHeight + margin;
     });
 
@@ -130,7 +150,7 @@ export class MenuScene extends window.Phaser.Scene {
 
     const text1 = this.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',
-      fontSize: '42px',
+      fontSize: '48px',
       color: '#f00',
       align: 'center',
     }).setShadow(2, 2, '#000', 4, false, true);
@@ -152,6 +172,27 @@ export class MenuScene extends window.Phaser.Scene {
       startX + text1.width + horizontalOffset,
       titleY + (text1.height - text2.height) / 2 + verticalOffset
     ).setOrigin(0, 0.5);
+  }
+
+  // 📝 Pomocnicza funkcja do rysowania przycisku
+  drawButton(graphics, fillColor, alpha, strokeColor, btnWidth, btnHeight) {
+    graphics.clear();
+    graphics.fillStyle(fillColor, alpha);
+    graphics.lineStyle(2, strokeColor);
+    graphics.fillRoundedRect(
+      -btnWidth / 2, 
+      -btnHeight / 2, 
+      btnWidth, 
+      btnHeight, 
+      10
+    );
+    graphics.strokeRoundedRect(
+      -btnWidth / 2, 
+      -btnHeight / 2, 
+      btnWidth, 
+      btnHeight, 
+      10
+    );
   }
 
   async fetchTracks() {
@@ -187,7 +228,7 @@ export class MenuScene extends window.Phaser.Scene {
 
       const trackBtn = this.menuButtons.find(btn => btn.key === 'track');
       if (trackBtn) {
-        trackBtn.text.setText(this.tracks[this.selectedTrack].label);
+        trackBtn.container.getAt(2).setText(this.tracks[this.selectedTrack].label);
       }
     } else if (key === 'mode') {
       this.gameMode = this.gameMode === 'PRACTICE' ? 'RACE' : 'PRACTICE';
@@ -195,7 +236,7 @@ export class MenuScene extends window.Phaser.Scene {
 
       const modeBtn = this.menuButtons.find(btn => btn.key === 'mode');
       if (modeBtn) {
-        modeBtn.text.setText(this.gameMode);
+        modeBtn.container.getAt(2).setText(this.gameMode);
       }
     }
   }

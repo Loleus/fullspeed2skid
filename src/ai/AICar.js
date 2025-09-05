@@ -67,6 +67,14 @@ export class AICar extends Car {
     // Inicjalizacja modułów (przekazujemy referencję do this)
     this.aiDriving = new AIDriving(this);
     this.aiRecovery = new AIRecovery(this);
+
+    // Post-collision grace (on-road): keep straight, pause throttle, avoid recovery
+    this.postCollision = {
+      active: false,
+      steerHoldTimer: 0,
+      throttleCooldown: 0,
+      totalTimer: 0
+    };
   }
 
   // Implementacja fizyki dla AI
@@ -196,6 +204,30 @@ export class AICar extends Car {
 
     // Wykryj utknięcie
     this._detectStuck(dt);
+
+    // Post-collision grace handling (on-road): don't turn, wait bounce, then go
+    if (this.postCollision.active) {
+      this.postCollision.steerHoldTimer -= dt;
+      this.postCollision.throttleCooldown -= dt;
+      this.postCollision.totalTimer -= dt;
+      if (this.postCollision.steerHoldTimer < 0) this.postCollision.steerHoldTimer = 0;
+      if (this.postCollision.throttleCooldown < 0) this.postCollision.throttleCooldown = 0;
+
+      const control = {
+        left: false,
+        right: false,
+        up: this.postCollision.throttleCooldown <= 0,
+        down: false
+      };
+
+      // Exit conditions: timer elapsed or clearly moving forward again
+      if (this.postCollision.totalTimer <= 0 || state.v_x > 10) {
+        this.postCollision.active = false;
+      }
+
+      this.update(dt, control, worldW, worldH);
+      return;
+    }
 
     // Tryb recovery
     if (this.recoveryMode) {
@@ -356,15 +388,39 @@ export class AICar extends Car {
       return dist < this.dangerZoneRadius && timeDiff < 10000; // 10 sekund
     });
 
-    if (recentCollisionsInArea.length >= 2) {
-      console.log(`[AI] Repeated collisions in area! Entering desperate mode`);
+    if (recentCollisionsInArea.length >= 3) {
+      console.log(`[AI] Multiple collisions in area! Entering desperate mode`);
       this._enterDesperateMode();
 
       // Ograniczony przeskok waypointów - tylko +2, nie więcej
       this.currentWaypointIndex = (this.currentWaypointIndex + 2) % this.waypoints.length;
-    } else {
-      console.log(`[AI] Collision! Starting recovery (${this.dangerZones.length} danger zones)`);
+    } else if (recentCollisionsInArea.length === 2) {
+      // Druga kolizja w krótkim czasie – wymuś cofanie zamiast od razu jechać dalej
+      console.log('[AI] Second collision – forcing reverse recovery');
       this._startSmartRecovery();
+      this.recoverySubPhase = 'reverse';
+      this.recoveryTimer = Math.max(this.recoveryTimer, this.config.recovery.reverseTimer);
+    } else {
+      // Jeśli jesteśmy na drodze, nie wchodź w recovery natychmiast – jedź prosto po odbiciu
+      const surfaceHere = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
+      const onRoad = surfaceHere !== 'obstacle';
+
+      if (onRoad) {
+        console.log('[AI] Collision on road – applying post-collision grace (no immediate recovery)');
+        // Dopasowane do wąskich dróg i modelu rowerowego
+        // Czas na odbicie: zsynchronizowany z collisionImmunity ~0.2s, trzymamy kierunek dłużej
+        this.postCollision.active = true;
+        this.postCollision.steerHoldTimer = 0.4; // utrzymaj prosto, bez skrętu
+        this.postCollision.throttleCooldown = 0.25; // chwilowo bez gazu po odbiciu
+        this.postCollision.totalTimer = 0.8; // całe okno łaski
+        // Wyzeruj ewentualny recovery
+        this.recoveryMode = false;
+        this.recoveryTimer = 0;
+        this.recoveryAttempts = 0;
+      } else {
+        console.log(`[AI] Collision off-road – starting recovery`);
+        this._startSmartRecovery();
+      }
     }
   }
 

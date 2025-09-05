@@ -70,8 +70,8 @@ export class AIRecovery {
             this.ai.recoverySteer = 0;
         }
 
-        // Sprawdź czy możemy zacząć cofać
-        if (Math.abs(state.speed) < 1) {  // Jeśli prawie się zatrzymaliśmy
+        // Sprawdź czy możemy zacząć cofać (twardszy próg i minimalny czas cofania)
+        if (Math.abs(state.speed) < 0.5) {  // Jeśli praktycznie stoimy
             return {
                 left: this.ai.recoverySteer < -0.01,
                 right: this.ai.recoverySteer > 0.01,
@@ -80,8 +80,8 @@ export class AIRecovery {
             };
         }
 
-        // Po cofnięciu sprawdź ponownie widoczność
-        if (state.speed < -5) {
+        // Po cofnięciu sprawdź ponownie widoczność (wymagaj krótkiej fazy cofania)
+        if (state.speed < -6 && this.ai.recoveryTimer < this.ai.config.recovery.reverseTimer * 0.5) {
             this.ai.recoverySubPhase = 'check_visibility';
             this.ai.recoveryTimer = 0.5; // Krótkie sprawdzenie
             return { left: false, right: false, up: false, down: false };

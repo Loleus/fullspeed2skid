@@ -4,17 +4,18 @@ export class MenuScene extends window.Phaser.Scene {
 
     // 🔧 Parametry stylu menu
     this.menuStyle = {
-      buttonWidth: 300,
+      buttonWidth: 256,
       buttonHeight: 62,
       buttonMargin: 10,
       buttonPadding: 8,
-      buttonAlpha: 0.5,
-      buttonFillColor: 0x444444,
-      buttonHoverColor: 0x666666,
+      buttonAlpha: 0.67,
+      buttonFillColor: 0x254334,
+      shadowButtonFillColor: 0x000000,
+      buttonHoverColor: 0x26503b,
       buttonStrokeColor: 0x222222,
       buttonFontSize: '24px',
       buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#ccc',
+      buttonTextColor: '#87911fff',
       buttonDisabledColor: '#666',
       offsetY: 72
     };
@@ -42,8 +43,9 @@ export class MenuScene extends window.Phaser.Scene {
     const gradientCtx = gradientCanvas.getContext();
     const gradient = gradientCtx.createLinearGradient(0, 0, 0, height);
     gradient.addColorStop(0, 'rgba(75, 30, 77, 1)');
-    gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.3)');
-    gradient.addColorStop(1.0, 'rgba(28, 52, 90, 1)');
+    gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.3)');
+    gradient.addColorStop(0.75, 'rgba(0, 0, 0, 0.3)');
+    gradient.addColorStop(1.0, 'rgba(25,43,34, 1)');
     gradientCtx.fillStyle = gradient;
     gradientCtx.fillRect(0, 0, width, height);
     gradientCanvas.refresh();
@@ -85,6 +87,7 @@ export class MenuScene extends window.Phaser.Scene {
       buttonFontFamily,
       buttonTextColor,
       buttonDisabledColor,
+      shadowButtonFillColor,
       offsetY: menuOffsetY
     } = this.menuStyle;
 
@@ -93,11 +96,15 @@ export class MenuScene extends window.Phaser.Scene {
 
     // 🔹 Tworzenie przycisków
     buttons.forEach((btn) => {
+      const shadow = this.add.rectangle(
+        5 + width / 2, 5 + y + btnHeight / 2,
+        btnWidth, btnHeight,
+        shadowButtonFillColor, btn.disabled ? 0.5 : 1).setOrigin(0.5).setAlpha(0.7);
+
       const bg = this.add.rectangle(
         width / 2, y + btnHeight / 2,
         btnWidth, btnHeight,
-        buttonFillColor, btn.disabled ? 0.5 : 1
-      ).setStrokeStyle(2, buttonStrokeColor).setOrigin(0.5).setAlpha(buttonAlpha);
+        buttonFillColor, btn.disabled ? 0.5 : 1).setStrokeStyle(2, buttonStrokeColor).setOrigin(0.5).setAlpha(buttonAlpha);
 
       const text = this.add.text(width / 2, y + btnHeight / 2, btn.label, {
         fontFamily: buttonFontFamily,
@@ -114,7 +121,7 @@ export class MenuScene extends window.Phaser.Scene {
         bg.on('pointerout', () => bg.setFillStyle(buttonFillColor, 1));
       }
 
-      this.menuButtons.push({ bg, text, key: btn.key });
+      this.menuButtons.push({shadow, bg, text, key: btn.key });
       y += btnHeight + margin;
     });
 
@@ -123,15 +130,15 @@ export class MenuScene extends window.Phaser.Scene {
 
     const text1 = this.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',
-      fontSize: '40px',
+      fontSize: '42px',
       color: '#f00',
       align: 'center',
     }).setShadow(2, 2, '#000', 4, false, true);
 
     const text2 = this.add.text(0, 0, 'Skid', {
       fontFamily: 'punk_kid',
-      fontSize: '70px',
-      color: '#ffd',
+      fontSize: '64px',
+      color: '#99a',
       align: 'center',
     });
 

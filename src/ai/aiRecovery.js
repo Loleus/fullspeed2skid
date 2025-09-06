@@ -5,9 +5,11 @@ export class AIRecovery {
     // Nowe właściwości dla ulepszonego systemu recovery
     this.lastSafeWaypoint = null;
     this.recoveryPhase = 'assess'; // assess, cautious_reverse, find_nearest, check_obstacles, intelligent_reverse, cautious_approach
-    this.obstacleCheckRadius = 80; // Promień sprawdzania przeszkód
-    this.maxAngleForDirectApproach = Math.PI / 6; // 30 stopni - maksymalny kąt dla bezpośredniego podejścia
-    this.cautiousThrottle = 0.3; // Bardzo ostrożny gaz w fazie początkowej
+    this.obstacleCheckRadius = 120; // Zwiększony promień sprawdzania przeszkód
+    this.maxAngleForDirectApproach = Math.PI / 4; // 45 stopni - zwiększony kąt dla bezpośredniego podejścia
+    this.cautiousThrottle = 0.2; // Jeszcze bardziej ostrożny gaz
+    this.minReverseSpeed = -8; // Minimalna prędkość cofania (zwiększona)
+    this.reverseTime = 1.5; // Czas cofania (zwiększony)
   }
 
   _handleSmarterRecovery(dt, state) {
@@ -26,14 +28,17 @@ export class AIRecovery {
     if (this.recoveryPhase === 'assess') {
         console.log('[AI] Recovery Phase: ASSESS - evaluating situation');
         
-        // Zapamiętaj ostatni bezpieczny waypoint (poprzedni)
+        // Zapamiętaj ostatni bezpieczny waypoint (poprzedni) i cofnij się do niego
         const prevIndex = (this.ai.currentWaypointIndex - 1 + this.ai.waypoints.length) % this.ai.waypoints.length;
         this.lastSafeWaypoint = this.ai.waypoints[prevIndex];
+        this.ai.currentWaypointIndex = prevIndex; // Cofnij się do ostatniego zdobytego waypointa
         
-        // Sprawdź czy widzimy obecny waypoint
+        console.log(`[AI] Reverting to last safe waypoint: ${prevIndex}`);
+        
+        // Sprawdź czy widzimy obecny waypoint (teraz poprzedni)
         const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
         if (this._canSeeWaypoint(currentWP) && this._isPathClear(currentWP)) {
-            console.log('[AI] Current waypoint visible and clear - resuming normal driving');
+            console.log('[AI] Last safe waypoint visible and clear - resuming normal driving');
             this.ai.recoveryMode = false;
             this.recoveryPhase = 'assess';
             return { left: false, right: false, up: true, down: false };
@@ -41,31 +46,38 @@ export class AIRecovery {
         
         // Przejdź do ostrożnego cofania
         this.recoveryPhase = 'cautious_reverse';
-        this.ai.recoveryTimer = 1.0; // Czas na ostrożne cofanie
+        this.ai.recoveryTimer = this.reverseTime; // Zwiększony czas na ostrożne cofanie
         return { left: false, right: false, up: false, down: false };
     }
 
     // --- FAZA 1: BARDZO OSTROŻNE COFANIE ---
     if (this.recoveryPhase === 'cautious_reverse') {
-        console.log('[AI] Recovery Phase: CAUTIOUS_REVERSE - backing up carefully');
+        console.log('[AI] Recovery Phase: CAUTIOUS_REVERSE - backing up toward last safe waypoint');
         
         if (this.ai.throttleLock) {
             return { left: false, right: false, up: false, down: false };
         }
 
-        // Cofaj się prosto, bez skręcania
+        // Cofaj się w kierunku ostatniego bezpiecznego waypointa
         if (Math.abs(state.speed) < 0.5) {
+            const targetWP = this.lastSafeWaypoint;
+            const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
+            const angleDiff = this.ai._normalizeAngle(angleToTarget - (state.carAngle + Math.PI)); // +PI bo cofamy
+            
+            // Bardzo ostrożne skręcanie podczas cofania
+            const steer = Phaser.Math.Clamp(angleDiff * 0.3, -0.2, 0.2);
+            
             return {
-                left: false,
-                right: false,
+                left: steer < -0.01,
+                right: steer > 0.01,
                 up: false,
                 down: true
             };
         }
 
-        // Po cofnięciu przejdź do szukania najbliższego waypointa
-        if (state.speed < -4 && this.ai.recoveryTimer < 0.5) {
-            this.recoveryPhase = 'find_nearest';
+        // Po cofnięciu przejdź do sprawdzenia czy droga jest czysta
+        if (state.speed < this.minReverseSpeed && this.ai.recoveryTimer < 0.5) {
+            this.recoveryPhase = 'check_obstacles';
             this.ai.recoveryTimer = 0.5;
             return { left: false, right: false, up: false, down: false };
         }
@@ -73,41 +85,26 @@ export class AIRecovery {
         return { left: false, right: false, up: false, down: false };
     }
 
-    // --- FAZA 2: SZUKANIE NAJBLIŻSZEGO WAYPOINTA ---
-    if (this.recoveryPhase === 'find_nearest') {
-        console.log('[AI] Recovery Phase: FIND_NEAREST - looking for closest visible waypoint');
-        
-        const nearestWP = this._findNearestVisibleWaypoint();
-        if (nearestWP) {
-            console.log(`[AI] Found nearest waypoint at index ${nearestWP.index}`);
-            this.ai.currentWaypointIndex = nearestWP.index;
-            this.recoveryPhase = 'check_obstacles';
-            this.ai.recoveryTimer = 0.3;
-            return { left: false, right: false, up: false, down: false };
-        } else {
-            // Jeśli nie znaleziono żadnego waypointa, spróbuj cofnąć się dalej
-            this.recoveryPhase = 'cautious_reverse';
-            this.ai.recoveryTimer = 1.0;
-            return { left: false, right: false, up: false, down: true };
-        }
-    }
+    // --- FAZA 2: SPRAWDZENIE PRZESZKÓD (po cofnięciu do bezpiecznego waypointa) ---
 
     // --- FAZA 3: SPRAWDZENIE PRZESZKÓD ---
     if (this.recoveryPhase === 'check_obstacles') {
-        console.log('[AI] Recovery Phase: CHECK_OBSTACLES - checking for obstacles on path');
+        console.log('[AI] Recovery Phase: CHECK_OBSTACLES - checking path to next waypoint');
         
-        const targetWP = this.ai.waypoints[this.ai.currentWaypointIndex];
+        // Sprawdź drogę do następnego waypointa (nie obecnego)
+        const nextIndex = (this.ai.currentWaypointIndex + 1) % this.ai.waypoints.length;
+        const targetWP = this.ai.waypoints[nextIndex];
         const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
         const angleDiff = Math.abs(this.ai._normalizeAngle(angleToTarget - state.carAngle));
         
-        // Sprawdź czy na drodze do waypointa są przeszkody
+        // Sprawdź czy na drodze do następnego waypointa są przeszkody
         if (this._hasObstaclesOnPath(targetWP) || angleDiff > this.maxAngleForDirectApproach) {
-            console.log('[AI] Obstacles detected or angle too sharp - entering intelligent reverse');
+            console.log('[AI] Obstacles detected on path to next waypoint - entering intelligent reverse');
             this.recoveryPhase = 'intelligent_reverse';
             this.ai.recoveryTimer = 2.0;
             return { left: false, right: false, up: false, down: false };
         } else {
-            console.log('[AI] Path clear - proceeding with cautious approach');
+            console.log('[AI] Path to next waypoint clear - proceeding with cautious approach');
             this.recoveryPhase = 'cautious_approach';
             this.ai.recoveryTimer = 1.5;
             return { left: false, right: false, up: false, down: false };
@@ -157,9 +154,11 @@ export class AIRecovery {
 
     // --- FAZA 5: OSTROŻNE ZBLIŻANIE ---
     if (this.recoveryPhase === 'cautious_approach') {
-        console.log('[AI] Recovery Phase: CAUTIOUS_APPROACH - carefully approaching waypoint');
+        console.log('[AI] Recovery Phase: CAUTIOUS_APPROACH - carefully approaching next waypoint');
         
-        const targetWP = this.ai.waypoints[this.ai.currentWaypointIndex];
+        // Jedź do następnego waypointa (nie obecnego)
+        const nextIndex = (this.ai.currentWaypointIndex + 1) % this.ai.waypoints.length;
+        const targetWP = this.ai.waypoints[nextIndex];
         const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
         const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
         
@@ -204,6 +203,22 @@ export class AIRecovery {
     this.ai.stuckDetector.lastPosition = { x: this.ai.carX, y: this.ai.carY };
   }
 
+  // Metoda wywoływana przy ponownej kolizji podczas recovery
+  handleRecoveryCollision() {
+    console.log('[AI] Collision during recovery - forcing longer reverse');
+    
+    // Zwiększ parametry cofania dla kolejnych prób
+    this.minReverseSpeed = Math.min(this.minReverseSpeed - 2, -12); // Cofaj się jeszcze dalej
+    this.reverseTime = Math.min(this.reverseTime + 0.5, 3.0); // Dłuższy czas cofania
+    this.obstacleCheckRadius = Math.min(this.obstacleCheckRadius + 20, 200); // Większy promień sprawdzania
+    
+    // Wymuś powrót do fazy cofania
+    this.recoveryPhase = 'cautious_reverse';
+    this.ai.recoveryTimer = this.reverseTime;
+    
+    console.log(`[AI] Updated recovery params: minReverseSpeed=${this.minReverseSpeed}, reverseTime=${this.reverseTime}, obstacleRadius=${this.obstacleCheckRadius}`);
+  }
+
   // Sprawdza czy waypoint jest widoczny (w rozsądnym kącie przed nami)
   _canSeeWaypoint(waypoint) {
     const angleToWP = Math.atan2(waypoint.y - this.ai.carY, waypoint.x - this.ai.carX);
@@ -218,30 +233,10 @@ export class AIRecovery {
     return this.ai.aiDriving._isPathSafe(waypoint);
   }
 
-  // Znajduje najbliższy widoczny waypoint
-  _findNearestVisibleWaypoint() {
-    let nearestWP = null;
-    let minDistance = Infinity;
-    let nearestIndex = -1;
-
-    // Sprawdź waypointy w promieniu 200 pikseli
-    for (let i = 0; i < this.ai.waypoints.length; i++) {
-      const wp = this.ai.waypoints[i];
-      const dist = Math.hypot(wp.x - this.ai.carX, wp.y - this.ai.carY);
-      
-      if (dist < 200 && this._canSeeWaypoint(wp) && dist < minDistance) {
-        nearestWP = wp;
-        minDistance = dist;
-        nearestIndex = i;
-      }
-    }
-
-    return nearestWP ? { waypoint: nearestWP, index: nearestIndex, distance: minDistance } : null;
-  }
 
   // Sprawdza czy na drodze do waypointa są przeszkody
   _hasObstaclesOnPath(targetWP) {
-    const pathPoints = 8; // Sprawdź więcej punktów na drodze
+    const pathPoints = 12; // Zwiększona liczba punktów sprawdzania
     const dx = (targetWP.x - this.ai.carX) / pathPoints;
     const dy = (targetWP.y - this.ai.carY) / pathPoints;
     
@@ -253,6 +248,7 @@ export class AIRecovery {
       for (const zone of this.ai.dangerZones) {
         const dist = Math.hypot(checkX - zone.x, checkY - zone.y);
         if (dist < this.obstacleCheckRadius) {
+          console.log(`[AI] Obstacle detected at path point ${i}, distance: ${dist.toFixed(1)}`);
           return true;
         }
       }
@@ -260,6 +256,7 @@ export class AIRecovery {
       // Sprawdź czy punkt jest poza drogą (dodatkowa kontrola)
       const surfaceType = this.ai.worldData?.getSurfaceTypeAt?.(checkX, checkY);
       if (surfaceType === 'obstacle') {
+        console.log(`[AI] Off-road obstacle detected at path point ${i}`);
         return true;
       }
     }

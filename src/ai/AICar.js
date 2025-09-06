@@ -322,7 +322,7 @@ export class AICar extends Car {
     const control = {
       left: steer < -0.005,
       right: steer > 0.005,
-      up: throttle > 0,
+      up: throttle > 0 && !this.throttleLock, // Sprawdź throttleLock
       down: false
     };
 
@@ -384,6 +384,13 @@ export class AICar extends Car {
 
     // Dodaj miejsce kolizji jako strefę niebezpieczną
     this._addDangerZone(this.carX, this.carY);
+
+    // Sprawdź czy to kolizja podczas recovery
+    if (this.recoveryMode) {
+      console.log('[AI] Collision during recovery - forcing longer reverse');
+      this.aiRecovery.handleRecoveryCollision();
+      return;
+    }
 
     // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze
     const recentCollisionsInArea = this.dangerZones.filter(zone => {

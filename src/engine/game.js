@@ -19,6 +19,13 @@ export class GameScene extends window.Phaser.Scene {
 		super({ key: "GameScene" });
 		this.minimapa = true;
 		this.gameMode = 'PRACTICE';
+		
+		// System odliczania startu
+		this.countdownActive = false;
+		this.countdownTimer = 0;
+		this.countdownPhase = 0; // 0=3, 1=2, 2=1, 3=START
+		this.countdownText = null;
+		this.countdownTween = null;
 	}
 
 	isMobile() {
@@ -118,23 +125,47 @@ export class GameScene extends window.Phaser.Scene {
 
 		window.dispatchEvent(new Event("game-ready"));
 		skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+		
+		// Uruchom odliczanie startu
+		this.startCountdown();
 	}
 
 	update(time, dt) {
 		dt /= 1000;
+
+		// Aktualizuj odliczanie startu
+		if (this.countdownActive) {
+			this.updateCountdown(dt);
+		}
 
 		if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
 		if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
 		if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
 
 		const control = getControlState(this);
+		
+		// Blokuj throttle podczas odliczania
+		if (this.countdownActive) {
+			control.up = false;
+			control.down = false;
+		}
+		
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
 		if (this.p2Controller) {
 			const control2 = { up: this.cursors.up.isDown, down: this.cursors.down.isDown, left: this.cursors.left.isDown, right: this.cursors.right.isDown };
+			// Blokuj throttle dla drugiego gracza
+			if (this.countdownActive) {
+				control2.up = false;
+				control2.down = false;
+			}
 			this.p2Controller.update(dt, control2, this.worldSize, this.worldSize);
 		}
 
 		if (this.aiController) {
+			// Blokuj throttle dla AI
+			if (this.countdownActive) {
+				this.aiController.throttleLock = true;
+			}
 			this.aiController.updateAI(dt, this.worldSize, this.worldSize);
 		}
 
@@ -189,10 +220,130 @@ export class GameScene extends window.Phaser.Scene {
 		if (skidMarksAI) {
 			skidMarksAI.clear();
 		}
+		
+		// Reset odliczania startu
+		this.startCountdown();
 	}
 
 
 	exitToMenu() {
 		this.scene.start("MenuScene");
+	}
+
+	// === SYSTEM ODLICZANIA STARTU ===
+	startCountdown() {
+		console.log('[GameScene] Starting countdown...');
+		this.countdownActive = true;
+		this.countdownTimer = 0;
+		this.countdownPhase = 0;
+		
+		// Blokuj throttle dla wszystkich pojazdów
+		this.carController.throttleLock = true;
+		if (this.aiController) this.aiController.throttleLock = true;
+		if (this.p2Controller) this.p2Controller.throttleLock = true;
+		
+		// Pokaż pierwszą cyfrę
+		this.showCountdownNumber();
+	}
+
+	updateCountdown(dt) {
+		this.countdownTimer += dt;
+		
+		// Przełączaj cyfry co sekundę
+		if (this.countdownTimer >= 1.0) {
+			this.countdownPhase++;
+			this.countdownTimer = 0;
+			
+			if (this.countdownPhase <= 3) {
+				this.showCountdownNumber();
+			} else {
+				// Koniec odliczania - START!
+				this.finishCountdown();
+			}
+		}
+	}
+
+	showCountdownNumber() {
+		const { width, height } = this.sys.game.canvas;
+		
+		// Usuń poprzedni tekst jeśli istnieje
+		if (this.countdownText) {
+			this.countdownText.destroy();
+			this.countdownText = null;
+		}
+		
+		// Zatrzymaj poprzedni tween
+		if (this.countdownTween) {
+			this.countdownTween.stop();
+			this.countdownTween = null;
+		}
+		
+		// Określ tekst do wyświetlenia
+		let displayText = '';
+		if (this.countdownPhase === 0) displayText = '3';
+		else if (this.countdownPhase === 1) displayText = '2';
+		else if (this.countdownPhase === 2) displayText = '1';
+		else if (this.countdownPhase === 3) displayText = 'START';
+		
+		// Utwórz tekst
+		this.countdownText = this.add.text(width / 2, height / 2, displayText, {
+			fontFamily: 'Stormfaze',
+			fontSize: '79px',
+			color: '#ff0000',
+			align: 'center'
+		}).setOrigin(0.5).setDepth(1000);
+		
+		// Animacja pojawienia się i zanikania
+		this.countdownText.setAlpha(0).setScale(0.5);
+		
+		this.countdownTween = this.tweens.add({
+			targets: this.countdownText,
+			alpha: 1,
+			scaleX: 1,
+			scaleY: 1,
+			duration: 200,
+			ease: 'Back.easeOut',
+			onComplete: () => {
+				// Po pojawieniu się, zacznij zanikanie po 0.3s
+				this.time.delayedCall(300, () => {
+					if (this.countdownText) {
+						this.tweens.add({
+							targets: this.countdownText,
+							alpha: 0,
+							scaleX: 2.5, // Powiększ do ~200px (79px * 2.5)
+							scaleY: 2.5,
+							duration: 300,
+							ease: 'Power2.easeOut'
+						});
+					}
+				});
+			}
+		});
+		
+		console.log(`[GameScene] Showing countdown: ${displayText}`);
+	}
+
+	finishCountdown() {
+		console.log('[GameScene] Countdown finished - RACE START!');
+		
+		// Usuń tekst
+		if (this.countdownText) {
+			this.countdownText.destroy();
+			this.countdownText = null;
+		}
+		
+		// Zatrzymaj tween
+		if (this.countdownTween) {
+			this.countdownTween.stop();
+			this.countdownTween = null;
+		}
+		
+		// Odblokuj throttle dla wszystkich pojazdów
+		this.carController.throttleLock = false;
+		if (this.aiController) this.aiController.throttleLock = false;
+		if (this.p2Controller) this.p2Controller.throttleLock = false;
+		
+		// Zakończ odliczanie
+		this.countdownActive = false;
 	}
 }

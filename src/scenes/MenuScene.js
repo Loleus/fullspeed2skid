@@ -1,30 +1,31 @@
-export class MenuScene extends window.Phaser.Scene {
+const btnHoverColor = Phaser.Display.Color.RGBStringToColor("rgba(20, 125, 135, 1)");
+const btnColor = Phaser.Display.Color.RGBStringToColor("rgba(25, 104, 120, 1)");
+const btnStrokeColor = Phaser.Display.Color.RGBStringToColor("rgb(0, 43, 36)");
+
+export class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
-
-    // 🔧 Parametry stylu menu
     this.menuStyle = {
       buttonWidth: 256,
       buttonHeight: 62,
       buttonMargin: 10,
       buttonPadding: 8,
-      buttonAlpha: 0.72,
-      buttonFillColor: 0x254334,
+      buttonAlpha: 0.26,
+      buttonFillColor: btnColor.color,
       shadowButtonFillColor: 0x000000,
-      buttonHoverColor: 0x26503b,
-      buttonStrokeColor: 0x222222,
-      buttonFontSize: '24px',
+      buttonHoverColor: btnHoverColor.color,
+      buttonStrokeColor: btnStrokeColor.color,
+      buttonFontSize: '26px',
       buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#65911fff',
+      buttonTextColor: '#83b1afff',
       buttonDisabledColor: '#666',
-      offsetY: 72
+      offsetY: 72,
+      shadowOffsetDefault: { x: 5, y: 5 },
+      shadowOffsetPressed: { x: -3, y: -3 }
     };
-
-    // 🔧 Dane globalne
     if (!window._tracks) window._tracks = [];
     if (typeof window._selectedTrack !== 'number') window._selectedTrack = 0;
     if (!window._gameMode) window._gameMode = 'PRACTICE';
-
     this.tracks = window._tracks;
     this.selectedTrack = window._selectedTrack;
     this.gameMode = window._gameMode;
@@ -32,40 +33,24 @@ export class MenuScene extends window.Phaser.Scene {
 
   async create() {
     const { width, height } = this.sys.game.canvas;
-
-    // 🔹 Tło kafelkowe
     this.add.tileSprite(0, 0, width, height, 'tile').setOrigin(0, 0);
-    if (this.textures.exists('gradientOverlay')) {
-      this.textures.remove('gradientOverlay');
-    }
-    // 🔹 Gradient pionowy
+    if (this.textures.exists('gradientOverlay')) this.textures.remove('gradientOverlay');
     const gradientCanvas = this.textures.createCanvas('gradientOverlay', width, height);
-    const gradientCtx = gradientCanvas.getContext();
-    const gradient = gradientCtx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, 'rgba(75, 30, 77, 1)');
-    gradient.addColorStop(0.6, 'rgba(0, 0, 0, 0.3)');
-    gradient.addColorStop(0.75, 'rgba(0, 0, 0, 0.3)');
-    gradient.addColorStop(1.0, 'rgba(25,43,34, 1)');
-    gradientCtx.fillStyle = gradient;
-    gradientCtx.fillRect(0, 0, width, height);
+    const ctx = gradientCanvas.getContext();
+    const g = ctx.createLinearGradient(0, 0, 0, height);
+    g.addColorStop(0, 'rgba(75,30,77,1)');
+    g.addColorStop(0.6, 'rgba(0,0,0,0.3)');
+    g.addColorStop(0.75, 'rgba(0,0,0,0.3)');
+    g.addColorStop(1.0, 'rgba(25,33,43,1)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height);
     gradientCanvas.refresh();
     this.add.image(0, 0, 'gradientOverlay').setOrigin(0, 0);
 
-    // 🔹 Pobieranie tras
-    if (!this.tracks || this.tracks.length === 0) {
-      this.tracks = await this.fetchTracks();
-      window._tracks = this.tracks;
-    }
-    if (this.tracks.length === 0) {
-      this.tracks = [{ label: 'TRACK 1', file: 'scene_1.svg' }];
-      window._tracks = this.tracks;
-    }
-    if (typeof this.selectedTrack !== 'number' || this.selectedTrack < 0 || this.selectedTrack >= this.tracks.length) {
-      this.selectedTrack = 0;
-      window._selectedTrack = 0;
-    }
+    if (!this.tracks.length) this.tracks = await this.fetchTracks();
+    if (!this.tracks.length) this.tracks = [{ label: 'TRACK 1', file: 'scene_1.svg' }];
+    if (this.selectedTrack < 0 || this.selectedTrack >= this.tracks.length) this.selectedTrack = 0;
 
-    // 🔹 Definicja przycisków
     const buttons = [
       { label: 'START', key: 'start' },
       { label: this.gameMode, key: 'mode' },
@@ -75,169 +60,103 @@ export class MenuScene extends window.Phaser.Scene {
 
     this.menuButtons = [];
     const {
-      buttonWidth: btnWidth,
-      buttonHeight: btnHeight,
-      buttonMargin: margin,
-      buttonPadding: padding,
-      buttonAlpha,
-      buttonFillColor,
-      buttonHoverColor,
-      buttonStrokeColor,
-      buttonFontSize,
-      buttonFontFamily,
-      buttonTextColor,
-      buttonDisabledColor,
-      shadowButtonFillColor,
-      offsetY: menuOffsetY
+      buttonWidth: w, buttonHeight: h, buttonMargin: m, buttonPadding: p,
+      buttonAlpha: a, buttonFillColor: f, buttonHoverColor: hf, buttonStrokeColor: s,
+      buttonFontSize: fs, buttonFontFamily: ff, buttonTextColor: tc, buttonDisabledColor: dc,
+      shadowButtonFillColor: sf, offsetY: oy, shadowOffsetDefault: so, shadowOffsetPressed: sp
     } = this.menuStyle;
 
-    const totalHeight = buttons.length * btnHeight + (buttons.length - 1) * margin;
-    let y = height / 2 - totalHeight / 2 + menuOffsetY;
+    const totalHeight = buttons.length * h + (buttons.length - 1) * m;
+    let y = height / 2 - totalHeight / 2 + oy;
 
-    // 🔹 Tworzenie przycisków
-    buttons.forEach((btn) => {
-      // 📝 Stworzenie cienia za pomocą Graphics (zaokrąglony prostokąt)
-      const shadowGraphics = this.add.graphics();
-      shadowGraphics.fillStyle(shadowButtonFillColor, btn.disabled ? 0.5 : 0.7);
-      // Prawidłowe obliczenie pozycji cienia względem środka
-      shadowGraphics.fillRoundedRect(
-        -btnWidth / 2 + 5, 
-        -btnHeight / 2 + 5, 
-        btnWidth, 
-        btnHeight, 
-        10
-      );
-      
-      // 📝 Stworzenie tła przycisku za pomocą Graphics (zaokrąglony prostokąt)
-      const bgGraphics = this.add.graphics();
-      this.drawButton(bgGraphics, buttonFillColor, buttonAlpha, buttonStrokeColor, btnWidth, btnHeight);
-
+    buttons.forEach(btn => {
+      const shadow = this.add.graphics();
+      this.drawShadow(shadow, so, w, h, sf, 0.26);
+      const bg = this.add.graphics();
+      this.drawButton(bg, f, a, s, w, h);
       const text = this.add.text(0, 0, btn.label, {
-        fontFamily: buttonFontFamily,
-        fontSize: buttonFontSize,
-        color: btn.disabled ? buttonDisabledColor : buttonTextColor,
-        align: 'center',
-        padding: { left: padding, right: padding, top: padding, bottom: padding },
+        fontFamily: ff, fontSize: fs, color: btn.disabled ? dc : tc, align: 'center',
+        padding: { left: p, right: p, top: p, bottom: p }
       }).setOrigin(0.5).setShadow(2, 2, '#000', 3, false, true);
-
-      // 📝 Tworzenie kontenera dla przycisku
-      const buttonContainer = this.add.container(width / 2, y + btnHeight / 2, [shadowGraphics, bgGraphics, text]);
+      const container = this.add.container(width / 2, y + h / 2, [shadow, bg, text]);
 
       if (!btn.disabled) {
-        buttonContainer.setSize(btnWidth, btnHeight)
-          .setInteractive({ useHandCursor: true });
-
-        // Zdarzenie najechania myszką
-        buttonContainer.on('pointerover', () => {
-          this.drawButton(bgGraphics, buttonHoverColor, 1, buttonStrokeColor, btnWidth, btnHeight);
+        container.setSize(w, h).setInteractive({ useHandCursor: true });
+        container.on('pointerover', () => {
+          this.drawButton(bg, hf, a, s, w, h);
         });
-        
-        // Zdarzenie opuszczenia obszaru
-        buttonContainer.on('pointerout', () => {
-          this.drawButton(bgGraphics, buttonFillColor, buttonAlpha, buttonStrokeColor, btnWidth, btnHeight);
+        container.on('pointerout', () => {
+          this.drawButton(bg, f, a, s, w, h);
         });
-
-        // Obsługa kliknięcia
-        buttonContainer.on('pointerdown', () => this.handleButton(btn.key));
+        container.on('pointerdown', () => {
+          this.drawShadow(shadow, sp, w, h, sf, 0.26);
+          this.handleButton(btn.key);
+        });
+        container.on('pointerup', () => {
+          this.drawShadow(shadow, so, w, h, sf, 0.26);
+        });
       }
 
-      this.menuButtons.push({container: buttonContainer, key: btn.key });
-      y += btnHeight + margin;
+      this.menuButtons.push({ container, key: btn.key });
+      y += h + m;
     });
 
-    // 🔹 Tytuł gry
     const titleY = height / 2 - totalHeight / 2 - 70;
-
     const text1 = this.add.text(0, 0, 'Full Speed 2', {
-      fontFamily: 'skid',
-      fontSize: '48px',
-      color: '#f00',
-      align: 'center',
+      fontFamily: 'skid', fontSize: '44px', color: '#f00', align: 'center'
     }).setShadow(2, 2, '#000', 4, false, true);
-
     const text2 = this.add.text(0, 0, 'Skid', {
-      fontFamily: 'punk_kid',
-      fontSize: '64px',
-      color: '#99a',
-      align: 'center',
+      fontFamily: 'punk_kid', fontSize: '72px', color: 'rgba(170,162,153,1)', align: 'center'
     });
-
     const totalTitleWidth = text1.width + text2.width;
     const startX = width / 2 - totalTitleWidth / 2;
     text1.setPosition(startX, titleY).setOrigin(0, 0.5);
-
-    const verticalOffset = -60;
-    const horizontalOffset = 30;
-    text2.setPosition(
-      startX + text1.width + horizontalOffset,
-      titleY + (text1.height - text2.height) / 2 + verticalOffset
-    ).setOrigin(0, 0.5);
+    text2.setPosition(startX + text1.width + 30, titleY + (text1.height - text2.height) / 2 - 60).setOrigin(0, 0.5);
   }
 
-  // 📝 Pomocnicza funkcja do rysowania przycisku
-  drawButton(graphics, fillColor, alpha, strokeColor, btnWidth, btnHeight) {
-    graphics.clear();
-    graphics.fillStyle(fillColor, alpha);
-    graphics.lineStyle(2, strokeColor);
-    graphics.fillRoundedRect(
-      -btnWidth / 2, 
-      -btnHeight / 2, 
-      btnWidth, 
-      btnHeight, 
-      10
-    );
-    graphics.strokeRoundedRect(
-      -btnWidth / 2, 
-      -btnHeight / 2, 
-      btnWidth, 
-      btnHeight, 
-      10
-    );
+  drawButton(g, fill, alpha, stroke, w, h) {
+    g.clear();
+    g.fillStyle(fill, alpha);
+    g.lineStyle(0, stroke);
+    g.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
+    g.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
+  }
+
+  drawShadow(g, offset, w, h, fill, alpha) {
+    g.clear();
+    g.fillStyle(fill, alpha);
+    g.lineStyle(0, 0x000000, 0 );
+    g.fillRoundedRect(-w / 2 + offset.x, -h / 2 + offset.y, w, h, 10);
   }
 
   async fetchTracks() {
     try {
-      const response = await fetch('assets/levels/tracks.json');
-      const tracks = await response.json();
-      return tracks.filter((t, i, arr) => arr.findIndex(x => x.file === t.file) === i);
-    } catch (e) {
-      return [
-        { label: 'TRACK 1', file: 'scene_1.svg' },
-        { label: 'TRACK 2', file: 'scene_2.svg' }
-      ];
+      const res = await fetch('assets/levels/tracks.json');
+      const data = await res.json();
+      return data.filter((t, i, arr) => arr.findIndex(x => x.file === t.file) === i);
+    } catch {
+      return [{ label: 'TRACK 1', file: 'scene_1.svg' }, { label: 'TRACK 2', file: 'scene_2.svg' }];
     }
   }
 
   handleButton(key) {
-    console.log('Klik:', key, 'selectedTrack:', this.selectedTrack);
-
     if (key === 'start') {
       this.scene.start('LoadingScene', {
         trackFile: this.tracks[this.selectedTrack].file,
         gameMode: this.gameMode
       });
     } else if (key === 'fullscreen') {
-      if (document.fullscreenElement) {
-        document.exitFullscreen();
-      } else {
-        document.body.requestFullscreen();
-      }
+      document.fullscreenElement ? document.exitFullscreen() : document.body.requestFullscreen();
     } else if (key === 'track') {
       this.selectedTrack = (this.selectedTrack + 1) % this.tracks.length;
       window._selectedTrack = this.selectedTrack;
-
-      const trackBtn = this.menuButtons.find(btn => btn.key === 'track');
-      if (trackBtn) {
-        trackBtn.container.getAt(2).setText(this.tracks[this.selectedTrack].label);
-      }
+      const btn = this.menuButtons.find(b => b.key === 'track');
+      if (btn) btn.container.getAt(2).setText(this.tracks[this.selectedTrack].label);
     } else if (key === 'mode') {
       this.gameMode = this.gameMode === 'PRACTICE' ? 'RACE' : 'PRACTICE';
       window._gameMode = this.gameMode;
-
-      const modeBtn = this.menuButtons.find(btn => btn.key === 'mode');
-      if (modeBtn) {
-        modeBtn.container.getAt(2).setText(this.gameMode);
-      }
+      const btn = this.menuButtons.find(b => b.key === 'mode');
+      if (btn) btn.container.getAt(2).setText(this.gameMode);
     }
   }
 }

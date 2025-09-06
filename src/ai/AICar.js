@@ -342,7 +342,11 @@ export class AICar extends Car {
   _detectStuck(dt) { return this.aiDriving._detectStuck(dt); }
 
   _handleSmarterRecovery(dt, state) { return this.aiRecovery._handleSmarterRecovery(dt, state); }
-  _startSmartRecovery() { return this.aiRecovery._startSmartRecovery(); }
+  _startSmartRecovery() { 
+    // Resetuj fazę recovery do początkowej
+    this.aiRecovery.recoveryPhase = 'assess';
+    return this.aiRecovery._startSmartRecovery(); 
+  }
 
   _normalizeAngle(angle) {
     while (angle > Math.PI) angle -= 2 * Math.PI;

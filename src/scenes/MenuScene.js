@@ -1,4 +1,4 @@
-const btnHoverColor = Phaser.Display.Color.RGBStringToColor("rgba(20, 125, 135, 1)");
+const btnHoverColor = Phaser.Display.Color.RGBStringToColor("rgba(33, 143, 153, 1)");
 const btnColor = Phaser.Display.Color.RGBStringToColor("rgba(25, 104, 120, 1)");
 const btnStrokeColor = Phaser.Display.Color.RGBStringToColor("rgb(0, 43, 36)");
 
@@ -23,6 +23,9 @@ export class MenuScene extends Phaser.Scene {
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 }
     };
+    // Resetuj stan gradientu do wartości początkowych
+    this.gradientState = { stop1: 0.6, stop2: 0.75 };
+    this.gradientTween = null; // Referencja do tweena dla łatwego zatrzymania
     if (!window._tracks) window._tracks = [];
     if (typeof window._selectedTrack !== 'number') window._selectedTrack = 0;
     if (!window._gameMode) window._gameMode = 'PRACTICE';
@@ -34,18 +37,37 @@ export class MenuScene extends Phaser.Scene {
   async create() {
     const { width, height } = this.sys.game.canvas;
     this.add.tileSprite(0, 0, width, height, 'tile').setOrigin(0, 0);
+
+    // Zatrzymaj poprzedni tween jeśli istnieje
+    if (this.gradientTween) {
+      this.gradientTween.stop();
+      this.gradientTween = null;
+    }
+
+    // Resetuj stan gradientu do wartości początkowych
+    this.gradientState = { stop1: 0.6, stop2: 0.75 };
+
     if (this.textures.exists('gradientOverlay')) this.textures.remove('gradientOverlay');
     const gradientCanvas = this.textures.createCanvas('gradientOverlay', width, height);
     const ctx = gradientCanvas.getContext();
-    const g = ctx.createLinearGradient(0, 0, 0, height);
-    g.addColorStop(0, 'rgba(75,30,77,1)');
-    g.addColorStop(0.6, 'rgba(0,0,0,0.3)');
-    g.addColorStop(0.75, 'rgba(0,0,0,0.3)');
-    g.addColorStop(1.0, 'rgba(25,33,43,1)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, width, height);
+    this.updateGradient(ctx, width, height);
     gradientCanvas.refresh();
-    this.add.image(0, 0, 'gradientOverlay').setOrigin(0, 0);
+    this.add.image(0, 0, 'gradientOverlay').setOrigin(0, 0).setAlpha(1);
+
+    // Utwórz nowy tween i zapisz referencję
+    this.gradientTween = this.tweens.add({
+      targets: this.gradientState,
+      stop1: 0.25,
+      stop2: 0.4,
+      duration: 4000,
+      ease: 'Sine.easeInOut',
+      yoyo: true,
+      repeat: -1,
+      onUpdate: () => {
+        this.updateGradient(ctx, width, height);
+        gradientCanvas.refresh();
+      }
+    });
 
     if (!this.tracks.length) this.tracks = await this.fetchTracks();
     if (!this.tracks.length) this.tracks = [{ label: 'TRACK 1', file: 'scene_1.svg' }];
@@ -71,7 +93,7 @@ export class MenuScene extends Phaser.Scene {
 
     buttons.forEach(btn => {
       const shadow = this.add.graphics();
-      this.drawShadow(shadow, so, w, h, sf, 0.26);
+      this.drawShadow(shadow, so, w, h, sf, a);
       const bg = this.add.graphics();
       this.drawButton(bg, f, a, s, w, h);
       const text = this.add.text(0, 0, btn.label, {
@@ -89,11 +111,11 @@ export class MenuScene extends Phaser.Scene {
           this.drawButton(bg, f, a, s, w, h);
         });
         container.on('pointerdown', () => {
-          this.drawShadow(shadow, sp, w, h, sf, 0.26);
+          this.drawShadow(shadow, sp, w, h, sf, a);
           this.handleButton(btn.key);
         });
         container.on('pointerup', () => {
-          this.drawShadow(shadow, so, w, h, sf, 0.26);
+          this.drawShadow(shadow, so, w, h, sf, a);
         });
       }
 
@@ -114,6 +136,17 @@ export class MenuScene extends Phaser.Scene {
     text2.setPosition(startX + text1.width + 30, titleY + (text1.height - text2.height) / 2 - 60).setOrigin(0, 0.5);
   }
 
+  updateGradient(ctx, width, height) {
+    const g = ctx.createLinearGradient(0, 0, 0, height);
+    g.addColorStop(0, 'rgba(75,30,77,1)');
+    g.addColorStop(this.gradientState.stop1, 'rgba(0,0,0,0.3)');
+    g.addColorStop(this.gradientState.stop2, 'rgba(0,0,0,0.3)');
+    g.addColorStop(1.0, 'rgba(25,33,43,1)');
+    ctx.clearRect(0, 0, width, height);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, width, height);
+  }
+
   drawButton(g, fill, alpha, stroke, w, h) {
     g.clear();
     g.fillStyle(fill, alpha);
@@ -125,7 +158,7 @@ export class MenuScene extends Phaser.Scene {
   drawShadow(g, offset, w, h, fill, alpha) {
     g.clear();
     g.fillStyle(fill, alpha);
-    g.lineStyle(0, 0x000000, 0 );
+    g.lineStyle(0, 0x000000, 0);
     g.fillRoundedRect(-w / 2 + offset.x, -h / 2 + offset.y, w, h, 10);
   }
 
@@ -158,5 +191,24 @@ export class MenuScene extends Phaser.Scene {
       const btn = this.menuButtons.find(b => b.key === 'mode');
       if (btn) btn.container.getAt(2).setText(this.gameMode);
     }
+  }
+
+  // Metoda wywoływana przy niszczeniu sceny - czyści zasoby
+  shutdown() {
+    // Zatrzymaj animację gradientu
+    if (this.gradientTween) {
+      this.gradientTween.stop();
+      this.gradientTween = null;
+    }
+    
+    // Wyczyść wszystkie tweens w tej scenie
+    this.tweens.killAll();
+    
+    // Usuń teksturę gradientu
+    if (this.textures.exists('gradientOverlay')) {
+      this.textures.remove('gradientOverlay');
+    }
+    
+    console.log('[MenuScene] Scene shutdown - cleaned up gradient animation');
   }
 }

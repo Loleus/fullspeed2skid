@@ -62,6 +62,12 @@ _getSafeTarget() {
           return false;
         }
       }
+
+      // Dodatkowo: twarda przeszkoda na linii (proaktywne unikanie ścian)
+      const surfaceType = this.ai.worldData?.getSurfaceTypeAt?.(checkX, checkY);
+      if (surfaceType === 'obstacle') {
+        return false;
+      }
     }
     
     return true;

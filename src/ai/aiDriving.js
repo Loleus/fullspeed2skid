@@ -162,6 +162,16 @@ _getSafeTarget() {
   }
 
   _checkWaypointCompletion() {
+    // KLUCZOWA NAPRAWA: Nie przechodź do następnego waypointa przez 4 sekundy po recovery
+    if (this.ai.aiRecovery.recoveryEndTime > 0) {
+      const timeSinceRecovery = Date.now() - this.ai.aiRecovery.recoveryEndTime;
+      if (timeSinceRecovery < 4000) { // 4 sekundy
+        return; // Nie przechodź do następnego waypointa
+      } else {
+        this.ai.aiRecovery.recoveryEndTime = 0; // Reset
+      }
+    }
+
     const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
     const dist = Math.hypot(
       currentWP.x - this.ai.carX,
@@ -172,7 +182,7 @@ _getSafeTarget() {
       const prevIndex = this.ai.currentWaypointIndex;
       this.ai.currentWaypointIndex = (this.ai.currentWaypointIndex + 1) % this.ai.waypoints.length;
       this.ai.waypointStability.lastChangeTime = Date.now();
-      // console.log(`[AI] WP ${prevIndex} -> ${this.ai.currentWaypointIndex}`);
+      console.log(`[AI] WP ${prevIndex} -> ${this.ai.currentWaypointIndex} (after recovery delay)`);
     }
   }
 

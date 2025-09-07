@@ -392,25 +392,23 @@ export class AICar extends Car {
       return;
     }
 
-    // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze
+    // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze w ciągu 1 sekundy
     const recentCollisionsInArea = this.dangerZones.filter(zone => {
       const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);
       const timeDiff = Date.now() - zone.time;
-      return dist < this.dangerZoneRadius && timeDiff < 10000; // 10 sekund
+      return dist < this.dangerZoneRadius && timeDiff < 1000; // TYLKO 1 sekunda!
     });
 
     if (recentCollisionsInArea.length >= 3) {
-      console.log(`[AI] Multiple collisions in area! Entering desperate mode`);
+      console.log(`[AI] Multiple collisions in 1 second! Entering desperate mode`);
       this._enterDesperateMode();
-
-      // Ograniczony przeskok waypointów - tylko +2, nie więcej
       this.currentWaypointIndex = (this.currentWaypointIndex + 2) % this.waypoints.length;
-    } else if (recentCollisionsInArea.length === 2) {
-      // Druga kolizja w krótkim czasie – wymuś cofanie zamiast od razu jechać dalej
-      console.log('[AI] Second collision – forcing reverse recovery');
+    } else if (recentCollisionsInArea.length >= 2) {
+      // Druga kolizja w ciągu 1 sekundy – wymuś długie cofanie
+      console.log('[AI] Second collision in 1 second – forcing LONG reverse recovery');
       this._startSmartRecovery();
       this.recoverySubPhase = 'reverse';
-      this.recoveryTimer = Math.max(this.recoveryTimer, this.config.recovery.reverseTimer);
+      this.recoveryTimer = Math.max(this.recoveryTimer, 4.0); // Długie cofanie - 4 sekundy
     } else {
       // Jeśli jesteśmy na drodze, nie wchodź w recovery natychmiast – jedź prosto po odbiciu
       const surfaceHere = this.worldData.getSurfaceTypeAt(this.carX, this.carY);

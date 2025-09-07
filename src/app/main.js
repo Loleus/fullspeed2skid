@@ -1,8 +1,8 @@
 // Import scen gry (ekran ładowania, menu, właściwa rozgrywka, HUD)
-import { MenuScene } from './MenuScene.js';
-import { LoadingScene } from './LoadingScene.js';
-import { GameScene } from './game.js';
-import { HudScene } from './HudScene.js';
+import { MenuScene } from '../scenes/MenuScene.js';
+import { LoadingScene } from '../scenes/LoadingScene.js';
+import { GameScene } from '../engine/game.js';
+import { HudScene } from '../scenes/HudScene.js';
 
 // Rozmiar pojedynczego kafelka (używany np. w mapach)
 const tileSize  = 256;

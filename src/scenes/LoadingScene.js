@@ -1,5 +1,5 @@
-import { World } from './world.js';
-import { tileSize, worldH } from './main.js';
+import { World } from '../engine/world.js';
+import { tileSize, worldH } from '../app/main.js';
 
 export class LoadingScene extends window.Phaser.Scene {
   constructor() {
@@ -26,14 +26,13 @@ export class LoadingScene extends window.Phaser.Scene {
     const padding = 5;
     // Tło przycisku
     this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, 0x444444, 1)
-      .setStrokeStyle(2, 0x222222)
       .setOrigin(0.5)
-      .setAlpha(0.5);
+      .setAlpha(0.2);
     // Tekst
     const loadingText = this.add.text(width / 2, height / 2, 'loading...', {
       fontFamily: 'Stormfaze',
       fontSize: '21px',
-      color: '#fff',
+      color: '#728a99ff',
       align: 'center',
       padding: { left: padding, right: padding, top: padding, bottom: padding },
     }).setOrigin(0.5);

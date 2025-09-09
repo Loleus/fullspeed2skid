@@ -7,9 +7,10 @@ export class AIRecovery {
     this.recoveryPhase = 'assess'; // assess, cautious_reverse, find_nearest, check_obstacles, intelligent_reverse, cautious_approach
     this.obstacleCheckRadius = 120; // Zwiększony promień sprawdzania przeszkód
     this.maxAngleForDirectApproach = Math.PI / 4; // 45 stopni - zwiększony kąt dla bezpośredniego podejścia
-    this.cautiousThrottle = 0.2; // Jeszcze bardziej ostrożny gaz
-    this.minReverseSpeed = -8; // Minimalna prędkość cofania (zwiększona)
-    this.reverseTime = 3.0; // Długi czas cofania (3 sekundy)
+    this.cautiousThrottle = 0.05; // BARDZO ostrożny gaz - 4x wolniej!
+    this.minReverseSpeed = -4; // Wolniejsze cofanie
+    this.reverseTime = 4.0; // Dłuższy czas cofania (4 sekundy)
+    this.gentleDriveTimer = 0; // Timer dla delikatnej jazdy
     this.recoveryEndTime = 0; // Czas zakończenia recovery
   }
 
@@ -38,14 +39,9 @@ export class AIRecovery {
         
         console.log(`[AI] Reverting to PREVIOUS waypoint: ${prevIndex} (not looking further!)`);
         
-        // Sprawdź czy widzimy obecny waypoint (teraz poprzedni)
-        const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
-        if (this._canSeeWaypoint(currentWP) && this._isPathClear(currentWP)) {
-            console.log('[AI] Last safe waypoint visible and clear - resuming normal driving');
-            this.ai.recoveryMode = false;
-            this.recoveryPhase = 'assess';
-            return { left: false, right: false, up: true, down: false };
-        }
+        // ZAWSZE przejdź do cofania - nie sprawdzaj czy waypoint jest "widoczny"
+        // AI musi się wycofać z problematycznego obszaru
+        console.log('[AI] Always backing up from problem area - no shortcuts!');
         
         // Przejdź do ostrożnego cofania
         this.recoveryPhase = 'cautious_reverse';
@@ -65,10 +61,11 @@ export class AIRecovery {
         if (Math.abs(state.speed) < 0.5) {
             const targetWP = this.lastSafeWaypoint;
             const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
-            const angleDiff = this.ai._normalizeAngle(angleToTarget - (state.carAngle + Math.PI)); // +PI bo cofamy
+            // NAPRAWKA: Nie dodawaj Math.PI - AI ma skręcać w kierunku waypointa, nie w przeciwnym!
+            const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
             
             // Bardzo ostrożne skręcanie podczas cofania
-            const steer = Phaser.Math.Clamp(angleDiff * 0.3, -0.2, 0.2);
+            const steer = Phaser.Math.Clamp(angleDiff * 0.1, -0.05, 0.05); // 6x mniej agresywne!
             
             console.log(`[AI] REVERSE COMMAND: down=true, steer=${steer.toFixed(2)}, angleDiff=${angleDiff.toFixed(2)}`);
             return {
@@ -80,7 +77,8 @@ export class AIRecovery {
         }
 
         // Po cofnięciu przejdź bezpośrednio do ostrożnego podejścia
-        if (state.speed < this.minReverseSpeed && this.ai.recoveryTimer < 0.5) {
+        if (Math.abs(state.speed) < 1.0 && this.ai.recoveryTimer < 0.5) {
+            console.log('[AI] Speed low enough, transitioning to cautious approach');
             this.recoveryPhase = 'cautious_approach';
             this.ai.recoveryTimer = 1.5;
             return { left: false, right: false, up: false, down: false };
@@ -98,27 +96,81 @@ export class AIRecovery {
         const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
         const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
         
-        // Bardzo ostrożne sterowanie
-        const steer = Phaser.Math.Clamp(angleDiff * 0.3, -0.2, 0.2);
+        // Najpierw zatrzymaj się i ocenij sytuację
+        if (Math.abs(state.speed) > 2) {
+            console.log('[AI] Still moving, stopping first...');
+            return { left: false, right: false, up: false, down: true };
+        }
         
-        // Bardzo ostrożny gaz
-        const throttle = this.cautiousThrottle;
+        // BARDZO delikatne i ostrożne sterowanie - jak prawdziwy kierowca po wypadku
+        const steer = Phaser.Math.Clamp(angleDiff * 0.05, -0.02, 0.02); // 6x mniej agresywne!
+        
+        // BARDZO ostrożny gaz - wolno i spokojnie
+        const throttle = this.cautiousThrottle * 0.1; // 10x wolniej!
         
         // Sprawdź czy jesteśmy wystarczająco blisko poprzedniego waypointa
         const distToTarget = Math.hypot(targetWP.x - this.ai.carX, targetWP.y - this.ai.carY);
         if (distToTarget < this.ai.waypointZoneRadius * 1.5 && Math.abs(angleDiff) < 0.3) {
             console.log('[AI] Reached previous waypoint - recovery successful, staying here for a moment');
-            this.ai.recoveryMode = false;
-            this.recoveryPhase = 'assess';
+            
+            // KLUCZOWA NAPRAWA: Sprawdź czy AI rzeczywiście opuściło problematyczny obszar
+            const problemArea = this.ai.dangerZones.find(zone => {
+                const dist = Math.hypot(this.ai.carX - zone.x, this.ai.carY - zone.y);
+                return dist < this.ai.dangerZoneRadius;
+            });
+            
+            if (problemArea) {
+                console.log('[AI] Still in problem area - continuing reverse for safety');
+                return { left: false, right: false, up: false, down: true };
+            }
+            
+            // STOPNIOWE PRZEJŚCIE: Nie kończ recovery od razu - przejdź do fazy "gentle_drive"
+            console.log('[AI] Starting gentle transition from recovery to normal driving');
+            this.recoveryPhase = 'gentle_drive';
             this.recoveryEndTime = Date.now(); // Zapisz czas zakończenia recovery
-            // KLUCZOWA NAPRAWA: Nie przechodź do następnego waypointa od razu
-            // AI zostanie przy poprzednim waypointa i będzie jechać normalnie
+            this.gentleDriveTimer = 3.0; // 3 sekundy delikatnej jazdy
+            
+            // BARDZO delikatne sterowanie podczas przejścia
             return { left: false, right: false, up: true, down: false };
         }
 
         return {
             left: steer < -0.01,
             right: steer > 0.01,
+            up: throttle > 0,
+            down: false
+        };
+    }
+
+    // --- FAZA 3: DELIKATNA JAZDA PO RECOVERY ---
+    if (this.recoveryPhase === 'gentle_drive') {
+        console.log(`[AI] Recovery Phase: GENTLE_DRIVE - very careful driving after recovery, timer=${this.gentleDriveTimer.toFixed(1)}`);
+        
+        this.gentleDriveTimer -= dt;
+        
+        if (this.gentleDriveTimer <= 0) {
+            console.log('[AI] Gentle drive phase completed - returning to normal driving');
+            this.ai.recoveryMode = false;
+            this.recoveryPhase = 'assess';
+            return { left: false, right: false, up: false, down: false };
+        }
+        
+        // BARDZO delikatne sterowanie - jak nowicjusz
+        const targetWP = this.ai.waypoints[this.ai.currentWaypointIndex];
+        const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
+        const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
+        
+        // Jeszcze bardziej delikatne sterowanie
+        const steer = Phaser.Math.Clamp(angleDiff * 0.02, -0.01, 0.01); // 10x mniej agresywne!
+        
+        // BARDZO wolny gaz
+        const throttle = this.cautiousThrottle * 0.05; // 20x wolniej!
+        
+        console.log(`[AI] GENTLE DRIVE: steer=${steer.toFixed(3)}, throttle=${throttle.toFixed(3)}, speed=${state.speed.toFixed(1)}`);
+        
+        return {
+            left: steer < -0.005,
+            right: steer > 0.005,
             up: throttle > 0,
             down: false
         };

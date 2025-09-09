@@ -12,6 +12,15 @@ export class AIRecovery {
     this.reverseTime = 4.0; // Dłuższy czas cofania (4 sekundy)
     this.gentleDriveTimer = 0; // Timer dla delikatnej jazdy
     this.recoveryEndTime = 0; // Czas zakończenia recovery
+    
+    // NOWE: Mechanizmy zapobiegające gwałtownym ruchom
+    this.momentumDamping = 0.95; // Tłumienie pędu po zatrzymaniu
+    this.lastSpeed = 0; // Poprzednia prędkość dla wykrywania nagłych zmian
+    this.speedChangeThreshold = 5.0; // Próg wykrywania nagłych zmian prędkości
+    this.stabilizationTimer = 0; // Timer stabilizacji po zatrzymaniu
+    this.stabilizationDelay = 1.0; // Czas stabilizacji przed ruszeniem
+    this.gradualThrottleIncrease = 0.02; // Stopniowe zwiększanie throttle
+    this.currentThrottle = 0; // Aktualny throttle (stopniowo zwiększany)
   }
 
   _handleSmarterRecovery(dt, state) {
@@ -96,17 +105,40 @@ export class AIRecovery {
         const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
         const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
         
+        // NOWE: Wykrywanie nagłych zmian prędkości
+        const speedChange = Math.abs(state.speed - this.lastSpeed);
+        this.lastSpeed = state.speed;
+        
+        if (speedChange > this.speedChangeThreshold) {
+            console.log(`[AI] Sudden speed change detected: ${speedChange.toFixed(1)} - applying emergency brake`);
+            this.stabilizationTimer = this.stabilizationDelay; // Reset stabilizacji
+            this.currentThrottle = 0; // Reset throttle
+            return { left: false, right: false, up: false, down: true };
+        }
+        
         // Najpierw zatrzymaj się i ocenij sytuację
         if (Math.abs(state.speed) > 2) {
             console.log('[AI] Still moving, stopping first...');
+            this.stabilizationTimer = 0; // Reset stabilizacji
+            this.currentThrottle = 0; // Reset throttle
             return { left: false, right: false, up: false, down: true };
+        }
+        
+        // NOWE: Timer stabilizacji - czekaj przed ruszeniem
+        if (this.stabilizationTimer < this.stabilizationDelay) {
+            this.stabilizationTimer += dt;
+            console.log(`[AI] Stabilizing after stop: ${this.stabilizationTimer.toFixed(1)}/${this.stabilizationDelay}s`);
+            return { left: false, right: false, up: false, down: false };
         }
         
         // BARDZO delikatne i ostrożne sterowanie - jak prawdziwy kierowca po wypadku
         const steer = Phaser.Math.Clamp(angleDiff * 0.05, -0.02, 0.02); // 6x mniej agresywne!
         
-        // BARDZO ostrożny gaz - wolno i spokojnie
-        const throttle = this.cautiousThrottle * 0.1; // 10x wolniej!
+        // NOWE: Stopniowe zwiększanie throttle zamiast gwałtownego ruszania
+        this.currentThrottle = Math.min(this.currentThrottle + this.gradualThrottleIncrease * dt, this.cautiousThrottle * 0.1);
+        const throttle = this.currentThrottle;
+        
+        console.log(`[AI] Gradual throttle increase: ${throttle.toFixed(4)} (target: ${(this.cautiousThrottle * 0.1).toFixed(4)})`);
         
         // Sprawdź czy jesteśmy wystarczająco blisko poprzedniego waypointa
         const distToTarget = Math.hypot(targetWP.x - this.ai.carX, targetWP.y - this.ai.carY);
@@ -121,6 +153,8 @@ export class AIRecovery {
             
             if (problemArea) {
                 console.log('[AI] Still in problem area - continuing reverse for safety');
+                this.stabilizationTimer = 0; // Reset stabilizacji
+                this.currentThrottle = 0; // Reset throttle
                 return { left: false, right: false, up: false, down: true };
             }
             
@@ -152,7 +186,21 @@ export class AIRecovery {
             console.log('[AI] Gentle drive phase completed - returning to normal driving');
             this.ai.recoveryMode = false;
             this.recoveryPhase = 'assess';
+            // Reset wszystkich timerów
+            this.stabilizationTimer = 0;
+            this.currentThrottle = 0;
+            this.lastSpeed = 0;
             return { left: false, right: false, up: false, down: false };
+        }
+        
+        // NOWE: Wykrywanie nagłych zmian prędkości również w gentle_drive
+        const speedChange = Math.abs(state.speed - this.lastSpeed);
+        this.lastSpeed = state.carAngle;
+        
+        if (speedChange > this.speedChangeThreshold * 0.5) { // Jeszcze bardziej wrażliwe
+            console.log(`[AI] Sudden movement in gentle drive: ${speedChange.toFixed(1)} - slowing down`);
+            this.gentleDriveTimer += 0.5; // Przedłuż fazę gentle_drive
+            return { left: false, right: false, up: false, down: true };
         }
         
         // BARDZO delikatne sterowanie - jak nowicjusz
@@ -160,13 +208,15 @@ export class AIRecovery {
         const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
         const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
         
-        // Jeszcze bardziej delikatne sterowanie
-        const steer = Phaser.Math.Clamp(angleDiff * 0.02, -0.01, 0.01); // 10x mniej agresywne!
+        // Jeszcze bardziej delikatne sterowanie z dodatkowym tłumieniem
+        const baseSteer = angleDiff * 0.02;
+        const steer = Phaser.Math.Clamp(baseSteer * this.momentumDamping, -0.01, 0.01); // 10x mniej agresywne!
         
-        // BARDZO wolny gaz
-        const throttle = this.cautiousThrottle * 0.05; // 20x wolniej!
+        // NOWE: Stopniowe zwiększanie throttle również w gentle_drive
+        this.currentThrottle = Math.min(this.currentThrottle + this.gradualThrottleIncrease * dt * 0.5, this.cautiousThrottle * 0.05);
+        const throttle = this.currentThrottle;
         
-        console.log(`[AI] GENTLE DRIVE: steer=${steer.toFixed(3)}, throttle=${throttle.toFixed(3)}, speed=${state.speed.toFixed(1)}`);
+        console.log(`[AI] GENTLE DRIVE: steer=${steer.toFixed(4)}, throttle=${throttle.toFixed(4)}, speed=${state.speed.toFixed(1)}, momentum=${this.momentumDamping.toFixed(2)}`);
         
         return {
             left: steer < -0.005,
@@ -186,6 +236,12 @@ export class AIRecovery {
     this.recoveryPhase = 'assess'; // Zacznij od oceny sytuacji
     this.ai.recoveryTimer = 1.0; // Czas na ocenę sytuacji
     this.ai.recoveryAttempts++;
+
+    // NOWE: Reset wszystkich timerów stabilizacji
+    this.stabilizationTimer = 0;
+    this.currentThrottle = 0;
+    this.lastSpeed = state.speed;
+    this.gentleDriveTimer = 0;
 
     console.log(`[AI] Recovery STARTED (assessing situation, attempt ${this.ai.recoveryAttempts})`);
 

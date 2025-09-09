@@ -271,10 +271,17 @@ export class AICar extends Car {
     // KLUCZOWA NAPRAWA: Po recovery AI jedzie znacznie wolniej
     if (this.aiRecovery.recoveryEndTime > 0) {
       const timeSinceRecovery = Date.now() - this.aiRecovery.recoveryEndTime;
-      if (timeSinceRecovery < 10000) { // 10 sekund po recovery
-        const recoveryThrottleMultiplier = Math.max(0.1, 1.0 - (timeSinceRecovery / 10000)); // 0.1 do 1.0
+      if (timeSinceRecovery < 15000) { // 15 sekund po recovery (zwiększone z 10)
+        const recoveryThrottleMultiplier = Math.max(0.05, 1.0 - (timeSinceRecovery / 15000)); // 0.05 do 1.0 (bardziej konserwatywne)
         throttle *= recoveryThrottleMultiplier;
-        console.log(`[AI] Post-recovery driving: time=${timeSinceRecovery}ms, throttle=${throttle.toFixed(3)}`);
+        
+        // Dodatkowe ograniczenie prędkości po recovery
+        const maxSpeedAfterRecovery = 60; // Maksymalna prędkość po recovery
+        if (state.speed > maxSpeedAfterRecovery) {
+          throttle = 0; // Zatrzymaj jeśli za szybko
+        }
+        
+        console.log(`[AI] Post-recovery driving: time=${timeSinceRecovery}ms, throttle=${throttle.toFixed(3)}, speed=${state.speed.toFixed(1)}`);
       }
     }
 
@@ -290,9 +297,14 @@ export class AICar extends Car {
       // KLUCZOWA NAPRAWA: Po recovery AI skręca delikatniej
       if (this.aiRecovery.recoveryEndTime > 0) {
         const timeSinceRecovery = Date.now() - this.aiRecovery.recoveryEndTime;
-        if (timeSinceRecovery < 10000) { // 10 sekund po recovery
-          const recoverySteerMultiplier = Math.max(0.3, 1.0 - (timeSinceRecovery / 10000)); // 0.3 do 1.0
+        if (timeSinceRecovery < 15000) { // 15 sekund po recovery (zwiększone z 10)
+          const recoverySteerMultiplier = Math.max(0.2, 1.0 - (timeSinceRecovery / 15000)); // 0.2 do 1.0 (bardziej konserwatywne)
           steer *= recoverySteerMultiplier;
+          
+          // Dodatkowe ograniczenie skrętu po recovery
+          const maxSteerAfterRecovery = 0.05; // Maksymalny skręt po recovery
+          steer = Phaser.Math.Clamp(steer, -maxSteerAfterRecovery, maxSteerAfterRecovery);
+          
           console.log(`[AI] Post-recovery steering: time=${timeSinceRecovery}ms, steer=${steer.toFixed(3)}`);
         }
       }
@@ -460,7 +472,7 @@ export class AICar extends Car {
         // NIE wyzeruj recovery - pozwól mu działać jeśli jest aktywny
       } else {
         console.log(`[AI] Collision off-road – starting recovery`);
-        this._startSmartRecovery();
+      this._startSmartRecovery();
       }
     }
   }

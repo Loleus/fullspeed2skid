@@ -206,7 +206,8 @@ export class AICar extends Car {
     this._detectStuck(dt);
 
     // Post-collision grace handling (on-road): don't turn, wait bounce, then go
-    if (this.postCollision.active) {
+    // ALE NIE jeśli jesteśmy w recovery mode - recovery ma priorytet!
+    if (this.postCollision.active && !this.recoveryMode) {
       this.postCollision.steerHoldTimer -= dt;
       this.postCollision.throttleCooldown -= dt;
       this.postCollision.totalTimer -= dt;
@@ -231,7 +232,7 @@ export class AICar extends Car {
 
     // Tryb recovery
     if (this.recoveryMode) {
-      const recoveryControl = this._handleSmarterRecovery(dt, state);
+      const recoveryControl = this.aiRecovery._handleSmarterRecovery(dt, state);
       this.update(dt, recoveryControl, worldW, worldH);
       return;
     }
@@ -266,6 +267,16 @@ export class AICar extends Car {
     // Oblicz sterowanie z użyciem nowych parametrów konfiguracyjnych
     let steer = 0;
     let throttle = this.config.speed.baseThrottle;
+    
+    // KLUCZOWA NAPRAWA: Po recovery AI jedzie znacznie wolniej
+    if (this.aiRecovery.recoveryEndTime > 0) {
+      const timeSinceRecovery = Date.now() - this.aiRecovery.recoveryEndTime;
+      if (timeSinceRecovery < 10000) { // 10 sekund po recovery
+        const recoveryThrottleMultiplier = Math.max(0.1, 1.0 - (timeSinceRecovery / 10000)); // 0.1 do 1.0
+        throttle *= recoveryThrottleMultiplier;
+        console.log(`[AI] Post-recovery driving: time=${timeSinceRecovery}ms, throttle=${throttle.toFixed(3)}`);
+      }
+    }
 
     const absAngleDiff = Math.abs(angleDiff);
 
@@ -275,6 +286,17 @@ export class AICar extends Car {
     } else {
       // Podstawowe sterowanie z uwzględnieniem czułości
       steer = angleDiff * this.config.steering.baseSensitivity;
+      
+      // KLUCZOWA NAPRAWA: Po recovery AI skręca delikatniej
+      if (this.aiRecovery.recoveryEndTime > 0) {
+        const timeSinceRecovery = Date.now() - this.aiRecovery.recoveryEndTime;
+        if (timeSinceRecovery < 10000) { // 10 sekund po recovery
+          const recoverySteerMultiplier = Math.max(0.3, 1.0 - (timeSinceRecovery / 10000)); // 0.3 do 1.0
+          steer *= recoverySteerMultiplier;
+          console.log(`[AI] Post-recovery steering: time=${timeSinceRecovery}ms, steer=${steer.toFixed(3)}`);
+        }
+      }
+      
       steer = Phaser.Math.Clamp(steer, -this.maxSteerInput, this.maxSteerInput);
 
       // Dostosowanie throttle na podstawie kąta
@@ -392,23 +414,36 @@ export class AICar extends Car {
       return;
     }
 
-    // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze w ciągu 1 sekundy
+    // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze
     const recentCollisionsInArea = this.dangerZones.filter(zone => {
       const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);
       const timeDiff = Date.now() - zone.time;
-      return dist < this.dangerZoneRadius && timeDiff < 1000; // TYLKO 1 sekunda!
+      return dist < this.dangerZoneRadius && timeDiff < 2000; // 2 sekundy
     });
 
-    if (recentCollisionsInArea.length >= 3) {
-      console.log(`[AI] Multiple collisions in 1 second! Entering desperate mode`);
-      this._enterDesperateMode();
-      this.currentWaypointIndex = (this.currentWaypointIndex + 2) % this.waypoints.length;
-    } else if (recentCollisionsInArea.length >= 2) {
-      // Druga kolizja w ciągu 1 sekundy – wymuś długie cofanie
-      console.log('[AI] Second collision in 1 second – forcing LONG reverse recovery');
+    // Sprawdź czy mamy dużo kolizji w tym samym miejscu (niezależnie od czasu)
+    const totalCollisionsInArea = this.dangerZones.filter(zone => {
+      const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);
+      return dist < this.dangerZoneRadius;
+    }).reduce((sum, zone) => sum + zone.collisions, 0);
+
+    // DODAJ COOLDOWN - nie wchodź w recovery jeśli już jesteś w recovery lub niedawno skończyłeś
+    const timeSinceLastRecovery = Date.now() - (this.recoveryEndTime || 0);
+    const isInRecoveryCooldown = timeSinceLastRecovery < 8000; // 8 sekund cooldown
+
+    if ((totalCollisionsInArea >= 5 || recentCollisionsInArea.length >= 3) && !isInRecoveryCooldown) {
+      console.log(`[AI] Too many collisions in area (${totalCollisionsInArea} total, ${recentCollisionsInArea.length} recent)! Entering recovery`);
       this._startSmartRecovery();
       this.recoverySubPhase = 'reverse';
       this.recoveryTimer = Math.max(this.recoveryTimer, 4.0); // Długie cofanie - 4 sekundy
+    } else if (recentCollisionsInArea.length >= 2 && !isInRecoveryCooldown) {
+      // Druga kolizja w ciągu 2 sekund – wymuś długie cofanie
+      console.log('[AI] Second collision in 2 seconds – forcing LONG reverse recovery');
+      this._startSmartRecovery();
+      this.recoverySubPhase = 'reverse';
+      this.recoveryTimer = Math.max(this.recoveryTimer, 4.0); // Długie cofanie - 4 sekundy
+    } else if (isInRecoveryCooldown) {
+      console.log(`[AI] Recovery cooldown active (${(8000 - timeSinceLastRecovery).toFixed(0)}ms remaining) - skipping recovery`);
     } else {
       // Jeśli jesteśmy na drodze, nie wchodź w recovery natychmiast – jedź prosto po odbiciu
       const surfaceHere = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
@@ -422,10 +457,7 @@ export class AICar extends Car {
         this.postCollision.steerHoldTimer = 0.4; // utrzymaj prosto, bez skrętu
         this.postCollision.throttleCooldown = 0.25; // chwilowo bez gazu po odbiciu
         this.postCollision.totalTimer = 0.8; // całe okno łaski
-        // Wyzeruj ewentualny recovery
-        this.recoveryMode = false;
-        this.recoveryTimer = 0;
-        this.recoveryAttempts = 0;
+        // NIE wyzeruj recovery - pozwól mu działać jeśli jest aktywny
       } else {
         console.log(`[AI] Collision off-road – starting recovery`);
         this._startSmartRecovery();

@@ -7,16 +7,11 @@ export class AIDriving {
 
   // Zwraca bezpieczny waypoint (kopia oryginalnej logiki)
 _getSafeTarget() {
-    // --- KLUCZOWA POPRAWKA ---
-    // Jeśli to jest stan tuż po PIERWSZEJ kolizji (recoveryAttempts === 1),
-    // to ignorujemy wszystkie strefy zagrożenia i po prostu jedziemy prosto do celu.
-    // To zapobiegnie natychmiastowemu skręcaniu w celu "ominięcia" gracza/ściany.
-    if (this.ai.recoveryAttempts === 1) {
-        // console.log('[AI] Post-first-collision grace period. Ignoring danger zones, continuing straight.');
-        return this.ai.waypoints[this.ai.currentWaypointIndex];
-    }
+    // --- USUNIĘTO IGNOROWANIE STREF ZAGROŻENIA ---
+    // AI zawsze sprawdza strefy zagrożenia, nawet po pierwszej kolizji
+    // To zapobiegnie ponownym kolizjom w tym samym miejscu
 
-    // --- Poniższa logika unikania przeszkód działa tylko w trybie normalnej jazdy (recoveryAttempts === 0) ---
+    // --- Logika unikania przeszkód działa zawsze ---
     const currentWP = this.ai.waypoints[this.ai.currentWaypointIndex];
     if (!this._isWaypointInDangerZone(currentWP) && this._isPathSafe(currentWP)) {
       return currentWP;
@@ -162,12 +157,14 @@ _getSafeTarget() {
   }
 
   _checkWaypointCompletion() {
-    // KLUCZOWA NAPRAWA: Nie przechodź do następnego waypointa przez 4 sekundy po recovery
+    // KLUCZOWA NAPRAWA: Nie przechodź do następnego waypointa przez 6 sekund po recovery
     if (this.ai.aiRecovery.recoveryEndTime > 0) {
       const timeSinceRecovery = Date.now() - this.ai.aiRecovery.recoveryEndTime;
-      if (timeSinceRecovery < 4000) { // 4 sekundy
+      if (timeSinceRecovery < 6000) { // 6 sekund - AI zostaje przy poprzednim waypointa
+        console.log(`[AI] Staying at waypoint ${this.ai.currentWaypointIndex} for ${(6000 - timeSinceRecovery).toFixed(0)}ms more`);
         return; // Nie przechodź do następnego waypointa
       } else {
+        console.log('[AI] Recovery cooldown ended - resuming normal waypoint progression');
         this.ai.aiRecovery.recoveryEndTime = 0; // Reset
       }
     }

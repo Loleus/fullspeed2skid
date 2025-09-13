@@ -8,7 +8,7 @@ export class AIRecovery {
     this.obstacleCheckRadius = 120; // Zwiększony promień sprawdzania przeszkód
     this.maxAngleForDirectApproach = Math.PI / 4; // 45 stopni - zwiększony kąt dla bezpośredniego podejścia
     this.cautiousThrottle = 0.05; // BARDZO ostrożny gaz - 4x wolniej!
-    this.minReverseSpeed = -4; // Wolniejsze cofanie
+    this.minReverseSpeed = -2; // BARDZO wolniejsze cofanie
     this.reverseTime = 8.0; // Dłuższy czas cofania (8 sekund)
     this.gentleDriveTimer = 0; // Timer dla delikatnej jazdy
     this.recoveryEndTime = 0; // Czas zakończenia recovery
@@ -27,8 +27,10 @@ export class AIRecovery {
     this.lastCollisionTime = 0; // Czas ostatniej kolizji
     this.collisionCount = 0; // Licznik kolizji podczas cofania
     this.collisionThreshold = 2.0; // Próg prędkości dla rozróżnienia delikatnej/mocnej kolizji
-    this.reverseObstaclePhase = 'none'; // none, gentle_reverse, forward_steer, continue_reverse
+    this.reverseObstaclePhase = 'none'; // none, gentle_reverse, forward_steer, continue_reverse, avoid_obstacle
     this.originalSteering = 0; // Oryginalny kierunek skręcania przed kolizją
+    this.lastCollisionPosition = null; // Pozycja ostatniej kolizji
+    this.obstacleAvoidanceDistance = 150; // Odległość unikania przeszkód
   }
 
   _handleSmarterRecovery(dt, state) {
@@ -117,11 +119,11 @@ export class AIRecovery {
                 return { left: false, right: false, up: false, down: false };
             }
             
-            // Delikatne cofanie z kierownicą w przeciwną stronę
+            // Delikatne cofanie z kierownicą w tym samym kierunku co waypoint
             const targetWP = this.lastSafeWaypoint;
             const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
             const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
-            const gentleReverseSteering = Phaser.Math.Clamp(-angleDiff * 0.08, -0.04, 0.04); // Delikatniejsze skręcanie
+            const gentleReverseSteering = Phaser.Math.Clamp(angleDiff * 0.06, -0.03, 0.03); // Delikatniejsze skręcanie
             
             return {
                 left: gentleReverseSteering < -0.01,
@@ -133,17 +135,56 @@ export class AIRecovery {
             // Faza 3: Kontynuacja normalnego cofania
             console.log(`[AI] CONTINUE_REVERSE: Normal reverse to waypoint`);
             this.reverseObstaclePhase = 'none'; // Reset do normalnego cofania
+        } else if (this.reverseObstaclePhase === 'avoid_obstacle') {
+            // Faza 4: Unikanie przeszkód - wycofaj się daleko od miejsca kolizji
+            console.log(`[AI] AVOID_OBSTACLE: Backing away from collision point`);
+            
+            // Sprawdź czy dotarliśmy do waypointa podczas unikania przeszkód
+            if (this._checkWaypointReached()) {
+                console.log('[AI] Waypoint reached during obstacle avoidance - continuing recovery');
+                this.reverseObstaclePhase = 'none';
+                this.collisionCount = 0;
+                return { left: false, right: false, up: false, down: false };
+            }
+            
+            // Wycofaj się w kierunku przeciwnym do miejsca kolizji
+            if (this.lastCollisionPosition) {
+                const angleAwayFromCollision = Math.atan2(
+                    this.ai.carY - this.lastCollisionPosition.y, 
+                    this.ai.carX - this.lastCollisionPosition.x
+                );
+                const angleDiff = this.ai._normalizeAngle(angleAwayFromCollision - state.carAngle);
+                const avoidSteering = Phaser.Math.Clamp(angleDiff * 0.1, -0.05, 0.05);
+                
+                console.log(`[AI] AVOID_OBSTACLE: steering=${avoidSteering.toFixed(2)}, away from collision`);
+                
+                return {
+                    left: avoidSteering < -0.01,
+                    right: avoidSteering > 0.01,
+                    up: false,
+                    down: true
+                };
+            }
+            
+            // Jeśli nie ma pozycji kolizji, cofaj się normalnie
+            this.reverseObstaclePhase = 'none';
         }
 
         // Normalne cofanie w kierunku ostatniego bezpiecznego waypointa
+        // Sprawdź czy prędkość nie jest za wysoka podczas cofania
+        if (state.speed < this.minReverseSpeed) {
+            console.log(`[AI] Speed too high during reverse: ${state.speed.toFixed(1)}, braking`);
+            return { left: false, right: false, up: false, down: true };
+        }
+        
         if (Math.abs(state.speed) < 0.5) {
             const targetWP = this.lastSafeWaypoint;
             const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
             const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
             
-            // KLUCZOWA NAPRAWA: Podczas cofania skręcamy w PRZECIWNYM kierunku!
-            // Jeśli waypoint jest po prawej, to podczas cofania skręcamy w lewo
-            const reverseSteering = Phaser.Math.Clamp(-angleDiff * 0.15, -0.08, 0.08);
+            // KLUCZOWA NAPRAWA: Podczas cofania skręcamy w TYM SAMYM kierunku co waypoint!
+            // Jeśli waypoint jest po prawej, to podczas cofania też skręcamy w prawo
+            const reverseSteering = Phaser.Math.Clamp(angleDiff * 0.12, -0.06, 0.06);
             this.originalSteering = reverseSteering;
             
             console.log(`[AI] REVERSE COMMAND: down=true, reverseSteer=${reverseSteering.toFixed(2)}, angleDiff=${angleDiff.toFixed(2)}, targetWP=(${targetWP.x.toFixed(1)},${targetWP.y.toFixed(1)})`);
@@ -327,6 +368,7 @@ export class AIRecovery {
     this.collisionCount = 0;
     this.lastCollisionTime = 0;
     this.originalSteering = 0;
+    this.lastCollisionPosition = null;
 
     console.log(`[AI] Recovery STARTED (assessing situation, attempt ${this.ai.recoveryAttempts})`);
 
@@ -377,22 +419,24 @@ export class AIRecovery {
   _handleReverseCollision(state) {
     console.log(`[AI] Handling reverse collision #${this.collisionCount}, speed=${state.speed.toFixed(1)}`);
     
+    // Zapisz pozycję kolizji
+    this.lastCollisionPosition = { x: this.ai.carX, y: this.ai.carY };
+    
     if (this.collisionCount === 1) {
       // Pierwsza kolizja - natychmiast jedź do przodu z tą samą kierownicą
       console.log('[AI] First collision - switching to forward with same steering');
       this.reverseObstaclePhase = 'forward_steer';
       this.ai.recoveryTimer = 1.0; // Krótki czas na jazdę do przodu
     } else if (this.collisionCount === 2) {
-      // Druga kolizja - delikatnie cofaj z kierownicą w przeciwną stronę
-      console.log('[AI] Second collision - gentle reverse with opposite steering');
+      // Druga kolizja - delikatnie cofaj z kierownicą w tym samym kierunku
+      console.log('[AI] Second collision - gentle reverse with same steering');
       this.reverseObstaclePhase = 'gentle_reverse';
       this.ai.recoveryTimer = 2.0; // Dłuższy czas na delikatne cofanie
     } else if (this.collisionCount >= 3) {
-      // Trzecia i kolejne kolizje - wróć do punktu 1 (jazda do przodu)
-      console.log('[AI] Multiple collisions - returning to forward steering');
-      this.reverseObstaclePhase = 'forward_steer';
-      this.collisionCount = 1; // Reset licznika
-      this.ai.recoveryTimer = 1.0;
+      // Trzecia i kolejne kolizje - wycofaj się przed przeszkodą
+      console.log('[AI] Multiple collisions - avoiding obstacle, backing away from collision point');
+      this.reverseObstaclePhase = 'avoid_obstacle';
+      this.ai.recoveryTimer = 4.0; // Dłuższy czas na unikanie przeszkód
     }
   }
 

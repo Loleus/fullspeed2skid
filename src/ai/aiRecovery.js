@@ -9,7 +9,7 @@ export class AIRecovery {
     this.maxAngleForDirectApproach = Math.PI / 4; // 45 stopni - zwiększony kąt dla bezpośredniego podejścia
     this.cautiousThrottle = 0.05; // BARDZO ostrożny gaz - 4x wolniej!
     this.minReverseSpeed = -4; // Wolniejsze cofanie
-    this.reverseTime = 4.0; // Dłuższy czas cofania (4 sekundy)
+    this.reverseTime = 8.0; // Dłuższy czas cofania (8 sekund)
     this.gentleDriveTimer = 0; // Timer dla delikatnej jazdy
     this.recoveryEndTime = 0; // Czas zakończenia recovery
     
@@ -21,6 +21,14 @@ export class AIRecovery {
     this.stabilizationDelay = 1.0; // Czas stabilizacji przed ruszeniem
     this.gradualThrottleIncrease = 0.02; // Stopniowe zwiększanie throttle
     this.currentThrottle = 0; // Aktualny throttle (stopniowo zwiększany)
+    
+    // NOWE: Mechanizmy obsługi przeszkód podczas cofania
+    this.reverseSteering = 0; // Kierunek skręcania podczas cofania
+    this.lastCollisionTime = 0; // Czas ostatniej kolizji
+    this.collisionCount = 0; // Licznik kolizji podczas cofania
+    this.collisionThreshold = 2.0; // Próg prędkości dla rozróżnienia delikatnej/mocnej kolizji
+    this.reverseObstaclePhase = 'none'; // none, gentle_reverse, forward_steer, continue_reverse
+    this.originalSteering = 0; // Oryginalny kierunek skręcania przed kolizją
   }
 
   _handleSmarterRecovery(dt, state) {
@@ -58,39 +66,110 @@ export class AIRecovery {
         return { left: false, right: false, up: false, down: false };
     }
 
-    // --- FAZA 1: BARDZO OSTROŻNE COFANIE ---
+    // --- FAZA 1: BARDZO OSTROŻNE COFANIE Z OBSŁUGĄ PRZESZKÓD ---
     if (this.recoveryPhase === 'cautious_reverse') {
-        console.log(`[AI] Recovery Phase: CAUTIOUS_REVERSE - backing up toward last safe waypoint, speed=${state.speed.toFixed(1)}`);
+        console.log(`[AI] Recovery Phase: CAUTIOUS_REVERSE - backing up toward last safe waypoint, speed=${state.speed.toFixed(1)}, obstaclePhase=${this.reverseObstaclePhase}`);
         
         // KLUCZOWA NAPRAWA: ZAWSZE wymuś odblokowanie throttle dla cofania
         this.ai.throttleLock = false; // ZAWSZE wymuś odblokowanie
         console.log('[AI] Forced throttle unlock for reverse');
 
-        // Cofaj się w kierunku ostatniego bezpiecznego waypointa
+        // Sprawdź czy jest kolizja podczas cofania
+        const hasCollision = this._checkReverseCollision(state);
+        if (hasCollision) {
+            this._handleReverseCollision(state);
+        }
+
+        // Obsługa różnych faz obsługi przeszkód podczas cofania
+        if (this.reverseObstaclePhase === 'forward_steer') {
+            // Faza 1: Natychmiastowe przejście do przodu z tą samą kierownicą
+            console.log(`[AI] FORWARD_STEER: Driving forward with original steering=${this.originalSteering.toFixed(2)}`);
+            
+            // Sprawdź czy dotarliśmy do waypointa podczas jazdy do przodu
+            if (this._checkWaypointReached()) {
+                console.log('[AI] Waypoint reached during forward steering - continuing recovery');
+                this.reverseObstaclePhase = 'none';
+                this.collisionCount = 0;
+                return { left: false, right: false, up: false, down: false };
+            }
+            
+            // Podczas jazdy do przodu używamy normalnej logiki skręcania (nie odwróconej)
+            const targetWP = this.lastSafeWaypoint;
+            const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
+            const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
+            const forwardSteering = Phaser.Math.Clamp(angleDiff * 0.1, -0.05, 0.05);
+            
+            return {
+                left: forwardSteering < -0.01,
+                right: forwardSteering > 0.01,
+                up: true,
+                down: false
+            };
+        } else if (this.reverseObstaclePhase === 'gentle_reverse') {
+            // Faza 2: Delikatne cofanie z kierownicą w przeciwną stronę
+            console.log(`[AI] GENTLE_REVERSE: Slowly backing with opposite steering`);
+            
+            // Sprawdź czy dotarliśmy do waypointa podczas delikatnego cofania
+            if (this._checkWaypointReached()) {
+                console.log('[AI] Waypoint reached during gentle reverse - continuing recovery');
+                this.reverseObstaclePhase = 'none';
+                this.collisionCount = 0;
+                return { left: false, right: false, up: false, down: false };
+            }
+            
+            // Delikatne cofanie z kierownicą w przeciwną stronę
+            const targetWP = this.lastSafeWaypoint;
+            const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
+            const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
+            const gentleReverseSteering = Phaser.Math.Clamp(-angleDiff * 0.08, -0.04, 0.04); // Delikatniejsze skręcanie
+            
+            return {
+                left: gentleReverseSteering < -0.01,
+                right: gentleReverseSteering > 0.01,
+                up: false,
+                down: true
+            };
+        } else if (this.reverseObstaclePhase === 'continue_reverse') {
+            // Faza 3: Kontynuacja normalnego cofania
+            console.log(`[AI] CONTINUE_REVERSE: Normal reverse to waypoint`);
+            this.reverseObstaclePhase = 'none'; // Reset do normalnego cofania
+        }
+
+        // Normalne cofanie w kierunku ostatniego bezpiecznego waypointa
         if (Math.abs(state.speed) < 0.5) {
             const targetWP = this.lastSafeWaypoint;
             const angleToTarget = Math.atan2(targetWP.y - this.ai.carY, targetWP.x - this.ai.carX);
-            // NAPRAWKA: Nie dodawaj Math.PI - AI ma skręcać w kierunku waypointa, nie w przeciwnym!
             const angleDiff = this.ai._normalizeAngle(angleToTarget - state.carAngle);
             
-            // Bardzo ostrożne skręcanie podczas cofania
-            const steer = Phaser.Math.Clamp(angleDiff * 0.1, -0.05, 0.05); // 6x mniej agresywne!
+            // KLUCZOWA NAPRAWA: Podczas cofania skręcamy w PRZECIWNYM kierunku!
+            // Jeśli waypoint jest po prawej, to podczas cofania skręcamy w lewo
+            const reverseSteering = Phaser.Math.Clamp(-angleDiff * 0.15, -0.08, 0.08);
+            this.originalSteering = reverseSteering;
             
-            console.log(`[AI] REVERSE COMMAND: down=true, steer=${steer.toFixed(2)}, angleDiff=${angleDiff.toFixed(2)}`);
+            console.log(`[AI] REVERSE COMMAND: down=true, reverseSteer=${reverseSteering.toFixed(2)}, angleDiff=${angleDiff.toFixed(2)}, targetWP=(${targetWP.x.toFixed(1)},${targetWP.y.toFixed(1)})`);
             return {
-                left: steer < -0.01,
-                right: steer > 0.01,
+                left: reverseSteering < -0.01,
+                right: reverseSteering > 0.01,
                 up: false,
                 down: true // WYMUŚ COFANIE!
             };
         }
 
-        // Po cofnięciu przejdź bezpośrednio do ostrożnego podejścia
-        if (Math.abs(state.speed) < 1.0 && this.ai.recoveryTimer < 0.5) {
-            console.log('[AI] Speed low enough, transitioning to cautious approach');
+        // Sprawdź czy dotarliśmy do waypointa podczas cofania
+        if (this._checkWaypointReached()) {
+            console.log('[AI] Waypoint reached during reverse - transitioning to cautious approach');
             this.recoveryPhase = 'cautious_approach';
             this.ai.recoveryTimer = 1.5;
+            this.reverseObstaclePhase = 'none'; // Reset fazy przeszkód
+            this.collisionCount = 0; // Reset licznika kolizji
             return { left: false, right: false, up: false, down: false };
+        }
+
+        // Jeśli czas się skończył, ale nie dotarliśmy do waypointa - kontynuuj cofanie
+        if (this.ai.recoveryTimer <= 0) {
+            console.log('[AI] Reverse time expired, but waypoint not reached - extending reverse time');
+            this.ai.recoveryTimer = 3.0; // Przedłuż czas cofania
+            return { left: false, right: false, up: false, down: true };
         }
 
         return { left: false, right: false, up: false, down: false };
@@ -243,6 +322,12 @@ export class AIRecovery {
     this.lastSpeed = state.speed;
     this.gentleDriveTimer = 0;
 
+    // NOWE: Reset zmiennych obsługi przeszkód podczas cofania
+    this.reverseObstaclePhase = 'none';
+    this.collisionCount = 0;
+    this.lastCollisionTime = 0;
+    this.originalSteering = 0;
+
     console.log(`[AI] Recovery STARTED (assessing situation, attempt ${this.ai.recoveryAttempts})`);
 
     this.ai.stuckDetector.stuckTime = 0;
@@ -265,6 +350,69 @@ export class AIRecovery {
     this.ai.throttleLock = false; // Wymuś odblokowanie throttle
     
     console.log(`[AI] Updated recovery params: minReverseSpeed=${this.minReverseSpeed}, reverseTime=${this.reverseTime}, obstacleRadius=${this.obstacleCheckRadius}`);
+  }
+
+  // Sprawdza czy podczas cofania nastąpiła kolizja z przeszkodą
+  _checkReverseCollision(state) {
+    const currentTime = Date.now();
+    const timeSinceLastCollision = currentTime - this.lastCollisionTime;
+    
+    // Sprawdź czy prędkość gwałtownie się zmieniła (wskazuje na kolizję)
+    const speedChange = Math.abs(state.speed - this.lastSpeed);
+    this.lastSpeed = state.speed;
+    
+    // Jeśli prędkość gwałtownie spadła podczas cofania, to prawdopodobnie kolizja
+    // Zwiększony próg i dłuższy czas między kolizjami
+    if (speedChange > this.collisionThreshold * 1.5 && state.speed < -0.5 && timeSinceLastCollision > 1000) {
+      console.log(`[AI] Reverse collision detected: speedChange=${speedChange.toFixed(1)}, speed=${state.speed.toFixed(1)}, timeSince=${timeSinceLastCollision}ms`);
+      this.lastCollisionTime = currentTime;
+      this.collisionCount++;
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Obsługuje kolizję podczas cofania zgodnie z nową logiką
+  _handleReverseCollision(state) {
+    console.log(`[AI] Handling reverse collision #${this.collisionCount}, speed=${state.speed.toFixed(1)}`);
+    
+    if (this.collisionCount === 1) {
+      // Pierwsza kolizja - natychmiast jedź do przodu z tą samą kierownicą
+      console.log('[AI] First collision - switching to forward with same steering');
+      this.reverseObstaclePhase = 'forward_steer';
+      this.ai.recoveryTimer = 1.0; // Krótki czas na jazdę do przodu
+    } else if (this.collisionCount === 2) {
+      // Druga kolizja - delikatnie cofaj z kierownicą w przeciwną stronę
+      console.log('[AI] Second collision - gentle reverse with opposite steering');
+      this.reverseObstaclePhase = 'gentle_reverse';
+      this.ai.recoveryTimer = 2.0; // Dłuższy czas na delikatne cofanie
+    } else if (this.collisionCount >= 3) {
+      // Trzecia i kolejne kolizje - wróć do punktu 1 (jazda do przodu)
+      console.log('[AI] Multiple collisions - returning to forward steering');
+      this.reverseObstaclePhase = 'forward_steer';
+      this.collisionCount = 1; // Reset licznika
+      this.ai.recoveryTimer = 1.0;
+    }
+  }
+
+  // Sprawdza czy waypoint został osiągnięty podczas cofania
+  _checkWaypointReached() {
+    if (!this.lastSafeWaypoint) return false;
+    
+    const distToWaypoint = Math.hypot(
+      this.lastSafeWaypoint.x - this.ai.carX, 
+      this.lastSafeWaypoint.y - this.ai.carY
+    );
+    
+    // Sprawdź czy jesteśmy wystarczająco blisko waypointa
+    const reached = distToWaypoint < this.ai.waypointZoneRadius * 1.5;
+    
+    if (reached) {
+      console.log(`[AI] Waypoint reached during reverse obstacle handling: distance=${distToWaypoint.toFixed(1)}`);
+    }
+    
+    return reached;
   }
 
   // Sprawdza czy waypoint jest widoczny (w rozsądnym kącie przed nami)

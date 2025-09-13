@@ -58,7 +58,7 @@ export class GameScene extends window.Phaser.Scene {
         const twoPlayers = !!worldData?.twoPlayers;
         if (!twoPlayers && this.gameMode === 'RACE' && this.worldData.waypoints?.length > 0) {
             const aiStart = this.worldData.waypoints[0];
-            const aiStartYOffset = 80;
+            const aiStartYOffset = 0;
 
             this.aiCarSprite = this.physics.add.sprite(aiStart.x, aiStart.y + aiStartYOffset, "car_p2");
             this.aiCarSprite.setOrigin(0.5).setDepth(2);

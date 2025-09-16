@@ -9,7 +9,7 @@ import { updateSkidMarks } from "./skidMarksManager.js";
 import { createKeyboardBindings } from "../input/keyboardManager.js";
 import { createHUD } from "../ui/hudManager.js";
 import { AICar } from "../ai/AICar.js";
-import { CountdownManager } from "./countdownManager.js"; // ✅ nowoczesny import klasy
+import { CountdownManager } from "./countdownManager.js";
 
 let skidMarks = null;
 let skidMarksAI = null;
@@ -71,7 +71,7 @@ export class GameScene extends window.Phaser.Scene {
 			this.carController.opponentController = this.aiController;
 			this.aiController.opponentController = this.carController;
 		} else if (twoPlayers) {
-			const p2YOffset = 80;
+			const p2YOffset = 0;
 			this.p2CarSprite = this.physics.add.sprite(start.x, start.y + p2YOffset, "car_p2");
 			this.p2CarSprite.setOrigin(0.5).setDepth(2);
 			this.p2CarSprite.body.allowRotation = false;
@@ -167,7 +167,7 @@ export class GameScene extends window.Phaser.Scene {
 
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
 
-		if (this.checkpoints && this.checkpoints.length > 0) {
+		if (this.checkpoints && this.checkpoints.length > 0 && this.gameMode === "RACE") {
 			const pos = this.carController.getPosition();
 			for (const cp of this.checkpoints) {
 				const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;

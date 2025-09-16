@@ -140,12 +140,6 @@ export class GameScene extends window.Phaser.Scene {
 		this.countdown = new CountdownManager(this);
 		this.countdown.start();
 
-		// ✅ Checkpointy i logika okrążeń (kolejność wg id rosnąco)
-		// this.checkpoints = Array.isArray(worldData.checkpoints) ? [...worldData.checkpoints] : [];
-		// this.checkpoints.sort((a, b) => a.id - b.id);
-		// this.checkpointOrder = this.checkpoints.map(cp => cp.id);
-		// this.expectedCheckpointIndex = 0; // oczekiwany kolejny checkpoint
-		// this._cpInside = new Map(this.checkpoints.map(cp => [cp.id, false]));
 		this.checkpoints = Array.isArray(worldData.checkpoints) ? [...worldData.checkpoints] : [];
 		this.checkpoints.sort((a, b) => a.id - b.id); // Upewniamy się, że są w kolejności 1, 2, 3
 		this.checkpointOrder = [1, 2, 3]; // Jawne ustawienie kolejności (1 → 2 → 3 → 1...)
@@ -173,59 +167,36 @@ export class GameScene extends window.Phaser.Scene {
 
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
 
-		// ✅ Detekcja wejścia w obszar checkpointu (punktowo po pozycji auta)
-		// if (this.checkpoints && this.checkpoints.length > 0) {
-		// 	const pos = this.carController.getPosition();
-		// 	for (const cp of this.checkpoints) {
-		// 		const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;
-		// 		const wasInside = this._cpInside.get(cp.id);
-		// 		if (inside && !wasInside) {
-		// 			// wejście do checkpointu
-		// 			const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
-		// 			if (cp.id === expectedId) {
-		// 				this.expectedCheckpointIndex = (this.expectedCheckpointIndex + 1) % this.checkpointOrder.length;
-		// 				if (this.expectedCheckpointIndex === 0) {
-		// 					// domknięty cykl -> okrążenie
-		// 					this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
-		// 					this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
-		// 				}
-		// 			}
-		// 		}
-		// 		this._cpInside.set(cp.id, inside);
-		// 	}
-		// }
+		if (this.checkpoints && this.checkpoints.length > 0) {
+			const pos = this.carController.getPosition();
+			for (const cp of this.checkpoints) {
+				const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;
+				const wasInside = this._cpInside.get(cp.id);
 
-        if (this.checkpoints && this.checkpoints.length > 0) {
-            const pos = this.carController.getPosition();
-            for (const cp of this.checkpoints) {
-                const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;
-                const wasInside = this._cpInside.get(cp.id);
-        
-                if (inside && !wasInside) {
-                    const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
-        
-                    if (cp.id === expectedId) {
-                        // Gracz przejechał oczekiwany checkpoint
-                        this.expectedCheckpointIndex++;
-        
-                        // Jeśli przejechaliśmy wszystkie CP (1→2→3), ustaw flagę
-                        if (this.expectedCheckpointIndex >= this.checkpointOrder.length) {
-                            this.hasCompletedFullLap = true;
-                            this.expectedCheckpointIndex = 0;  // Resetujemy, by oczekiwać znowu CP 1
-                        }
-        
-                        // Jeśli przejechaliśmy CP 1 **PO** pełnym okrążeniu (1→2→3→1)
-                        if (cp.id === 1 && this.hasCompletedFullLap) {
-                            this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
-                            this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
-                            this.hasCompletedFullLap = false;  // Resetujemy flagę
-                        }
-                    }
-                }
-                this._cpInside.set(cp.id, inside);
-            }
-        }
+				if (inside && !wasInside) {
+					const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
 
+					if (cp.id === expectedId) {
+						// Gracz przejechał oczekiwany checkpoint
+						this.expectedCheckpointIndex++;
+
+						// Jeśli przejechaliśmy wszystkie CP (1→2→3), ustaw flagę
+						if (this.expectedCheckpointIndex >= this.checkpointOrder.length) {
+							this.hasCompletedFullLap = true;
+							this.expectedCheckpointIndex = 0; // Resetujemy, by oczekiwać znowu CP 1
+						}
+
+						// Jeśli przejechaliśmy CP 1 **PO** pełnym okrążeniu (1→2→3→1)
+						if (cp.id === 1 && this.hasCompletedFullLap) {
+							this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
+							this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
+							this.hasCompletedFullLap = false; // Resetujemy flagę
+						}
+					}
+				}
+				this._cpInside.set(cp.id, inside);
+			}
+		}
 
 		if (this.p2Controller) {
 			const control2 = {
@@ -303,7 +274,7 @@ export class GameScene extends window.Phaser.Scene {
 		this.currentLap = 0;
 		if (this.lapsText) this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
 		this.expectedCheckpointIndex = 0;
-        this.hasCompletedFullLap = false;  // Reset flagi
+		this.hasCompletedFullLap = false; // Reset flagi
 		if (this._cpInside) {
 			for (const key of this._cpInside.keys()) this._cpInside.set(key, false);
 		}

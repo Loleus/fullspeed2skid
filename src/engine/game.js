@@ -8,7 +8,7 @@ import { getControlState } from "../input/controlsManager.js";
 import { updateSkidMarks } from "./skidMarksManager.js";
 import { createKeyboardBindings } from "../input/keyboardManager.js";
 import { createHUD } from "../ui/hudManager.js";
-import { AICar } from "../ai/AICar.js"
+import { AICar } from "../ai/AICar.js";
 import { CountdownManager } from "./countdownManager.js"; // ✅ nowoczesny import klasy
 
 let skidMarks = null;
@@ -16,167 +16,209 @@ let skidMarksAI = null;
 let skidMarksEnabled = true;
 
 export class GameScene extends window.Phaser.Scene {
-    constructor() {
-        super({ key: "GameScene" });
-        this.minimapa = true;
-        this.gameMode = 'PRACTICE';
-    }
+	constructor() {
+		super({ key: "GameScene" });
+		this.minimapa = true;
+		this.gameMode = "PRACTICE";
+	}
 
-    isMobile() {
-        return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(navigator.userAgent);
-    }
+	isMobile() {
+		return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop|Mobile/i.test(navigator.userAgent);
+	}
 
-    init(data) {
-        this.worldData = data.worldData;
-        this.gameMode = data.gameMode || 'PRACTICE';
-        window._worldData = data.worldData;
-        if (this.gameMode === 'PRACTICE') this.aiController = null;
-    }
+	init(data) {
+		this.worldData = data.worldData;
+		this.gameMode = data.gameMode || "PRACTICE";
+		window._worldData = data.worldData;
+		if (this.gameMode === "PRACTICE") this.aiController = null;
+	}
 
-    preload() {
-        if (window._worldData?.tiles) {
-            preloadWorldTextures(this, window._worldData.tiles, tileSize);
-        }
-        this.load.image("car_p1", "assets/images/car.png");
-        this.load.image("car_p2", "assets/images/car_X.png");
-    }
+	preload() {
+		if (window._worldData?.tiles) {
+			preloadWorldTextures(this, window._worldData.tiles, tileSize);
+		}
+		this.load.image("car_p1", "assets/images/car.png");
+		this.load.image("car_p2", "assets/images/car_X.png");
+	}
 
-    async create() {
-        const worldData = this.worldData || window._worldData;
-        const viewW = this.sys.game.config.width;
-        const viewH = this.sys.game.config.height;
-        const start = worldData.startPos;
-        const startYOffset = 0;
+	async create() {
+		const worldData = this.worldData || window._worldData;
+		const viewW = this.sys.game.config.width;
+		const viewH = this.sys.game.config.height;
+		const start = worldData.startPos;
+		const startYOffset = 0;
 
-        this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car_p1");
-        this.car.setOrigin(0.5).setDepth(2);
-        this.car.body.allowRotation = false;
+		this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car_p1");
+		this.car.setOrigin(0.5).setDepth(2);
+		this.car.body.allowRotation = false;
 
-        this.carController = new PlayerCar(this, this.car, worldData, 1);
-        this.carController.resetState(start.x, start.y + startYOffset);
+		this.carController = new PlayerCar(this, this.car, worldData, 1);
+		this.carController.resetState(start.x, start.y + startYOffset);
 
-        const twoPlayers = !!worldData?.twoPlayers;
-        if (!twoPlayers && this.gameMode === 'RACE' && this.worldData.waypoints?.length > 0) {
-            const aiStart = this.worldData.waypoints[0];
-            const aiStartYOffset = 0;
+		const twoPlayers = !!worldData?.twoPlayers;
+		if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
+			const aiStart = this.worldData.waypoints[0];
+			const aiStartYOffset = 0;
 
-            this.aiCarSprite = this.physics.add.sprite(aiStart.x, aiStart.y + aiStartYOffset, "car_p2");
-            this.aiCarSprite.setOrigin(0.5).setDepth(2);
-            this.aiCarSprite.body.allowRotation = false;
+			this.aiCarSprite = this.physics.add.sprite(aiStart.x, aiStart.y + aiStartYOffset, "car_p2");
+			this.aiCarSprite.setOrigin(0.5).setDepth(2);
+			this.aiCarSprite.body.allowRotation = false;
 
-            this.aiController = new AICar(this, this.aiCarSprite, this.worldData, this.worldData.waypoints);
-            this.aiController.resetState(aiStart.x, aiStart.y + aiStartYOffset);
+			this.aiController = new AICar(this, this.aiCarSprite, this.worldData, this.worldData.waypoints);
+			this.aiController.resetState(aiStart.x, aiStart.y + aiStartYOffset);
 
-            skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-            this.carController.opponentController = this.aiController;
-            this.aiController.opponentController = this.carController;
-        } else if (twoPlayers) {
-            const p2YOffset = 80;
-            this.p2CarSprite = this.physics.add.sprite(start.x, start.y + p2YOffset, "car_p2");
-            this.p2CarSprite.setOrigin(0.5).setDepth(2);
-            this.p2CarSprite.body.allowRotation = false;
+			skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+			this.carController.opponentController = this.aiController;
+			this.aiController.opponentController = this.carController;
+		} else if (twoPlayers) {
+			const p2YOffset = 80;
+			this.p2CarSprite = this.physics.add.sprite(start.x, start.y + p2YOffset, "car_p2");
+			this.p2CarSprite.setOrigin(0.5).setDepth(2);
+			this.p2CarSprite.body.allowRotation = false;
 
-            this.p2Controller = new PlayerCar(this, this.p2CarSprite, worldData, 2);
-            this.p2Controller.resetState(start.x, start.y + p2YOffset);
+			this.p2Controller = new PlayerCar(this, this.p2CarSprite, worldData, 2);
+			this.p2Controller.resetState(start.x, start.y + p2YOffset);
 
-            skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-            this.carController.opponentController = this.p2Controller;
-            this.p2Controller.opponentController = this.carController;
-        }
+			skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+			this.carController.opponentController = this.p2Controller;
+			this.p2Controller.opponentController = this.carController;
+		}
 
-        const keys = createKeyboardBindings(this);
-        this.cursors = keys.cursors;
-        this.wasdKeys = keys.wasdKeys;
-        this.vKey = keys.vKey;
-        this.rKey = keys.rKey;
-        this.xKey = keys.xKey;
+		const keys = createKeyboardBindings(this);
+		this.cursors = keys.cursors;
+		this.wasdKeys = keys.wasdKeys;
+		this.vKey = keys.vKey;
+		this.rKey = keys.rKey;
+		this.xKey = keys.xKey;
 
-        this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
-        this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
+		this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
+		this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-        // ✅ LAPS HUD
-        this.totalLaps = 3;
-        this.currentLap = 0;
-        const { width } = this.sys.game.canvas;
-        this.lapsText = this.add.text(width / 2, 30, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
-            fontFamily: 'Stormfaze',
-            fontSize: '50px',
-            color: '#80e12aff',
-            align: 'center'
-        }).setOrigin(0.5, 0).setDepth(1000).setShadow(3, 3, '#0f0', 4, false, true).setScrollFactor(0);
+		// ✅ LAPS HUD
+		this.totalLaps = 3;
+		this.currentLap = 0;
+		const { width } = this.sys.game.canvas;
+		this.lapsText = this.add
+			.text(width / 2, 30, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
+				fontFamily: "Stormfaze",
+				fontSize: "50px",
+				color: "#80e12aff",
+				align: "center",
+			})
+			.setOrigin(0.5, 0)
+			.setDepth(1000)
+			.setShadow(3, 3, "#0f0", 4, false, true)
+			.setScrollFactor(0);
 
-        // Zgrupuj elementy HUD do jednej referencji przekazywanej do kamery HUD
-        if (this.isMobile()) {
-            this.control = this.hudInfoText; // obiekt sterowania
-            this.hudRoot = this.add.container(0, 0, [this.lapsText]);
-        } else {
-            this.hudRoot = this.add.container(0, 0, [this.hudInfoText, this.lapsText]);
-            this.cameras.main.ignore([this.hudRoot]);
-        }
+		// Zgrupuj elementy HUD do jednej referencji przekazywanej do kamery HUD
+		if (this.isMobile()) {
+			this.control = this.hudInfoText; // obiekt sterowania
+			this.hudRoot = this.add.container(0, 0, [this.lapsText]);
+		} else {
+			this.hudRoot = this.add.container(0, 0, [this.hudInfoText, this.lapsText]);
+			this.cameras.main.ignore([this.hudRoot]);
+		}
 
-        this.world = new World(this, worldData, tileSize, viewW, viewH);
-        if (worldData.worldSize) this.worldSize = worldData.worldSize;
+		this.world = new World(this, worldData, tileSize, viewW, viewH);
+		if (worldData.worldSize) this.worldSize = worldData.worldSize;
 
-        if (this.minimapa) {
-            await this.world.initMinimap(worldData.svgPath, this.hudRoot);
-        } else {
-            const hudObjects = [this.hudRoot];
-            this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, "hud");
-            this.cameras.main.ignore(hudObjects);
-            this.hudCamera.ignore(this.children.list.filter((obj) => !hudObjects.includes(obj)));
-            this.hudCamera.setScroll(0, 0);
-            this.hudCamera.setRotation(0);
-        }
+		if (this.minimapa) {
+			await this.world.initMinimap(worldData.svgPath, this.hudRoot);
+		} else {
+			const hudObjects = [this.hudRoot];
+			this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, "hud");
+			this.cameras.main.ignore(hudObjects);
+			this.hudCamera.ignore(this.children.list.filter((obj) => !hudObjects.includes(obj)));
+			this.hudCamera.setScroll(0, 0);
+			this.hudCamera.setRotation(0);
+		}
 
-        window.dispatchEvent(new Event("game-ready"));
-        skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
+		window.dispatchEvent(new Event("game-ready"));
+		skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
 
-        // ✅ Inicjalizacja countdown managera
-        this.countdown = new CountdownManager(this);
-        this.countdown.start();
+		// ✅ Inicjalizacja countdown managera
+		this.countdown = new CountdownManager(this);
+		this.countdown.start();
 
-        // ✅ Checkpointy i logika okrążeń (kolejność wg id rosnąco)
-        this.checkpoints = Array.isArray(worldData.checkpoints) ? [...worldData.checkpoints] : [];
-        this.checkpoints.sort((a, b) => a.id - b.id);
-        this.checkpointOrder = this.checkpoints.map(cp => cp.id);
-        this.expectedCheckpointIndex = 0; // oczekiwany kolejny checkpoint
-        this._cpInside = new Map(this.checkpoints.map(cp => [cp.id, false]));
-    }
+		// ✅ Checkpointy i logika okrążeń (kolejność wg id rosnąco)
+		// this.checkpoints = Array.isArray(worldData.checkpoints) ? [...worldData.checkpoints] : [];
+		// this.checkpoints.sort((a, b) => a.id - b.id);
+		// this.checkpointOrder = this.checkpoints.map(cp => cp.id);
+		// this.expectedCheckpointIndex = 0; // oczekiwany kolejny checkpoint
+		// this._cpInside = new Map(this.checkpoints.map(cp => [cp.id, false]));
+		this.checkpoints = Array.isArray(worldData.checkpoints) ? [...worldData.checkpoints] : [];
+		this.checkpoints.sort((a, b) => a.id - b.id); // Upewniamy się, że są w kolejności 1, 2, 3
+		this.checkpointOrder = [1, 2, 3]; // Jawne ustawienie kolejności (1 → 2 → 3 → 1...)
+		this.expectedCheckpointIndex = 0; // Oczekujemy najpierw CP 1
+		this._cpInside = new Map(this.checkpoints.map((cp) => [cp.id, false]));
+		this.hasCompletedFullLap = false; // Czy gracz przejechał już 1→2→3?
+	}
 
-    update(time, dt) {
-        dt /= 1000;
+	update(time, dt) {
+		dt /= 1000;
 
-        if (this.countdown?.isActive()) {
-            this.countdown.update(dt);
-        }
+		if (this.countdown?.isActive()) {
+			this.countdown.update(dt);
+		}
 
-        if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
-        if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
-        if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
+		if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
+		if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
+		if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
 
-        const control = getControlState(this);
-        if (this.countdown?.isActive()) {
-            control.up = false;
-            control.down = false;
-        }
+		const control = getControlState(this);
+		if (this.countdown?.isActive()) {
+			control.up = false;
+			control.down = false;
+		}
 
-        this.carController.update(dt, control, this.worldSize, this.worldSize);
+		this.carController.update(dt, control, this.worldSize, this.worldSize);
 
-        // ✅ Detekcja wejścia w obszar checkpointu (punktowo po pozycji auta)
+		// ✅ Detekcja wejścia w obszar checkpointu (punktowo po pozycji auta)
+		// if (this.checkpoints && this.checkpoints.length > 0) {
+		// 	const pos = this.carController.getPosition();
+		// 	for (const cp of this.checkpoints) {
+		// 		const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;
+		// 		const wasInside = this._cpInside.get(cp.id);
+		// 		if (inside && !wasInside) {
+		// 			// wejście do checkpointu
+		// 			const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
+		// 			if (cp.id === expectedId) {
+		// 				this.expectedCheckpointIndex = (this.expectedCheckpointIndex + 1) % this.checkpointOrder.length;
+		// 				if (this.expectedCheckpointIndex === 0) {
+		// 					// domknięty cykl -> okrążenie
+		// 					this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
+		// 					this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
+		// 				}
+		// 			}
+		// 		}
+		// 		this._cpInside.set(cp.id, inside);
+		// 	}
+		// }
+
         if (this.checkpoints && this.checkpoints.length > 0) {
             const pos = this.carController.getPosition();
             for (const cp of this.checkpoints) {
                 const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;
                 const wasInside = this._cpInside.get(cp.id);
+        
                 if (inside && !wasInside) {
-                    // wejście do checkpointu
                     const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
+        
                     if (cp.id === expectedId) {
-                        this.expectedCheckpointIndex = (this.expectedCheckpointIndex + 1) % this.checkpointOrder.length;
-                        if (this.expectedCheckpointIndex === 0) {
-                            // domknięty cykl -> okrążenie
+                        // Gracz przejechał oczekiwany checkpoint
+                        this.expectedCheckpointIndex++;
+        
+                        // Jeśli przejechaliśmy wszystkie CP (1→2→3), ustaw flagę
+                        if (this.expectedCheckpointIndex >= this.checkpointOrder.length) {
+                            this.hasCompletedFullLap = true;
+                            this.expectedCheckpointIndex = 0;  // Resetujemy, by oczekiwać znowu CP 1
+                        }
+        
+                        // Jeśli przejechaliśmy CP 1 **PO** pełnym okrążeniu (1→2→3→1)
+                        if (cp.id === 1 && this.hasCompletedFullLap) {
                             this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
                             this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
+                            this.hasCompletedFullLap = false;  // Resetujemy flagę
                         }
                     }
                 }
@@ -184,89 +226,90 @@ export class GameScene extends window.Phaser.Scene {
             }
         }
 
-        if (this.p2Controller) {
-            const control2 = {
-                up: this.cursors.up.isDown,
-                down: this.cursors.down.isDown,
-                left: this.cursors.left.isDown,
-                right: this.cursors.right.isDown
-            };
-            if (this.countdown?.isActive()) {
-                control2.up = false;
-                control2.down = false;
-            }
-            this.p2Controller.update(dt, control2, this.worldSize, this.worldSize);
-        }
 
-        if (this.aiController) {
-            if (this.countdown?.isActive()) {
-                this.aiController.throttleLock = true;
-            }
-            this.aiController.updateAI(dt, this.worldSize, this.worldSize);
-        }
-
-        const carPos = this.carController.getPosition();
-        const aiCarPos = this.aiController ? this.aiController.getPosition() : (this.p2Controller ? this.p2Controller.getPosition() : null);
-        this.world.drawTiles(carPos.x, carPos.y);
-
-        if (skidMarks?.enabled) {
-            const skidMarksList = [{ controller: this.carController, skidMarks: skidMarks }];
-            if (this.aiController && skidMarksAI) skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
-            if (this.p2Controller && skidMarksAI) skidMarksList.push({ controller: this.p2Controller, skidMarks: skidMarksAI });
-
-            updateSkidMarks(this, tileSize, skidMarksList);
-        }
-
-        if (this.minimapa && this.world) {
-            this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
-        }
-
-        this.cameraManager?.update(dt);
-
-        if (this.hudCamera) this.hudCamera.setRotation(0);
-        if (this.hudContainer) this.hudContainer.rotation = 0;
-        if (this.gasBtn) this.gasBtn.rotation = 0;
-        if (this.brakeBtn) this.brakeBtn.rotation = 0;
-    }
-
-    resetGame() {
-        const worldData = this.worldData || window._worldData;
-        const start = worldData.startPos;
-
-        this.carController.resetState(start.x, start.y);
-
-        if (this.aiController && this.worldData.waypoints?.length > 0) {
-            const aiStart = this.worldData.waypoints[0];
-            this.aiController.resetState(aiStart.x, aiStart.y);
-        }
-
-        if (this.world) {
-            this.world.trackTiles = [];
-            for (const tileObj of this.world.tilePool.values()) {
-                tileObj.setVisible(false);
-            }
+		if (this.p2Controller) {
+			const control2 = {
+				up: this.cursors.up.isDown,
+				down: this.cursors.down.isDown,
+				left: this.cursors.left.isDown,
+				right: this.cursors.right.isDown,
+			};
+			if (this.countdown?.isActive()) {
+				control2.up = false;
+				control2.down = false;
+			}
+			this.p2Controller.update(dt, control2, this.worldSize, this.worldSize);
 		}
 
-        this.cameraManager?.reset();
-        skidMarks?.clear();
-        if (skidMarksAI) {
-            skidMarksAI.clear();
-        }
+		if (this.aiController) {
+			if (this.countdown?.isActive()) {
+				this.aiController.throttleLock = true;
+			}
+			this.aiController.updateAI(dt, this.worldSize, this.worldSize);
+		}
 
-        // Restart odliczania
-        this.countdown.start();
+		const carPos = this.carController.getPosition();
+		const aiCarPos = this.aiController ? this.aiController.getPosition() : this.p2Controller ? this.p2Controller.getPosition() : null;
+		this.world.drawTiles(carPos.x, carPos.y);
 
-        // ✅ Reset okrążeń i checkpointów
-        this.currentLap = 0;
-        if (this.lapsText) this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
-        this.expectedCheckpointIndex = 0;
-        if (this._cpInside) {
-            for (const key of this._cpInside.keys()) this._cpInside.set(key, false);
-        }
-    }
+		if (skidMarks?.enabled) {
+			const skidMarksList = [{ controller: this.carController, skidMarks: skidMarks }];
+			if (this.aiController && skidMarksAI) skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
+			if (this.p2Controller && skidMarksAI) skidMarksList.push({ controller: this.p2Controller, skidMarks: skidMarksAI });
 
-    exitToMenu() {
-        this.scene.start("MenuScene");
-    }
+			updateSkidMarks(this, tileSize, skidMarksList);
+		}
+
+		if (this.minimapa && this.world) {
+			this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
+		}
+
+		this.cameraManager?.update(dt);
+
+		if (this.hudCamera) this.hudCamera.setRotation(0);
+		if (this.hudContainer) this.hudContainer.rotation = 0;
+		if (this.gasBtn) this.gasBtn.rotation = 0;
+		if (this.brakeBtn) this.brakeBtn.rotation = 0;
+	}
+
+	resetGame() {
+		const worldData = this.worldData || window._worldData;
+		const start = worldData.startPos;
+
+		this.carController.resetState(start.x, start.y);
+
+		if (this.aiController && this.worldData.waypoints?.length > 0) {
+			const aiStart = this.worldData.waypoints[0];
+			this.aiController.resetState(aiStart.x, aiStart.y);
+		}
+
+		if (this.world) {
+			this.world.trackTiles = [];
+			for (const tileObj of this.world.tilePool.values()) {
+				tileObj.setVisible(false);
+			}
+		}
+
+		this.cameraManager?.reset();
+		skidMarks?.clear();
+		if (skidMarksAI) {
+			skidMarksAI.clear();
+		}
+
+		// Restart odliczania
+		this.countdown.start();
+
+		// ✅ Reset okrążeń i checkpointów
+		this.currentLap = 0;
+		if (this.lapsText) this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
+		this.expectedCheckpointIndex = 0;
+        this.hasCompletedFullLap = false;  // Reset flagi
+		if (this._cpInside) {
+			for (const key of this._cpInside.keys()) this._cpInside.set(key, false);
+		}
+	}
+
+	exitToMenu() {
+		this.scene.start("MenuScene");
+	}
 }
-

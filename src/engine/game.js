@@ -94,19 +94,33 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
+        // ✅ LAPS HUD
+        this.totalLaps = 3;
+        this.currentLap = 0;
+        const { width } = this.sys.game.canvas;
+        this.lapsText = this.add.text(width / 2, 30, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
+            fontFamily: 'Stormfaze',
+            fontSize: '50px',
+            color: '#80e12aff',
+            align: 'center'
+        }).setOrigin(0.5, 0).setDepth(1000).setShadow(3, 3, '#0f0', 4, false, true).setScrollFactor(0);
+
+        // Zgrupuj elementy HUD do jednej referencji przekazywanej do kamery HUD
         if (this.isMobile()) {
-            this.control = this.hudInfoText;
+            this.control = this.hudInfoText; // obiekt sterowania
+            this.hudRoot = this.add.container(0, 0, [this.lapsText]);
         } else {
-            this.cameras.main.ignore([this.hudInfoText]);
+            this.hudRoot = this.add.container(0, 0, [this.hudInfoText, this.lapsText]);
+            this.cameras.main.ignore([this.hudRoot]);
         }
 
         this.world = new World(this, worldData, tileSize, viewW, viewH);
         if (worldData.worldSize) this.worldSize = worldData.worldSize;
 
         if (this.minimapa) {
-            await this.world.initMinimap(worldData.svgPath, this.hudInfoText);
+            await this.world.initMinimap(worldData.svgPath, this.hudRoot);
         } else {
-            const hudObjects = [this.hudInfoText];
+            const hudObjects = [this.hudRoot];
             this.hudCamera = this.cameras.add(0, 0, viewW, viewH, false, "hud");
             this.cameras.main.ignore(hudObjects);
             this.hudCamera.ignore(this.children.list.filter((obj) => !hudObjects.includes(obj)));
@@ -120,6 +134,13 @@ export class GameScene extends window.Phaser.Scene {
         // ✅ Inicjalizacja countdown managera
         this.countdown = new CountdownManager(this);
         this.countdown.start();
+
+        // ✅ Checkpointy i logika okrążeń (kolejność wg id rosnąco)
+        this.checkpoints = Array.isArray(worldData.checkpoints) ? [...worldData.checkpoints] : [];
+        this.checkpoints.sort((a, b) => a.id - b.id);
+        this.checkpointOrder = this.checkpoints.map(cp => cp.id);
+        this.expectedCheckpointIndex = 0; // oczekiwany kolejny checkpoint
+        this._cpInside = new Map(this.checkpoints.map(cp => [cp.id, false]));
     }
 
     update(time, dt) {
@@ -140,6 +161,28 @@ export class GameScene extends window.Phaser.Scene {
         }
 
         this.carController.update(dt, control, this.worldSize, this.worldSize);
+
+        // ✅ Detekcja wejścia w obszar checkpointu (punktowo po pozycji auta)
+        if (this.checkpoints && this.checkpoints.length > 0) {
+            const pos = this.carController.getPosition();
+            for (const cp of this.checkpoints) {
+                const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;
+                const wasInside = this._cpInside.get(cp.id);
+                if (inside && !wasInside) {
+                    // wejście do checkpointu
+                    const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
+                    if (cp.id === expectedId) {
+                        this.expectedCheckpointIndex = (this.expectedCheckpointIndex + 1) % this.checkpointOrder.length;
+                        if (this.expectedCheckpointIndex === 0) {
+                            // domknięty cykl -> okrążenie
+                            this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
+                            this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
+                        }
+                    }
+                }
+                this._cpInside.set(cp.id, inside);
+            }
+        }
 
         if (this.p2Controller) {
             const control2 = {
@@ -212,6 +255,14 @@ export class GameScene extends window.Phaser.Scene {
 
         // Restart odliczania
         this.countdown.start();
+
+        // ✅ Reset okrążeń i checkpointów
+        this.currentLap = 0;
+        if (this.lapsText) this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
+        this.expectedCheckpointIndex = 0;
+        if (this._cpInside) {
+            for (const key of this._cpInside.keys()) this._cpInside.set(key, false);
+        }
     }
 
     exitToMenu() {

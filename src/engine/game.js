@@ -123,7 +123,7 @@ export class GameScene extends window.Phaser.Scene {
 
 		this.lapTimerText = this.add
 			.text(width / 2, 90, "TOTAL: 0.00s  BEST LAP: 0.00s", {
-				fontFamily: "harting",
+				fontFamily: "Harting",
 				fontSize: "25px",
 				color: "#80e12aff",
 				align: "center",

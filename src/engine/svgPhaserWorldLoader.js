@@ -348,6 +348,26 @@ if (layoutGroup) {
     }
   }
 
+  // 5a. Checkpointy (ROAD -> CHECK, rect z id jako numer)
+  const checkpoints = [];
+  if (roadGroup) {
+    const checkGroup = roadGroup.querySelector('#CHECK');
+    if (checkGroup) {
+      const rects = Array.from(checkGroup.querySelectorAll('rect'));
+      for (const r of rects) {
+        const idStr = (r.id || '').trim();
+        const idNum = parseInt(idStr, 10);
+        if (!Number.isFinite(idNum)) continue;
+        const x = parseFloat(r.getAttribute('x')) * scale;
+        const y = parseFloat(r.getAttribute('y')) * scale;
+        const w = parseFloat(r.getAttribute('width')) * scale;
+        const h = parseFloat(r.getAttribute('height')) * scale;
+        checkpoints.push({ id: idNum, x, y, w, h });
+      }
+      checkpoints.sort((a, b) => a.id - b.id);
+    }
+  }
+
   // 6. Obstacles jako polygony
   const obstaclePolys = [];
   if (obstaclesGroup) {
@@ -562,7 +582,7 @@ if (layoutGroup) {
     console.log(waypoints);
   }
 
-  return { tiles, getSurfaceTypeAt, obstaclePolys, startPos, surfaceParams, worldSize, waypoints };
+  return { tiles, getSurfaceTypeAt, obstaclePolys, startPos, surfaceParams, worldSize, waypoints, checkpoints };
 }
 
 // ===================== MINIMAPA: generowanie tekstury z SVG =====================

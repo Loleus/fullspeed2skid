@@ -98,13 +98,15 @@ export class GameScene extends window.Phaser.Scene {
 		this.totalLaps = 3;
 		this.currentLap = 0;
 		const { width } = this.sys.game.canvas;
-		const dispLaps = this.gameMode === "RACE" ? `LAPS: ${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
+		// const dispLaps = this.gameMode === "RACE" ? `LAPS: ${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
 		this.lapsText = this.add
-			.text(width / 2, 30, dispLaps , {
+			.text(width / 2, 30, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
 				fontFamily: "Stormfaze",
 				fontSize: "50px",
 				color: "#80e12aff",
 				align: "center",
+				backgroundColor: "rgb(31, 31, 31)",
+				padding: { left: 8, right: 8, top: 4, bottom: 4 },
 			})
 			.setOrigin(0.5, 0)
 			.setDepth(1000)
@@ -118,13 +120,15 @@ export class GameScene extends window.Phaser.Scene {
 			currentLapStart: 0,
 			lapsCompleted: 0
 		};
-		
+
 		this.lapTimerText = this.add
 			.text(width / 2, 90, "TOTAL: 0.00s  BEST LAP: 0.00s", {
-				fontFamily: "Stormfaze",
+				fontFamily: "harting",
 				fontSize: "25px",
 				color: "#80e12aff",
 				align: "center",
+				backgroundColor: "rgb(31, 31, 31)",
+				padding: { left: 8, right: 8, top: 4, bottom: 4 },
 			})
 			.setOrigin(0.5, 0)
 			.setDepth(1000)
@@ -179,7 +183,7 @@ export class GameScene extends window.Phaser.Scene {
 		if (this.countdown?.isActive()) {
 			this.countdown.update(dt);
 		}
-		
+
 		// ✅ Uruchom timer od razu po zakończeniu countdownu
 		if (countdownWasActive && !this.countdown?.isActive() && !this.timerStarted) {
 			this.timerStarted = true;
@@ -229,16 +233,16 @@ export class GameScene extends window.Phaser.Scene {
 							if (this.currentLap < this.totalLaps) {
 								this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
 								this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
-								
+
 								// Aktualizacja czasu okrążenia
 								this.updateLapTime();
-								
+
 								// Sprawdź czy to było ostatnie okrążenie
 								if (this.currentLap >= this.totalLaps) {
 									this.raceFinished = true;
 								}
 							}
-							
+
 							this.hasCompletedFullLap = false; // Resetujemy flagę
 						}
 					}
@@ -298,7 +302,7 @@ export class GameScene extends window.Phaser.Scene {
 			const currentLapTime = this.lapTimes.total - this.lapTimes.currentLapStart;
 			const totalTime = this.lapTimes.total.toFixed(2);
 			const bestLapTime = this.lapTimes.bestLap > 0 ? this.lapTimes.bestLap.toFixed(2) : "0.00";
-			
+
 			this.lapTimerText.setText(`TOTAL: ${totalTime}s  BEST LAP: ${bestLapTime}s`);
 		}
 	}
@@ -307,17 +311,17 @@ export class GameScene extends window.Phaser.Scene {
 	updateLapTime() {
 		// Nie aktualizuj jeśli wyścig zakończony
 		if (this.raceFinished) return;
-		
+
 		const currentLapTime = this.lapTimes.total - this.lapTimes.currentLapStart;
-		
+
 		// Aktualizuj najlepszy czas, jeśli jest lepszy lub to pierwsze okrążenie
 		if (this.lapTimes.bestLap === 0 || currentLapTime < this.lapTimes.bestLap) {
 			this.lapTimes.bestLap = currentLapTime;
 		}
-		
+
 		// Zresetuj czas rozpoczęcia okrążenia
 		this.lapTimes.currentLapStart = this.lapTimes.total;
-		
+
 		// Aktualizuj wyświetlacz
 		this.updateLapTimer();
 	}
@@ -356,7 +360,7 @@ export class GameScene extends window.Phaser.Scene {
 		this.hasCompletedFullLap = false; // Reset flagi
 		this.timerStarted = false; // ✅ Reset flagi startu timera
 		this.raceFinished = false; // Reset flagi zakończenia wyścigu
-		
+
 		// Reset timerów
 		this.lapTimes = {
 			total: 0,
@@ -364,10 +368,10 @@ export class GameScene extends window.Phaser.Scene {
 			currentLapStart: 0,
 			lapsCompleted: 0
 		};
-		
+
 		// Aktualizuj wyświetlacz timerów
 		this.updateLapTimer();
-		
+
 		if (this._cpInside) {
 			for (const key of this._cpInside.keys()) this._cpInside.set(key, false);
 		}

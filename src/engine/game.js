@@ -98,8 +98,9 @@ export class GameScene extends window.Phaser.Scene {
 		this.totalLaps = 3;
 		this.currentLap = 0;
 		const { width } = this.sys.game.canvas;
+		const dispLaps = this.gameMode === "RACE" ? `LAPS: ${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
 		this.lapsText = this.add
-			.text(width / 2, 30, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
+			.text(width / 2, 30, dispLaps , {
 				fontFamily: "Stormfaze",
 				fontSize: "50px",
 				color: "#80e12aff",
@@ -167,7 +168,7 @@ export class GameScene extends window.Phaser.Scene {
 
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
 
-		if (this.checkpoints && this.checkpoints.length > 0 && this.gameMode === "RACE") {
+		if (this.checkpoints && this.checkpoints.length > 0) {
 			const pos = this.carController.getPosition();
 			for (const cp of this.checkpoints) {
 				const inside = pos.x >= cp.x && pos.x <= cp.x + cp.w && pos.y >= cp.y && pos.y <= cp.y + cp.h;

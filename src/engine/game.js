@@ -1,4 +1,3 @@
-
 import { CameraManager } from "../cameras/cameras.js";
 import { PlayerCar } from "../vehicles/PlayerCar.js";
 import { World } from "./world.js";
@@ -101,7 +100,7 @@ export class GameScene extends window.Phaser.Scene {
 		const { width } = this.sys.game.canvas;
 		const dispLaps = this.gameMode === "RACE" ? `LAPS: ${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
 		this.lapsText = this.add
-			.text(width / 2, 30, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
+			.text(width / 2, 30, dispLaps , {
 				fontFamily: "Stormfaze",
 				fontSize: "50px",
 				color: "#80e12aff",
@@ -119,7 +118,7 @@ export class GameScene extends window.Phaser.Scene {
 			currentLapStart: 0,
 			lapsCompleted: 0
 		};
-
+		
 		this.lapTimerText = this.add
 			.text(width / 2, 90, "TOTAL: 0.00s  BEST LAP: 0.00s", {
 				fontFamily: "Stormfaze",
@@ -168,15 +167,23 @@ export class GameScene extends window.Phaser.Scene {
 		this.expectedCheckpointIndex = 0; // Oczekujemy najpierw CP 1
 		this._cpInside = new Map(this.checkpoints.map((cp) => [cp.id, false]));
 		this.hasCompletedFullLap = false; // Czy gracz przejechał już 1→2→3?
-		this.lapStarted = false; // Czy rozpoczęto okrążenie
-		this.raceFinished = false; // ✅ Flaga zakończenia wyścigu
+		this.timerStarted = false; // ✅ Czy timer został uruchomiony
+		this.raceFinished = false; // Flaga zakończenia wyścigu
 	}
 
 	update(time, dt) {
 		dt /= 1000;
 
+		// ✅ Sprawdź czy countdown się skończył i uruchom timer
+		const countdownWasActive = this.countdown?.isActive();
 		if (this.countdown?.isActive()) {
 			this.countdown.update(dt);
+		}
+		
+		// ✅ Uruchom timer od razu po zakończeniu countdownu
+		if (countdownWasActive && !this.countdown?.isActive() && !this.timerStarted) {
+			this.timerStarted = true;
+			this.lapTimes.currentLapStart = 0; // Pierwsze okrążenie zaczyna się od 0
 		}
 
 		if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
@@ -191,11 +198,9 @@ export class GameScene extends window.Phaser.Scene {
 
 		this.carController.update(dt, control, this.worldSize, this.worldSize);
 
-		// ✅ Aktualizacja timera okrążeń - tylko jeśli wyścig nie jest zakończony
-		if (!this.countdown?.isActive() && this.lapStarted && !this.raceFinished) {
+		// ✅ Aktualizacja timera okrążeń - liczy od razu po countdown
+		if (this.timerStarted && !this.raceFinished) {
 			this.lapTimes.total += dt;
-
-			// Aktualizuj timer tylko jeśli gra jest aktywna
 			this.updateLapTimer();
 		}
 
@@ -220,28 +225,21 @@ export class GameScene extends window.Phaser.Scene {
 
 						// Jeśli przejechaliśmy CP 1 **PO** pełnym okrążeniu (1→2→3→1)
 						if (cp.id === 1 && this.hasCompletedFullLap) {
-							// ✅ Sprawdź czy to nie jest ostatnie okrążenie
+							// Sprawdź czy to nie jest ostatnie okrążenie
 							if (this.currentLap < this.totalLaps) {
 								this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
 								this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
-
+								
 								// Aktualizacja czasu okrążenia
 								this.updateLapTime();
-
-								// ✅ Sprawdź czy to było ostatnie okrążenie
+								
+								// Sprawdź czy to było ostatnie okrążenie
 								if (this.currentLap >= this.totalLaps) {
 									this.raceFinished = true;
-									// Możesz tu dodać dodatkową logikę zakończenia wyścigu
 								}
 							}
-
+							
 							this.hasCompletedFullLap = false; // Resetujemy flagę
-						}
-
-						// Rozpocznij mierzenie czasu przy pierwszym checkpoincie
-						if (cp.id === 1 && !this.lapStarted) {
-							this.lapStarted = true;
-							this.lapTimes.currentLapStart = this.lapTimes.total;
 						}
 					}
 				}
@@ -300,26 +298,26 @@ export class GameScene extends window.Phaser.Scene {
 			const currentLapTime = this.lapTimes.total - this.lapTimes.currentLapStart;
 			const totalTime = this.lapTimes.total.toFixed(2);
 			const bestLapTime = this.lapTimes.bestLap > 0 ? this.lapTimes.bestLap.toFixed(2) : "0.00";
-
+			
 			this.lapTimerText.setText(`TOTAL: ${totalTime}s  BEST LAP: ${bestLapTime}s`);
 		}
 	}
 
 	// Aktualizacja czasu najlepszego okrążenia
 	updateLapTime() {
-		// ✅ Nie aktualizuj jeśli wyścig zakończony
+		// Nie aktualizuj jeśli wyścig zakończony
 		if (this.raceFinished) return;
-
+		
 		const currentLapTime = this.lapTimes.total - this.lapTimes.currentLapStart;
-
+		
 		// Aktualizuj najlepszy czas, jeśli jest lepszy lub to pierwsze okrążenie
 		if (this.lapTimes.bestLap === 0 || currentLapTime < this.lapTimes.bestLap) {
 			this.lapTimes.bestLap = currentLapTime;
 		}
-
+		
 		// Zresetuj czas rozpoczęcia okrążenia
 		this.lapTimes.currentLapStart = this.lapTimes.total;
-
+		
 		// Aktualizuj wyświetlacz
 		this.updateLapTimer();
 	}
@@ -356,9 +354,9 @@ export class GameScene extends window.Phaser.Scene {
 		if (this.lapsText) this.lapsText.setText(`LAPS: ${this.currentLap}/${this.totalLaps}`);
 		this.expectedCheckpointIndex = 0;
 		this.hasCompletedFullLap = false; // Reset flagi
-		this.lapStarted = false; // Reset flagi rozpoczęcia okrążenia
-		this.raceFinished = false; // ✅ Reset flagi zakończenia wyścigu
-
+		this.timerStarted = false; // ✅ Reset flagi startu timera
+		this.raceFinished = false; // Reset flagi zakończenia wyścigu
+		
 		// Reset timerów
 		this.lapTimes = {
 			total: 0,
@@ -366,10 +364,10 @@ export class GameScene extends window.Phaser.Scene {
 			currentLapStart: 0,
 			lapsCompleted: 0
 		};
-
+		
 		// Aktualizuj wyświetlacz timerów
 		this.updateLapTimer();
-
+		
 		if (this._cpInside) {
 			for (const key of this._cpInside.keys()) this._cpInside.set(key, false);
 		}

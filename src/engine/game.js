@@ -100,8 +100,8 @@ export class GameScene extends window.Phaser.Scene {
 		const { width } = this.sys.game.canvas;
 		// const dispLaps = this.gameMode === "RACE" ? `LAPS: ${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
 		this.lapsText = this.add
-			.text(width / 2, 30, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
-				fontFamily: "Stormfaze",
+			.text(width / 2, 10, `LAPS: ${this.currentLap}/${this.totalLaps}`, {
+				fontFamily: "Harting",
 				fontSize: "50px",
 				color: "#80e12aff",
 				align: "center",

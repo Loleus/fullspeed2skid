@@ -12,9 +12,9 @@ export function createHUD(scene, isMobile, cameraManager) {
 
   return scene.add
     .text(10, 10, "V - zmiana kamery\nR - reset\nX - exit", {
-      fontFamily: "Stormfaze",
+      fontFamily: "Harting",
       fontSize: "20px",
-      fill: "#fff",
+      fill: "#cecdcdff",
       backgroundColor: "rgb(31, 31, 31)",
       padding: { left: 8, right: 8, top: 4, bottom: 4 },
     })

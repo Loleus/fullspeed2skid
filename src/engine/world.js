@@ -14,7 +14,7 @@ export class World {
     this.minimapKey = null;
     this.minimapImage = null;
     this.minimapOverlay = null;
-    this.minimapSize = 265;
+    this.minimapSize = 128;
     this.minimapMargin = 18;
     this.minimapWorldSize = 1024;
     this.minimapLastUpdate = 0; // znacznik czasu do throttlingu minimapy

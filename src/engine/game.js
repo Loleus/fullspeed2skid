@@ -21,6 +21,7 @@ export class GameScene extends window.Phaser.Scene {
         super({ key: "GameScene" });
         this.minimapa = true;
         this.gameMode = "PRACTICE";
+        this.collisionsEnabled = false
     }
 
     isMobile() {
@@ -29,6 +30,7 @@ export class GameScene extends window.Phaser.Scene {
 
     init(data) {
         this.worldData = data.worldData;
+        this.worldData.startFix = data.startFix;  // Dodaj startFix do worldData
         this.gameMode = data.gameMode || "PRACTICE";
         window._worldData = data.worldData;
         if (this.gameMode === "PRACTICE") this.aiController = null;
@@ -49,13 +51,19 @@ export class GameScene extends window.Phaser.Scene {
         const start = worldData.startPos;
         const startYOffset = 0;
 
+        const keys = createKeyboardBindings(this);
+        this.cursors = keys.cursors;
+        this.wasdKeys = keys.wasdKeys;
+        this.vKey = keys.vKey;
+        this.rKey = keys.rKey;
+        this.xKey = keys.xKey;
+
         this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car_p1");
         this.car.setOrigin(0.5).setDepth(2);
         this.car.body.allowRotation = false;
 
-        this.carController = new PlayerCar(this, this.car, worldData, 1);
+        this.carController = new PlayerCar(this, this.car, worldData);
         this.carController.resetState(start.x, start.y + startYOffset);
-
         const twoPlayers = !!worldData?.twoPlayers;
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
             const aiStart = this.worldData.waypoints[0];
@@ -69,28 +77,24 @@ export class GameScene extends window.Phaser.Scene {
             this.aiController.resetState(aiStart.x, aiStart.y + aiStartYOffset);
 
             skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-            this.carController.opponentController = this.aiController;
-            this.aiController.opponentController = this.carController;
+
+            if (this.collisionsEnabled) {
+                this.carController.opponentController = this.aiController;
+                this.aiController.opponentController = this.carController;
+            }
         } else if (twoPlayers) {
             const p2YOffset = 0;
             this.p2CarSprite = this.physics.add.sprite(start.x, start.y + p2YOffset, "car_p2");
             this.p2CarSprite.setOrigin(0.5).setDepth(2);
             this.p2CarSprite.body.allowRotation = false;
 
-            this.p2Controller = new PlayerCar(this, this.p2CarSprite, worldData, 2);
+            this.p2Controller = new PlayerCar(this, this.p2CarSprite, worldData);
             this.p2Controller.resetState(start.x, start.y + p2YOffset);
 
             skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
             this.carController.opponentController = this.p2Controller;
             this.p2Controller.opponentController = this.carController;
         }
-
-        const keys = createKeyboardBindings(this);
-        this.cursors = keys.cursors;
-        this.wasdKeys = keys.wasdKeys;
-        this.vKey = keys.vKey;
-        this.rKey = keys.rKey;
-        this.xKey = keys.xKey;
 
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);

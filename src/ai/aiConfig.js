@@ -7,7 +7,7 @@ export const aiConfig = {
   deadZoneAngle: 0.15,
   lookaheadDistance: 20,
 
-  // Nowe parametry sterowania
+  // Parametry sterowania
   steering: {
     baseSensitivity: 0.15,     // Podstawowa czułość skrętu
     speedReductionFactor: 0.8, // Współczynnik redukcji skrętu przy dużej prędkości
@@ -55,38 +55,11 @@ export const aiConfig = {
     }
   },
 
-  // Parametry bezpieczeństwa
-  safety: {
-    dangerZoneThrottleMultiplier: 0.3,  // Redukcja prędkości w strefie zagrożenia
-    minSafeDistance: 50,                 // Minimalna bezpieczna odległość od przeszkód
-    cautionRadius: 80                    // Promień zwiększonej ostrożności
-  },
-
   // Wykrywanie utknięcia
   stuckDetector: {
     positionCheckInterval: 3.0,
     minMovementDistance: 30,
     stuckTimeThreshold: 6.0
-  },
-
-  // Recovery
-  recovery: {
-    maxRecoveryAttempts: 2,
-    reverseTimer: 2.5,
-    reorientTimer: 2.5
-  },
-
-  // Strefy niebezpieczne
-  dangerZones: {
-    maxDangerZones: 10,
-    dangerZoneRadius: 150,
-    dangerZoneAvoidTime: 15000
-  },
-
-  // Desperate mode
-  desperateMode: {
-    timer: 5.0,
-    skipDistance: 5
   },
 
   // Debug

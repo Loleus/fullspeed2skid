@@ -21,7 +21,7 @@ export class GameScene extends window.Phaser.Scene {
         super({ key: "GameScene" });
         this.minimapa = true;
         this.gameMode = "PRACTICE";
-        this.collisionsEnabled = false
+        this.collisionsEnabled = true;
     }
 
     isMobile() {

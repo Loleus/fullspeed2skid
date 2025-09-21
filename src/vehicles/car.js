@@ -51,23 +51,28 @@ export class Car {
       return { cos: Math.cos(angle), sin: Math.sin(angle) };
     });
   }
-
-  // Resetuj stan auta
-  resetState(startX, startY, startAngle = -Math.PI / 2) {
+resetState(startX, startY, startAngle = -Math.PI / 2) {
     this.carX = startX;
     this.carY = startY;
-    this.carAngle = startAngle;
+    
+    // Pobierz korektę rotacji z tracks.json przez worldData
+    const startFix = this.worldData?.startFix ? 
+        Phaser.Math.DegToRad(parseFloat(this.worldData.startFix)) : 0;
+    console.log('Start fix (radians):', startFix);
+    // Zastosuj podstawową rotację + korektę
+    this.carAngle = startAngle + startFix;
+    
     this.v_x = 0;
     this.v_y = 0;
     this.steerAngle = 0;
     this.throttleLock = false;
     this.collisionCount = 0;
 
-    // Ustaw pozycję sprite'a
+    // Ustaw pozycję i rotację sprite'a
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
-  }
+}
 
   // Pobierz rogi auta dla kolizji
   getCarCorners(x, y, rot, width, height) {
@@ -196,6 +201,9 @@ export class Car {
 
   // Sprawdź kolizje między autami
   checkCarCollision() {
+        if (!this.scene.collisionsEnabled || !this.opponentController) {
+        return false;
+    }
     const opponent = this.opponentController || (this.isAI ? this.scene.carController : this.scene.aiController);
     if (!opponent) return false;
     const dx = this.carX - opponent.carX;

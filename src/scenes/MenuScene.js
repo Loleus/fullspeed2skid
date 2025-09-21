@@ -176,7 +176,8 @@ export class MenuScene extends Phaser.Scene {
     if (key === 'start') {
       this.scene.start('LoadingScene', {
         trackFile: this.tracks[this.selectedTrack].file,
-        gameMode: this.gameMode
+        gameMode: this.gameMode,
+        startFix: this.tracks[this.selectedTrack].startFix
       });
     } else if (key === 'fullscreen') {
       document.fullscreenElement ? document.exitFullscreen() : document.body.requestFullscreen();

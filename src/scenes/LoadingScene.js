@@ -9,6 +9,7 @@ export class LoadingScene extends window.Phaser.Scene {
   init(data) {
     this.trackFile = data.trackFile;
     this.gameMode = data.gameMode || 'PRACTICE';
+    this.startFix = data.startFix;
   }
 
   preload() {
@@ -45,12 +46,14 @@ export class LoadingScene extends window.Phaser.Scene {
       loadingText.setText('LOADING TRACK...');
       const svgPath = `assets/levels/${this.trackFile}`;
       const worldData = await World.loadWorld(svgPath, worldH, tileSize);
-      // Dodaj pole svgPath do worldData
+      // Dodaj pole svgPath i startFix do worldData
       worldData.svgPath = svgPath;
+      worldData.startFix = this.startFix;
       // startGame(worldData);
       this.scene.start('GameScene', { 
         worldData: worldData,
-        gameMode: this.gameMode 
+        gameMode: this.gameMode,
+        startFix: this.startFix
       });
     } else {
       // Przejdź do menu po utworzeniu template

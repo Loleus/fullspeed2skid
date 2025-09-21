@@ -2,7 +2,6 @@
 import { Car } from "../vehicles/car.js";
 import { aiConfig } from "./aiConfig.js";
 import { AIDriving } from "./aiDriving.js";
-import { AIRecovery } from "./aiRecovery.js";
 
 export class AICar extends Car {
   constructor(scene, carSprite, worldData, waypoints) {
@@ -12,8 +11,6 @@ export class AICar extends Car {
 
     this.waypoints = waypoints;
     this.currentWaypointIndex = 0;
-    this.recoverySubPhase = 'normal';
-    this.recoverySteer = 0;
 
     // Parametry sterowania
     this.waypointZoneRadius = this.config.waypointZoneRadius;
@@ -21,60 +18,29 @@ export class AICar extends Car {
     this.maxSteerInput = this.config.maxSteerInput;
     this.deadZoneAngle = this.config.deadZoneAngle;
 
-    // Lookahead
-    this.lookaheadDistance = this.config.lookaheadDistance;
-
     // Stan
     this.steerCommand = 0;
-    this.debugAngle = 0;
-
-    // Wykrywanie utknięcia (stan)
+    this.debugTimer = 0;
+    this.debugInterval = this.config.debugInterval;
+    
+    // Stan wykrywania utknięcia
     this.stuckDetector = {
       lastPosition: { x: 0, y: 0 },
       positionTimer: 0,
-      minMovementDistance: this.config.stuckDetector.minMovementDistance,
-      stuckTime: 0
+      stuckTime: 0,
+      minMovementDistance: this.config.stuckDetector.minMovementDistance
     };
 
-    // Recovery (stan i parametry)
-    this.recoveryMode = false;
-    this.recoveryTimer = 0;
-    this.recoveryPhase = 'reverse';
-    this.recoveryAttempts = 0;
-    this.maxRecoveryAttempts = this.config.recovery.maxRecoveryAttempts;
-
-    // Danger zones (stan i parametry)
-    this.dangerZones = [];
-    this.maxDangerZones = this.config.dangerZones.maxDangerZones;
-    this.dangerZoneRadius = this.config.dangerZones.dangerZoneRadius;
-    this.dangerZoneAvoidTime = this.config.dangerZones.dangerZoneAvoidTime;
-
-    // Desperate mode
-    this.desperateMode = false;
-    this.desperateModeTimer = 0;
-    this.desperateSkipDistance = this.config.desperateMode.skipDistance;
-
-    // Debug
-    this.debugTimer = 0;
-    this.debugInterval = this.config.debugInterval;
-
-    // Stabilizacja waypointa
-    this.waypointStability = {
-      lastChangeTime: 0,
-      minChangeInterval: this.config.waypointStabilityMinChangeInterval
-    };
-
-    // Inicjalizacja modułów (przekazujemy referencję do this)
-    this.aiDriving = new AIDriving(this);
-    this.aiRecovery = new AIRecovery(this);
-
-    // Post-collision grace (on-road): keep straight, pause throttle, avoid recovery
+    // Stan po kolizji
     this.postCollision = {
       active: false,
       steerHoldTimer: 0,
       throttleCooldown: 0,
       totalTimer: 0
     };
+
+    // Inicjalizacja modułu AI driving
+    this.aiDriving = new AIDriving(this);
   }
 
   // Implementacja fizyki dla AI
@@ -196,18 +162,11 @@ export class AICar extends Car {
     // Debug
     // this._updateDebug(dt, state);
 
-    // Aktualizuj tryb desperacki
-    this._updateDesperateMode(dt);
-
-    // Wyczyść stare strefy niebezpieczne
-    this._cleanupDangerZones();
-
     // Wykryj utknięcie
     this._detectStuck(dt);
 
     // Post-collision grace handling (on-road): don't turn, wait bounce, then go
-    // ALE NIE jeśli jesteśmy w recovery mode - recovery ma priorytet!
-    if (this.postCollision.active && !this.recoveryMode) {
+    if (this.postCollision.active) {
       this.postCollision.steerHoldTimer -= dt;
       this.postCollision.throttleCooldown -= dt;
       this.postCollision.totalTimer -= dt;
@@ -230,33 +189,19 @@ export class AICar extends Car {
       return;
     }
 
-    // Tryb recovery
-    if (this.recoveryMode) {
-      const recoveryControl = this.aiRecovery._handleSmarterRecovery(dt, state);
-      this.update(dt, recoveryControl, worldW, worldH);
-      return;
-    }
-
-    // Tryb desperacki - pomiń problematyczne obszary
-    if (this.desperateMode) {
-      const desperateControl = this._handleDesperateMode(dt, state);
-      this.update(dt, desperateControl, worldW, worldH);
-      return;
-    }
-
     // Sprawdź obecny waypoint
     this._checkWaypointCompletion();
 
-    // Wybierz cel - unikaj stref niebezpiecznych
-    const targetWP = this._getSafeTarget();
+    // Wybierz cel
+    let targetWP = this._getSafeTarget();
 
     // Oblicz kierunek do celu
-    const distToTarget = Math.hypot(
+    let distToTarget = Math.hypot(
       targetWP.x - this.carX,
       targetWP.y - this.carY
     );
 
-    const angleToTarget = Math.atan2(
+    let angleToTarget = Math.atan2(
       targetWP.y - this.carY,
       targetWP.x - this.carX
     );
@@ -267,77 +212,48 @@ export class AICar extends Car {
     // Oblicz sterowanie z użyciem nowych parametrów konfiguracyjnych
     let steer = 0;
     let throttle = this.config.speed.baseThrottle;
-    
-    // KLUCZOWA NAPRAWA: Po recovery AI jedzie znacznie wolniej
-    if (this.aiRecovery.recoveryEndTime > 0) {
-      const timeSinceRecovery = Date.now() - this.aiRecovery.recoveryEndTime;
-      if (timeSinceRecovery < 15000) { // 15 sekund po recovery (zwiększone z 10)
-        const recoveryThrottleMultiplier = Math.max(0.05, 1.0 - (timeSinceRecovery / 15000)); // 0.05 do 1.0 (bardziej konserwatywne)
-        throttle *= recoveryThrottleMultiplier;
-        
-        // Dodatkowe ograniczenie prędkości po recovery
-        const maxSpeedAfterRecovery = 60; // Maksymalna prędkość po recovery
-        if (state.speed > maxSpeedAfterRecovery) {
-          throttle = 0; // Zatrzymaj jeśli za szybko
-        }
-        
-        console.log(`[AI] Post-recovery driving: time=${timeSinceRecovery}ms, throttle=${throttle.toFixed(3)}, speed=${state.speed.toFixed(1)}`);
-      }
-    }
 
-    const absAngleDiff = Math.abs(angleDiff);
+    let absAngleDiff = Math.abs(angleDiff);
 
+    // Sterowanie z parametrami z konfiguracji
     if (absAngleDiff < this.deadZoneAngle) {
       steer = 0;
       throttle = this.config.speed.baseThrottle;
     } else {
-      // Podstawowe sterowanie z uwzględnieniem czułości
       steer = angleDiff * this.config.steering.baseSensitivity;
       
-      // KLUCZOWA NAPRAWA: Po recovery AI skręca delikatniej
-      if (this.aiRecovery.recoveryEndTime > 0) {
-        const timeSinceRecovery = Date.now() - this.aiRecovery.recoveryEndTime;
-        if (timeSinceRecovery < 15000) { // 15 sekund po recovery (zwiększone z 10)
-          const recoverySteerMultiplier = Math.max(0.2, 1.0 - (timeSinceRecovery / 15000)); // 0.2 do 1.0 (bardziej konserwatywne)
-          steer *= recoverySteerMultiplier;
-          
-          // Dodatkowe ograniczenie skrętu po recovery
-          const maxSteerAfterRecovery = 0.05; // Maksymalny skręt po recovery
-          steer = Phaser.Math.Clamp(steer, -maxSteerAfterRecovery, maxSteerAfterRecovery);
-          
-          console.log(`[AI] Post-recovery steering: time=${timeSinceRecovery}ms, steer=${steer.toFixed(3)}`);
-        }
+      // Zmniejsz czułość skrętu przy dużej prędkości
+      if (state.speed > this.config.speed.speedThresholds.high) {
+        steer *= this.config.steering.speedReductionFactor;
       }
       
-      steer = Phaser.Math.Clamp(steer, -this.maxSteerInput, this.maxSteerInput);
-
-      // Dostosowanie throttle na podstawie kąta
+      // Dostosuj throttle na podstawie kąta
       const angleThresholds = this.config.waypointControl.angleThresholds;
       const throttleMultipliers = this.config.waypointControl.throttleMultipliers;
 
       if (absAngleDiff > angleThresholds.extreme) {
-        throttle = throttleMultipliers.extreme;
+        throttle *= throttleMultipliers.extreme;
       } else if (absAngleDiff > angleThresholds.high) {
-        throttle = throttleMultipliers.high;
+        throttle *= throttleMultipliers.high;
       } else if (absAngleDiff > angleThresholds.medium) {
-        throttle = throttleMultipliers.medium;
+        throttle *= throttleMultipliers.medium;
       } else if (absAngleDiff > angleThresholds.small) {
-        throttle = throttleMultipliers.small;
+        throttle *= throttleMultipliers.small;
       } else {
-        throttle = throttleMultipliers.optimal;
+        throttle *= throttleMultipliers.optimal;
       }
     }
 
     // Kontrola prędkości
-    const speedThresholds = this.config.speed.speedThresholds;
+    let speedThresholds = this.config.speed.speedThresholds;
     if (state.speed > speedThresholds.high) {
       throttle = Math.min(throttle, speedThresholds.highSpeedThrottle);
     } else if (state.speed > speedThresholds.medium) {
       throttle = Math.min(throttle, speedThresholds.mediumSpeedThrottle);
     }
 
-    // Kontrola poślizgu bocznego
-    const lateralControl = this.config.lateralControl;
+    // Redukcja gazu przy poślizgu bocznym
+    let lateralControl = this.config.lateralControl;
     if (Math.abs(state.v_y) > lateralControl.severeSlipThreshold) {
       throttle *= lateralControl.severeSlipThrottleMultiplier;
       steer *= lateralControl.severeSlipSteerMultiplier;
@@ -346,14 +262,9 @@ export class AICar extends Car {
       steer *= lateralControl.moderateSlipSteerMultiplier;
     }
 
-    if (this._isInDangerZone()) {
-      console.log('[AI] In danger zone - extra caution');
-      throttle *= 0.3;
-    }
-
     this.steerCommand = steer;
 
-    const control = {
+    let control = {
       left: steer < -0.005,
       right: steer > 0.005,
       up: throttle > 0 && !this.throttleLock, // Sprawdź throttleLock
@@ -365,22 +276,8 @@ export class AICar extends Car {
 
   // --- Wrappery delegujące do modułów (metody mają te same nazwy jak oryginalnie) ---
   _getSafeTarget() { return this.aiDriving._getSafeTarget(); }
-  _isWaypointInDangerZone(waypoint) { return this.aiDriving._isWaypointInDangerZone(waypoint); }
-  _isInDangerZone() { return this.aiDriving._isInDangerZone(); }
-  _addDangerZone(x, y) { return this.aiDriving._addDangerZone(x, y); }
-  _cleanupDangerZones() { return this.aiDriving._cleanupDangerZones(); }
-  _enterDesperateMode() { return this.aiDriving._enterDesperateMode(); }
-  _updateDesperateMode(dt) { return this.aiDriving._updateDesperateMode(dt); }
-  _handleDesperateMode(dt, state) { return this.aiDriving._handleDesperateMode(dt, state); }
   _checkWaypointCompletion() { return this.aiDriving._checkWaypointCompletion(); }
   _detectStuck(dt) { return this.aiDriving._detectStuck(dt); }
-
-  _handleSmarterRecovery(dt, state) { return this.aiRecovery._handleSmarterRecovery(dt, state); }
-  _startSmartRecovery() { 
-    // Resetuj fazę recovery do początkowej
-    this.aiRecovery.recoveryPhase = 'assess';
-    return this.aiRecovery._startSmartRecovery(); 
-  }
 
   _normalizeAngle(angle) {
     while (angle > Math.PI) angle -= 2 * Math.PI;
@@ -392,20 +289,17 @@ export class AICar extends Car {
     this.debugTimer += dt;
 
     if (this.debugTimer >= this.debugInterval) {
-      const targetWP = this.waypoints[this.currentWaypointIndex];
-      const distToTarget = Math.hypot(targetWP.x - this.carX, targetWP.y - this.carY);
+      let targetWP = this.waypoints[this.currentWaypointIndex];
+      let distToTarget = Math.hypot(targetWP.x - this.carX, targetWP.y - this.carY);
 
-      const debugInfo = {
+      let debugInfo = {
         wp: this.currentWaypointIndex,
         dist: distToTarget.toFixed(0),
         angle: this.debugAngle.toFixed(1) + '°',
         speed: state.speed.toFixed(0),
         v_y: state.v_y.toFixed(0),
-        mode: this.desperateMode ? 'DESPERATE' :
-          this.recoveryMode ? `REC-${this.recoveryAttempts}-${this.recoveryPhase}` : 'DRIVE',
         steer: this.steerCommand.toFixed(2),
-        stuck: this.stuckDetector.stuckTime.toFixed(1),
-        dangers: this.dangerZones.length
+        stuck: this.stuckDetector.stuckTime.toFixed(1)
       };
 
       console.log('[AI]', JSON.stringify(debugInfo));
@@ -416,64 +310,18 @@ export class AICar extends Car {
   handleCollision(prevX, prevY, worldW, worldH) {
     super.handleCollision(prevX, prevY, worldW, worldH);
 
-    // Dodaj miejsce kolizji jako strefę niebezpieczną
-    this._addDangerZone(this.carX, this.carY);
+    // Jeśli jesteśmy na drodze, jedź prosto po odbiciu
+    let surfaceHere = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
+    let onRoad = surfaceHere !== 'obstacle';
 
-    // Sprawdź czy to kolizja podczas recovery
-    if (this.recoveryMode) {
-      console.log('[AI] Collision during recovery - forcing longer reverse');
-      this.aiRecovery.handleRecoveryCollision();
-      return;
-    }
-
-    // Sprawdź czy to powtarzająca się kolizja w tym samym obszarze
-    const recentCollisionsInArea = this.dangerZones.filter(zone => {
-      const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);
-      const timeDiff = Date.now() - zone.time;
-      return dist < this.dangerZoneRadius && timeDiff < 2000; // 2 sekundy
-    });
-
-    // Sprawdź czy mamy dużo kolizji w tym samym miejscu (niezależnie od czasu)
-    const totalCollisionsInArea = this.dangerZones.filter(zone => {
-      const dist = Math.hypot(this.carX - zone.x, this.carY - zone.y);
-      return dist < this.dangerZoneRadius;
-    }).reduce((sum, zone) => sum + zone.collisions, 0);
-
-    // DODAJ COOLDOWN - nie wchodź w recovery jeśli już jesteś w recovery lub niedawno skończyłeś
-    const timeSinceLastRecovery = Date.now() - (this.recoveryEndTime || 0);
-    const isInRecoveryCooldown = timeSinceLastRecovery < 8000; // 8 sekund cooldown
-
-    if ((totalCollisionsInArea >= 5 || recentCollisionsInArea.length >= 3) && !isInRecoveryCooldown) {
-      console.log(`[AI] Too many collisions in area (${totalCollisionsInArea} total, ${recentCollisionsInArea.length} recent)! Entering recovery`);
-      this._startSmartRecovery();
-      this.recoverySubPhase = 'reverse';
-      this.recoveryTimer = Math.max(this.recoveryTimer, 4.0); // Długie cofanie - 4 sekundy
-    } else if (recentCollisionsInArea.length >= 2 && !isInRecoveryCooldown) {
-      // Druga kolizja w ciągu 2 sekund – wymuś długie cofanie
-      console.log('[AI] Second collision in 2 seconds – forcing LONG reverse recovery');
-      this._startSmartRecovery();
-      this.recoverySubPhase = 'reverse';
-      this.recoveryTimer = Math.max(this.recoveryTimer, 4.0); // Długie cofanie - 4 sekundy
-    } else if (isInRecoveryCooldown) {
-      console.log(`[AI] Recovery cooldown active (${(8000 - timeSinceLastRecovery).toFixed(0)}ms remaining) - skipping recovery`);
-    } else {
-      // Jeśli jesteśmy na drodze, nie wchodź w recovery natychmiast – jedź prosto po odbiciu
-      const surfaceHere = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
-      const onRoad = surfaceHere !== 'obstacle';
-
-      if (onRoad) {
-        console.log('[AI] Collision on road – applying post-collision grace (no immediate recovery)');
-        // Dopasowane do wąskich dróg i modelu rowerowego
-        // Czas na odbicie: zsynchronizowany z collisionImmunity ~0.2s, trzymamy kierunek dłużej
-        this.postCollision.active = true;
-        this.postCollision.steerHoldTimer = 0.4; // utrzymaj prosto, bez skrętu
-        this.postCollision.throttleCooldown = 0.25; // chwilowo bez gazu po odbiciu
-        this.postCollision.totalTimer = 0.8; // całe okno łaski
-        // NIE wyzeruj recovery - pozwól mu działać jeśli jest aktywny
-      } else {
-        console.log(`[AI] Collision off-road – starting recovery`);
-      this._startSmartRecovery();
-      }
+    if (onRoad) {
+      console.log('[AI] Collision on road – applying post-collision grace');
+      // Dopasowane do wąskich dróg i modelu rowerowego
+      // Czas na odbicie: zsynchronizowany z collisionImmunity ~0.2s, trzymamy kierunek dłużej
+      this.postCollision.active = true;
+      this.postCollision.steerHoldTimer = 0.4; // utrzymaj prosto, bez skrętu
+      this.postCollision.throttleCooldown = 0.25; // chwilowo bez gazu po odbiciu
+      this.postCollision.totalTimer = 0.8; // całe okno łaski
     }
   }
 
@@ -481,39 +329,16 @@ export class AICar extends Car {
     const state = this.getFullState();
     return {
       wp: `${this.currentWaypointIndex}/${this.waypoints.length}`,
-      angle: this.debugAngle.toFixed(0) + '°',
-      speed: state.speed.toFixed(0),
-      mode: this.desperateMode ? 'DESP' :
-        this.recoveryMode ? `REC${this.recoveryAttempts}` : 'OK',
-      stuck: this.stuckDetector.stuckTime > 0 ? `${this.stuckDetector.stuckTime.toFixed(0)}s` : '',
-      zones: this.dangerZones.length > 0 ? `D${this.dangerZones.length}` : ''
+      speed: state.speed.toFixed(0)
     };
   }
 
   resetState(initialX, initialY) {
     super.resetState(initialX, initialY);
-
+    
     this.currentWaypointIndex = 0;
     this.steerCommand = 0;
-    this.debugAngle = 0;
-
-    this.stuckDetector.stuckTime = 0;
-    this.stuckDetector.positionTimer = 0;
-    this.stuckDetector.lastPosition = { x: initialX, y: initialY };
-
-    this.recoveryMode = false;
-    this.recoveryTimer = 0;
-    this.recoveryPhase = 'reverse';
-    this.recoveryAttempts = 0;
-
-    this.dangerZones = [];
-
-    this.desperateMode = false;
-    this.desperateModeTimer = 0;
-
-    this.debugTimer = 0;
-    this.waypointStability.lastChangeTime = 0;
-
+    
     this.body.setVelocity(0, 0);
     this.body.setAngularVelocity(0);
   }

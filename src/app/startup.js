@@ -7,7 +7,7 @@ async function waitForFonts() {
     await document.fonts.load('24px "punk_kid"');
     await document.fonts.load("40px skid");
     await document.fonts.load("50px Stormfaze");
-    await document.fonts.load("25px Harting");
+    await document.fonts.load("50px Harting");
     await document.fonts.ready;                   // Czekaj aż wszystkie czcionki będą gotowe
   }
 }

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.0.2';
+const CACHE_NAME = 'fullspeed2skid-v2.0.3';
 const ASSETS = [
   // Root and main files  
   '/fullspeed2skid/',
@@ -12,11 +12,13 @@ const ASSETS = [
   '/fullspeed2skid/assets/fonts/Stormfaze.otf',
   '/fullspeed2skid/assets/fonts/skid.ttf',
   '/fullspeed2skid/assets/fonts/punk_kid.ttf',
+  '/fullspeed2skid/assets/fonts/Harting.ttf',
 
   // assets/images
   '/fullspeed2skid/assets/images/car.png',
   '/fullspeed2skid/assets/images/car_X.png',
   '/fullspeed2skid/assets/images/asphalt.jpg',
+  '/fullspeed2skid/assets/images/asphalt1.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',
   '/fullspeed2skid/assets/images/stone.jpg',
   '/fullspeed2skid/assets/images/water.jpg',
@@ -28,6 +30,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/levels/scene_2.svg',
   '/fullspeed2skid/assets/levels/scene_3.svg',
   '/fullspeed2skid/assets/levels/scene_4.svg',
+  '/fullspeed2skid/assets/levels/tracks.json',
   
   // src/ai
   '/fullspeed2skid/src/ai/AICar.js',
@@ -48,9 +51,10 @@ const ASSETS = [
   '/fullspeed2skid/src/core/phaser.js',
 
   // src/engine
-  '/fullspeed2skid/src/engine/game.js',
-  '/fullspeed2skid/src/engine/skidMarksManager.js',
   '/fullspeed2skid/src/engine/countdownManager.js',
+  '/fullspeed2skid/src/engine/game.js',
+  '/fullspeed2skid/src/engine/lapsTimer.js',
+  '/fullspeed2skid/src/engine/skidMarksManager.js',
   '/fullspeed2skid/src/engine/svgPhaserWorldLoader.js',
   '/fullspeed2skid/src/engine/textureManager.js',
   '/fullspeed2skid/src/engine/world.js',

@@ -2,7 +2,7 @@ export class LapsTimer {
     constructor(scene, gameMode = "PRACTICE", totalLaps = 3) {
         this.scene = scene;
         this.gameMode = gameMode;
-        this.totalLaps = totalLaps;
+        this.totalLaps = gameMode === "PRACTICE" ? 100 : totalLaps;
         
         // Stan okrążeń
         this.currentLap = 0;

@@ -48,7 +48,7 @@ export class LapsTimer {
         .setShadow(3, 3, "#1d1d1dff", 2, false, true)
         .setScrollFactor(0);
 
-        this.lapTimerMainText = this.scene.add.text((width / 2)-10, 64, "", {
+        this.lapTimerMainText = this.scene.add.text(width / 2, 64, "", {
             fontFamily: "Harting",
             fontSize: "25px",
             color: "#63db00ff",
@@ -64,22 +64,7 @@ export class LapsTimer {
         this.bestLapText = this.scene.add.text(width / 2, 64 + 32, "BEST LAP: 0:00'00\"", {
             fontFamily: "Harting",
             fontSize: "20px",
-<<<<<<< HEAD
             color: "#63db00ff",
-=======
-            color: "#80e12aff",
-            backgroundColor: "rgb(31, 31, 31)",
-            padding: { left: 2, right: 2, top: 4, bottom: 4 },
-        })
-        .setDepth(1000)
-        .setShadow(1, 1, "#0f0", 1, false, true)
-        .setScrollFactor(0);
-
-        this.bestLapText = this.scene.add.text(width / 2, 64 + 34, "BEST LAP: 0:00'00\"", {
-            fontFamily: "Harting",
-            fontSize: "15px",
-            color: "#80e12aff",
->>>>>>> f1b79acca4a9e3c3790993eebb4b9393b49977d7
             align: "center",
             backgroundColor: "rgba(31, 31, 31,0.5)",
             padding: { left: 13, right: 13, top: 4, bottom: 4 },
@@ -104,21 +89,6 @@ export class LapsTimer {
 
         if (this.lapTimerMainText) {
             this.lapTimerMainText.setText(`TOTAL: ${formattedMain}`);
-<<<<<<< HEAD
-=======
-        }
-        if (this.lapTimerMillisText) {
-            this.lapTimerMillisText.setText(formattedMillis);
-        }
-
-        if (this.lapTimerMainText && this.lapTimerMillisText) {
-            const mainBounds = this.lapTimerMainText.getBounds();
-            this.lapTimerMillisText.x = mainBounds.right - 10;
-
-            const mainBottom = this.lapTimerMainText.y + this.lapTimerMainText.height;
-            const millisHeight = this.lapTimerMillisText.height;
-            this.lapTimerMillisText.y = mainBottom - millisHeight;
->>>>>>> f1b79acca4a9e3c3790993eebb4b9393b49977d7
         }
 
         // BEST LAP: z milisekundami (centysekundy)

@@ -488,7 +488,7 @@ export class LapsTimer {
         .setShadow(3, 3, "#0f0", 4, false, true)
         .setScrollFactor(0);
 
-        this.lapTimerMainText = this.scene.add.text(width / 2, 64, "", {
+        this.lapTimerMainText = this.scene.add.text((width / 2)-10, 64, "", {
             fontFamily: "Harting",
             fontSize: "25px",
             color: "#80e12aff",
@@ -512,9 +512,9 @@ export class LapsTimer {
         .setShadow(1, 1, "#0f0", 1, false, true)
         .setScrollFactor(0);
 
-        this.bestLapText = this.scene.add.text(width / 2, 64 + 36, "BEST LAP: 0:00'00\"", {
+        this.bestLapText = this.scene.add.text(width / 2, 64 + 34, "BEST LAP: 0:00'00\"", {
             fontFamily: "Harting",
-            fontSize: "20px",
+            fontSize: "15px",
             color: "#80e12aff",
             align: "center",
             backgroundColor: "rgb(31, 31, 31)",
@@ -539,7 +539,7 @@ export class LapsTimer {
         const formattedMillis = millis.toString().padStart(2, '0');
 
         if (this.lapTimerMainText) {
-            this.lapTimerMainText.setText(formattedMain);
+            this.lapTimerMainText.setText(`TOTAL: ${formattedMain}`);
         }
         if (this.lapTimerMillisText) {
             this.lapTimerMillisText.setText(formattedMillis);

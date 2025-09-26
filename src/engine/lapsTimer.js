@@ -85,7 +85,6 @@ export class LapsTimer {
         const millis = Math.floor((totalMs % 1000) / 10);
 
         const formattedMain = `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${millis.toString().padStart(2, '0')}`;
-        const formattedMillis = millis.toString().padStart(2, '0');
 
         if (this.lapTimerMainText) {
             this.lapTimerMainText.setText(`TOTAL: ${formattedMain}`);

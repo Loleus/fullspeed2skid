@@ -19,12 +19,12 @@ export class MenuScene extends Phaser.Scene {
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#83b1afff',
       buttonDisabledColor: '#666',
-      offsetY: 72,
+      offsetY: 52,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 }
     };
     // Resetuj stan gradientu do wartości początkowych
-    this.gradientState = { stop1: 0.6, stop2: 0.75 };
+    this.gradientState = { stop1: 0.3, stop2: 0.6 };
     this.gradientTween = null; // Referencja do tweena dla łatwego zatrzymania
     if (!window._tracks) window._tracks = [];
     if (typeof window._selectedTrack !== 'number') window._selectedTrack = 0;
@@ -45,7 +45,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     // Resetuj stan gradientu do wartości początkowych
-    this.gradientState = { stop1: 0.6, stop2: 0.75 };
+    this.gradientState = { stop1: 0.3, stop2: 0.6 };
 
     if (this.textures.exists('gradientOverlay')) this.textures.remove('gradientOverlay');
     const gradientCanvas = this.textures.createCanvas('gradientOverlay', width, height);
@@ -57,8 +57,8 @@ export class MenuScene extends Phaser.Scene {
     // Utwórz nowy tween i zapisz referencję
     this.gradientTween = this.tweens.add({
       targets: this.gradientState,
-      stop1: 0.25,
-      stop2: 0.4,
+      stop1: 0.2,
+      stop2: 0.7,
       duration: 4000,
       ease: 'Sine.easeInOut',
       yoyo: true,
@@ -123,12 +123,12 @@ export class MenuScene extends Phaser.Scene {
       y += h + m;
     });
 
-    const titleY = height / 2 - totalHeight / 2 - 70;
+    const titleY = height / 2 - totalHeight / 2 - 80;
     const text1 = this.add.text(0, 0, 'Full Speed 2', {
-      fontFamily: 'skid', fontSize: '44px', color: '#f00', align: 'center'
+      fontFamily: 'skid', fontSize: '44px', color: '#D72638', align: 'center'
     }).setShadow(2, 2, '#000', 4, false, true);
     const text2 = this.add.text(0, 0, 'Skid', {
-      fontFamily: 'punk_kid', fontSize: '72px', color: 'rgba(170,162,153,1)', align: 'center'
+      fontFamily: 'punk_kid', fontSize: '72px', color: 'rgba(248, 248, 242, 0.79)', align: 'center'
     });
     const totalTitleWidth = text1.width + text2.width;
     const startX = width / 2 - totalTitleWidth / 2;
@@ -138,10 +138,10 @@ export class MenuScene extends Phaser.Scene {
 
   updateGradient(ctx, width, height) {
     const g = ctx.createLinearGradient(0, 0, 0, height);
-    g.addColorStop(0, 'rgba(75,30,77,1)');
-    g.addColorStop(this.gradientState.stop1, 'rgba(0,0,0,0.3)');
-    g.addColorStop(this.gradientState.stop2, 'rgba(0,0,0,0.3)');
-    g.addColorStop(1.0, 'rgba(25,33,43,1)');
+    g.addColorStop(0, 'rgba(30, 61, 85, 1)');
+    g.addColorStop(this.gradientState.stop1, 'rgba(43, 82, 114, 0.3)');
+    g.addColorStop(this.gradientState.stop2, 'rgba(44, 44, 44, 0.3)');
+    g.addColorStop(1, 'rgba(44, 44, 44, 1)');
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, width, height);

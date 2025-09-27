@@ -33,14 +33,14 @@ export class LapsTimer {
 
     initializeHUD() {
         const { width } = this.scene.sys.game.canvas;
-        const dispLaps = this.gameMode === "RACE" ? `LAPS: ${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
+        const dispLaps = this.gameMode === "RACE" ? `LAPS:${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
 
         this.lapsText = this.scene.add.text(width / 2, 10, dispLaps, {
             fontFamily: "Harting",
-            fontSize: "48px",
+            fontSize: "55px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(31, 31, 31,0.5)",
+            backgroundColor: "rgba(22, 72, 10,0.5)",
             padding: { left: 12, right: 12, top: 4, bottom: -4 },
         })
         .setOrigin(0.5, 0)
@@ -48,26 +48,26 @@ export class LapsTimer {
         .setShadow(3, 3, "#1d1d1dff", 2, false, true)
         .setScrollFactor(0);
 
-        this.lapTimerMainText = this.scene.add.text(width / 2, 64, "", {
+        this.lapTimerMainText = this.scene.add.text(width / 2, 72, "", {
             fontFamily: "Harting",
             fontSize: "25px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(31, 31, 31,0.5)",
-            padding: { left: 4, right: 8, top: 0, bottom: 4 },
+            backgroundColor: "rgba(22, 72, 10,0.5)",
+            padding: { left: 6, right: 8, top: 0, bottom: 4 },
         })
         .setOrigin(0.5, 0)
         .setDepth(1000)
         .setShadow(2, 2, "#333", 1, false, true)
         .setScrollFactor(0);
 
-        this.bestLapText = this.scene.add.text(width / 2, 64 + 32, "BEST LAP: 0:00'00\"", {
+        this.bestLapText = this.scene.add.text(width / 2, 72 + 32, "BEST LAP: 0:00'00\"", {
             fontFamily: "Harting",
             fontSize: "20px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(31, 31, 31,0.5)",
-            padding: { left: 13, right: 13, top: 4, bottom: 4 },
+            backgroundColor: "rgba(22, 72, 10,0.5)",
+            padding: { left: 13, right: 15, top: 4, bottom: 4 },
         })
         .setOrigin(0.5, 0)
         .setDepth(1000)
@@ -109,7 +109,7 @@ export class LapsTimer {
     }
 
     updateLapsDisplay() {
-        const dispLaps = this.gameMode === "RACE" ? `LAPS: ${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
+        const dispLaps = this.gameMode === "RACE" ? `LAPS:${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
         if (this.lapsText) {
             this.lapsText.setText(dispLaps);
         }

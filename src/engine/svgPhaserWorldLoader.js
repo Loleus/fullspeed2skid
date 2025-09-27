@@ -1,4 +1,4 @@
-// svgPhaserWorldLoader.js – nowoczesny loader świata SVG do Phasera
+// svgPhaserWorldLoader.js – loader świata SVG do Phasera
 // Użycie: const worldData = await loadSVGPhaserWorld('assets/scene_1.svg', 4096, 256);
 
 export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 256) {

@@ -1,6 +1,6 @@
 {
   "tracks": {
-    "track_1": [
+    "track1": [
       {
         "place": 1,
         "nick": "ABC",
@@ -26,7 +26,7 @@
         "bestLap": "0:00'38\"00"
       }
     ],
-    "track_2": [
+    "track2": [
       {
         "place": 1,
         "nick": "ABC",
@@ -52,7 +52,7 @@
         "bestLap": "0:00'38\"00"
       }
     ],
-    "track_3": [
+    "track3": [
       {
         "place": 1,
         "nick": "ABC",
@@ -78,7 +78,7 @@
         "bestLap": "0:00'38\"00"
       }
     ],
-    "track_4": [
+    "track4": [
       {
         "place": 1,
         "nick": "ABC",

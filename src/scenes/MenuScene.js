@@ -24,7 +24,7 @@ export class MenuScene extends Phaser.Scene {
       shadowOffsetPressed: { x: -3, y: -3 }
     };
     // Resetuj stan gradientu do wartości początkowych
-    this.gradientState = { stop1: 0.3, stop2: 0.6 };
+    this.gradientState = { stop1: 0.2, stop2: 0.5 };
     this.gradientTween = null; // Referencja do tweena dla łatwego zatrzymania
     if (!window._tracks) window._tracks = [];
     if (typeof window._selectedTrack !== 'number') window._selectedTrack = 0;
@@ -45,7 +45,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     // Resetuj stan gradientu do wartości początkowych
-    this.gradientState = { stop1: 0.3, stop2: 0.6 };
+    this.gradientState = { stop1: 0.2, stop2: 0.5 };
 
     if (this.textures.exists('gradientOverlay')) this.textures.remove('gradientOverlay');
     const gradientCanvas = this.textures.createCanvas('gradientOverlay', width, height);
@@ -57,8 +57,8 @@ export class MenuScene extends Phaser.Scene {
     // Utwórz nowy tween i zapisz referencję
     this.gradientTween = this.tweens.add({
       targets: this.gradientState,
-      stop1: 0.2,
-      stop2: 0.7,
+      stop1: 0.5,
+      stop2: 0.8,
       duration: 4000,
       ease: 'Sine.easeInOut',
       yoyo: true,
@@ -77,7 +77,8 @@ export class MenuScene extends Phaser.Scene {
       { label: 'START', key: 'start' },
       { label: this.gameMode, key: 'mode' },
       { label: this.tracks[this.selectedTrack].label, key: 'track' },
-      { label: 'FULLSCREEN', key: 'fullscreen' }
+      { label: 'FULLSCREEN', key: 'fullscreen' },
+      { label: 'HISCORE', key: 'hiscore' } // ⬅️ nowy przycisk
     ];
 
     this.menuButtons = [];
@@ -171,6 +172,54 @@ export class MenuScene extends Phaser.Scene {
       return [{ label: 'TRACK 1', file: 'scene_1.svg' }, { label: 'TRACK 2', file: 'scene_2.svg' }];
     }
   }
+async showHiscoreOverlay() {
+  const { width, height } = this.sys.game.canvas;
+
+  // Blokujący overlay
+  const blocker = this.add.rectangle(0, 0, width, height, 0x000000, 0.8)
+    .setOrigin(0, 0)
+    .setInteractive()
+    .on('pointerdown', () => {
+      blocker.destroy();
+      container.destroy();
+    });
+
+  // Wczytaj dane
+  let hiscores = {};
+  try {
+    const res = await fetch('assets/levels/hiscores.json');
+    hiscores = await res.json();
+  } catch (e) {
+    console.warn('Nie udało się wczytać hiscores.json', e);
+  }
+
+  const trackKey = `track${this.selectedTrack + 1}`;
+  const scores = hiscores.tracks?.[trackKey] || [];
+
+  // Kontener z wynikami
+  const container = this.add.container(width / 2, height / 2);
+  const bg = this.add.graphics();
+  bg.fillStyle(0x1f2f3f, 0.9);
+  bg.fillRoundedRect(-300, -200, 600, 400, 20);
+  container.add(bg);
+
+  const title = this.add.text(0, -160, `HISCORE - ${this.tracks[this.selectedTrack].label}`, {
+    fontFamily: 'Stormfaze',
+    fontSize: '32px',
+    color: '#ffffff'
+  }).setOrigin(0.5);
+  container.add(title);
+
+  scores.forEach((entry, i) => {
+    const line = this.add.text(-250, -100 + i * 60,
+      `${entry.place}. ${entry.nick}  ${entry.totalTime}  [${entry.bestLap}]`, {
+        fontFamily: 'Stormfaze',
+        fontSize: '24px',
+        color: '#83b1afff'
+      });
+    container.add(line);
+  });
+}
 
   handleButton(key) {
     if (key === 'start') {
@@ -191,7 +240,12 @@ export class MenuScene extends Phaser.Scene {
       window._gameMode = this.gameMode;
       const btn = this.menuButtons.find(b => b.key === 'mode');
       if (btn) btn.container.getAt(2).setText(this.gameMode);
-    }
+    } else if (key === 'hiscore') {
+      this.showHiscoreOverlay();
+      const btn = this.menuButtons.find(b => b.key === key);
+if (btn) this.drawShadow(btn.container.getAt(0), this.menuStyle.shadowOffsetDefault, this.menuStyle.buttonWidth, this.menuStyle.buttonHeight, this.menuStyle.shadowButtonFillColor, this.menuStyle.buttonAlpha);
+
+}
   }
 
   // Metoda wywoływana przy niszczeniu sceny - czyści zasoby

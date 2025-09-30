@@ -75,9 +75,28 @@ export class HiscoreOverlay {
     if (!this.scene.ui?.menuButtons) return;
     
     this.scene.ui.menuButtons.forEach(btn => {
+      const isStart = btn.key === 'start';
+      const style = isStart ? { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customStartStyle } : this.scene.ui.menuStyle;
+
+      if (btn.container) {
+        btn.container.setAlpha(0.5);
+      }
       if (btn.hitCircle) {
         btn.hitCircle.removeInteractive();
         btn.hitCircle.removeAllListeners();
+      }
+      if (btn.bg) {
+        this.scene.ui.drawButton(
+          btn.bg, 
+          style.buttonFillColor, 
+          style.buttonAlpha,
+          style.buttonStrokeColor,
+          style.buttonWidth,
+          style.buttonHeight
+        );
+      }
+      if (btn.text) {
+        btn.text.setColor(style.buttonTextColor);
       }
     });
   }
@@ -86,9 +105,62 @@ export class HiscoreOverlay {
     if (!this.scene.ui?.menuButtons) return;
     
     this.scene.ui.menuButtons.forEach(btn => {
+      const isStart = btn.key === 'start';
+      const style = isStart ? { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customStartStyle } : this.scene.ui.menuStyle;
+
+      if (btn.container) {
+        btn.container.setAlpha(1);
+      }
+      if (btn.text) {
+        btn.text.setColor(style.buttonTextColor);
+      }
       if (btn.hitCircle) {
         btn.hitCircle.setInteractive({ useHandCursor: true });
-        btn.hitCircle.on('pointerdown', () => this.scene.handleButton(btn.key));
+        
+        btn.hitCircle.on('pointerover', () =>
+          this.scene.ui.drawButton(
+            btn.bg,
+            style.buttonHoverColor,
+            style.buttonAlpha,
+            style.buttonStrokeColor,
+            style.buttonWidth,
+            style.buttonHeight
+          )
+        );
+
+        btn.hitCircle.on('pointerout', () =>
+          this.scene.ui.drawButton(
+            btn.bg,
+            style.buttonFillColor,
+            style.buttonAlpha,
+            style.buttonStrokeColor,
+            style.buttonWidth,
+            style.buttonHeight
+          )
+        );
+
+        btn.hitCircle.on('pointerdown', () => {
+          this.scene.ui.drawShadow(
+            btn.shadow,
+            style.shadowOffsetPressed,
+            style.buttonWidth,
+            style.buttonHeight,
+            style.shadowButtonFillColor,
+            style.buttonAlpha
+          );
+          this.scene.handleButton(btn.key);
+        });
+
+        btn.hitCircle.on('pointerup', () =>
+          this.scene.ui.drawShadow(
+            btn.shadow,
+            style.shadowOffsetDefault,
+            style.buttonWidth,
+            style.buttonHeight,
+            style.shadowButtonFillColor,
+            style.buttonAlpha
+          )
+        );
       }
     });
   }

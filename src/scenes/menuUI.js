@@ -27,10 +27,10 @@ export class MenuUI {
       customStartStyle: {
         buttonWidth: 280,
         buttonHeight: 180,
-        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 100, 100, 1)").color,
-        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 150, 150, 1)").color,
+        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(216, 66, 20, 1)").color,
+        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(245, 102, 31, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
-        buttonTextColor: '#ffffff',
+        buttonTextColor: '#ed4c16ff',
         interactionRadiusOffset: 0,
         buttonFontSize: '46px',
       }

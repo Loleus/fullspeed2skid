@@ -12,27 +12,27 @@ export class MenuUI {
       buttonHeight: 130,
       buttonMargin: 10,
       buttonPadding: 8,
-      buttonAlpha: 0.26,
-      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(25, 104, 120, 1)").color,
+      buttonAlpha: 0.28,
+      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 84, 91, 1)").color,
       shadowButtonFillColor: 0x000000,
       buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(33, 143, 153, 1)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(0, 43, 36)").color,
-      buttonFontSize: '26px',
+      buttonFontSize: '22px',
       buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#83b1afff',
+      buttonTextColor: '#83b1a3ff',
       buttonDisabledColor: '#666',
-      offsetY: 50,
+      offsetY: 60,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
         buttonWidth: 280,
-        buttonHeight: 180,
+        buttonHeight: 160,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(216, 66, 20, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(245, 102, 31, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
         buttonTextColor: '#ed4c16ff',
         interactionRadiusOffset: 0,
-        buttonFontSize: '46px',
+        buttonFontSize: '38px',
       }
     };
   }
@@ -169,11 +169,11 @@ export class MenuUI {
   createLogo() {
     const { width, height } = this.scene.sys.game.canvas;
     const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-    const y = height / 2 + oy - h - 150;
+    const y = height / 2 + oy - h - 100;
 
     const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',
-      fontSize: '44px',
+      fontSize: '54px',
       color: '#D72638',
       align: 'center'
     }).setShadow(2, 2, '#000', 4, false, true);

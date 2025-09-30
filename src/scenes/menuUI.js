@@ -21,7 +21,7 @@ export class MenuUI {
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#83b1afff',
       buttonDisabledColor: '#666',
-      offsetY: 52,
+      offsetY: 0,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
@@ -123,7 +123,7 @@ export class MenuUI {
 
       let hitCircle = null;
       if (!btn.disabled) {
-        const radius = Math.min(style.buttonWidth, style.buttonHeight) / 2 + 38 + (style.interactionRadiusOffset || 0);
+        const radius = Math.min(style.buttonWidth, style.buttonHeight) / 2 + (style.interactionRadiusOffset || 0);
         hitCircle = this.scene.add.circle(0, 0, radius, 0x000000, 0);
         hitCircle.setInteractive({ useHandCursor: true });
 
@@ -169,7 +169,7 @@ export class MenuUI {
   createLogo() {
     const { width, height } = this.scene.sys.game.canvas;
     const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-    const y = height / 2 + oy - h - 200;
+    const y = height / 2 + oy - h - 100;
 
     const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',

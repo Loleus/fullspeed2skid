@@ -72,12 +72,24 @@ export class HiscoreOverlay {
   }
 
   disableMenuButtons() {
-    if (!this.scene.ui || !this.scene.ui.menuButtons) return;
-    this.scene.ui.disableAllButtons();
+    if (!this.scene.ui?.menuButtons) return;
+    
+    this.scene.ui.menuButtons.forEach(btn => {
+      if (btn.hitCircle) {
+        btn.hitCircle.removeInteractive();
+        btn.hitCircle.removeAllListeners();
+      }
+    });
   }
 
   enableMenuButtons() {
-    if (!this.scene.ui || !this.scene.ui.menuButtons) return;
-    this.scene.ui.enableAllButtons((key) => this.scene.handleButton(key));
+    if (!this.scene.ui?.menuButtons) return;
+    
+    this.scene.ui.menuButtons.forEach(btn => {
+      if (btn.hitCircle) {
+        btn.hitCircle.setInteractive({ useHandCursor: true });
+        btn.hitCircle.on('pointerdown', () => this.scene.handleButton(btn.key));
+      }
+    });
   }
 }

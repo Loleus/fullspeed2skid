@@ -8,6 +8,7 @@ export class MenuScene extends Phaser.Scene {
     this.tracks = window._tracks || [];
     this.selectedTrack = window._selectedTrack ?? 0;
     this.gameMode = window._gameMode || 'PRACTICE';
+    this.handleMenuButton = this.handleButton.bind(this);
   }
 
   async create() {
@@ -29,7 +30,7 @@ export class MenuScene extends Phaser.Scene {
       { label: 'FSCREEN', key: 'fullscreen' }
     ];
 
-    this.ui.createButtons(buttons, (key) => this.handleButton(key));
+    this.ui.createButtons(buttons, this.handleMenuButton);
     this.ui.createLogo();
   }
 

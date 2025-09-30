@@ -207,7 +207,7 @@ export class GameScene extends window.Phaser.Scene {
         if (this.brakeBtn) this.brakeBtn.rotation = 0;
     }
 
-    resetGame() {x
+    resetGame() {
         const worldData = this.worldData || window._worldData;
         const start = worldData.startPos;
 

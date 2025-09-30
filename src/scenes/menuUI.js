@@ -31,7 +31,8 @@ export class MenuUI {
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 150, 150, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
         buttonTextColor: '#ffffff',
-        interactionRadiusOffset: 0
+        interactionRadiusOffset: 0,
+        buttonFontSize: '46px',
       }
     };
   }

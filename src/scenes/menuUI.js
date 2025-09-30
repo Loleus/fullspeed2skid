@@ -9,7 +9,7 @@ export class MenuUI {
 
     this.menuStyle = {
       buttonWidth: 256,
-      buttonHeight: 62,
+      buttonHeight: 130,
       buttonMargin: 10,
       buttonPadding: 8,
       buttonAlpha: 0.26,
@@ -21,17 +21,17 @@ export class MenuUI {
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#83b1afff',
       buttonDisabledColor: '#666',
-      offsetY: 52,
+      offsetY: 82,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
         buttonWidth: 300,
-        buttonHeight: 80,
+        buttonHeight: 180,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 100, 100, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 150, 150, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
         buttonTextColor: '#ffffff',
-        interactionRadiusOffset: 50
+        interactionRadiusOffset: 0
       }
     };
   }
@@ -194,7 +194,7 @@ export class MenuUI {
 
   drawButton(g, fill, alpha, stroke, w, h) {
     g.clear();
-    const radius = Math.min(w, h) / 2 + 38;
+    const radius = Math.min(w, h) / 2;
     g.fillStyle(fill, alpha);
     g.lineStyle(2, stroke);
     g.fillCircle(0, 0, radius);
@@ -203,7 +203,7 @@ export class MenuUI {
 
   drawShadow(g, offset, w, h, fill, alpha) {
     g.clear();
-    const radius = Math.min(w, h) / 2 + 38;
+    const radius = Math.min(w, h) / 2;
     g.fillStyle(fill, alpha);
     g.lineStyle(0, 0x000000, 0);
     g.fillCircle(offset.x, offset.y, radius);

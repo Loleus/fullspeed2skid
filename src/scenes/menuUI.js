@@ -21,7 +21,7 @@ export class MenuUI {
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#83b1afff',
       buttonDisabledColor: '#666',
-      offsetY: 0,
+      offsetY: 50,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
@@ -169,7 +169,7 @@ export class MenuUI {
   createLogo() {
     const { width, height } = this.scene.sys.game.canvas;
     const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-    const y = height / 2 + oy - h - 100;
+    const y = height / 2 + oy - h - 150;
 
     const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',

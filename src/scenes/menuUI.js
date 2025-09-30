@@ -21,11 +21,11 @@ export class MenuUI {
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#83b1afff',
       buttonDisabledColor: '#666',
-      offsetY: 82,
+      offsetY: 52,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
-        buttonWidth: 300,
+        buttonWidth: 280,
         buttonHeight: 180,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 100, 100, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 150, 150, 1)").color,

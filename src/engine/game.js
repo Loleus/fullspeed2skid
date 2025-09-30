@@ -10,7 +10,7 @@ import { createKeyboardBindings } from "../input/keyboardManager.js";
 import { createHUD } from "../ui/hudManager.js";
 import { AICar } from "../ai/AICar.js";
 import { CountdownManager } from "./countdownManager.js";
-import { LapsTimer } from "./lapsTimer.js"; // ✅ Import nowego modułu
+import { LapsTimer } from "./lapsTimer.js";
 
 let skidMarks = null;
 let skidMarksAI = null;
@@ -30,7 +30,7 @@ export class GameScene extends window.Phaser.Scene {
 
     init(data) {
         this.worldData = data.worldData;
-        this.worldData.startFix = data.startFix;  // Dodaj startFix do worldData
+        this.worldData.startFix = data.startFix;
         this.gameMode = data.gameMode || "PRACTICE";
         window._worldData = data.worldData;
         if (this.gameMode === "PRACTICE") this.aiController = null;
@@ -99,7 +99,6 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-        // ✅ Inicjalizacja LapsTimer
         this.lapsTimer = new LapsTimer(this, this.gameMode, 3);
         this.lapsTimer.initializeCheckpoints(worldData.checkpoints);
 
@@ -130,7 +129,6 @@ export class GameScene extends window.Phaser.Scene {
         window.dispatchEvent(new Event("game-ready"));
         skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
 
-        // ✅ Inicjalizacja countdown managera
         this.countdown = new CountdownManager(this);
         this.countdown.start();
     }
@@ -138,13 +136,11 @@ export class GameScene extends window.Phaser.Scene {
     update(time, dt) {
         dt /= 1000;
 
-        // ✅ Sprawdź czy countdown się skończył i uruchom timer
         const countdownWasActive = this.countdown?.isActive();
         if (this.countdown?.isActive()) {
             this.countdown.update(dt);
         }
 
-        // ✅ Uruchom timer od razu po zakończeniu countdownu
         if (countdownWasActive && !this.countdown?.isActive() && !this.lapsTimer.isTimerStarted()) {
             this.lapsTimer.startTimer();
         }
@@ -161,10 +157,8 @@ export class GameScene extends window.Phaser.Scene {
 
         this.carController.update(dt, control, this.worldSize, this.worldSize);
 
-        // ✅ Aktualizacja timera okrążeń
         this.lapsTimer.update(dt);
 
-        // ✅ Sprawdzanie checkpointów
         const pos = this.carController.getPosition();
         this.lapsTimer.checkpointUpdate(pos);
 
@@ -213,7 +207,7 @@ export class GameScene extends window.Phaser.Scene {
         if (this.brakeBtn) this.brakeBtn.rotation = 0;
     }
 
-    resetGame() {
+    resetGame() {x
         const worldData = this.worldData || window._worldData;
         const start = worldData.startPos;
 
@@ -237,10 +231,8 @@ export class GameScene extends window.Phaser.Scene {
             skidMarksAI.clear();
         }
 
-        // Restart odliczania
         this.countdown.start();
 
-        // ✅ Reset lapsTimer
         this.lapsTimer.reset();
     }
 

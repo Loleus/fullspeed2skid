@@ -22,6 +22,7 @@ export class GameScene extends window.Phaser.Scene {
         this.minimapa = true;
         this.gameMode = "PRACTICE";
         this.collisionsEnabled = true;
+        this.raceFinished = false;
     }
 
     isMobile() {
@@ -34,6 +35,7 @@ export class GameScene extends window.Phaser.Scene {
         this.gameMode = data.gameMode || "PRACTICE";
         window._worldData = data.worldData;
         if (this.gameMode === "PRACTICE") this.aiController = null;
+        this.raceFinished = false;
     }
 
     preload() {
@@ -64,6 +66,7 @@ export class GameScene extends window.Phaser.Scene {
 
         this.carController = new PlayerCar(this, this.car, worldData);
         this.carController.resetState(start.x, start.y + startYOffset);
+
         const twoPlayers = !!worldData?.twoPlayers;
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
             const aiStart = this.worldData.waypoints[0];
@@ -99,17 +102,31 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-        this.lapsTimer = new LapsTimer(this, this.gameMode, 3);
+        const totalLaps = this.gameMode === "RACE" ? 5 : 100;
+        this.lapsTimer = new LapsTimer(this, this.gameMode, totalLaps);
         this.lapsTimer.initializeCheckpoints(worldData.checkpoints);
 
-        // Zgrupuj elementy HUD do jednej referencji przekazywanej do kamery HUD
         const lapHUDElements = this.lapsTimer.getHUDElements();
         if (this.isMobile()) {
             this.control = this.hudInfoText;
             this.hudRoot = this.add.container(0, 0, [...lapHUDElements]);
         } else {
             this.hudRoot = this.add.container(0, 0, [this.hudInfoText, ...lapHUDElements]);
-            this.cameras.main.ignore([this.hudRoot]);
+            this.cameras.main.ignore(this.hudRoot);
+        }
+
+        if (this.gameMode === "RACE") {
+            this.raceFinishText = this.add.text(
+                viewW / 2,
+                viewH / 3,
+                'RACE FINISH',
+                {
+                    fontFamily: 'Stormfaze',
+                    fontSize: '50px',
+                    color: '#ff0000'
+                }
+            ).setOrigin(0.5).setDepth(10).setVisible(false);
+            this.hudRoot.add(this.raceFinishText);
         }
 
         this.world = new World(this, worldData, tileSize, viewW, viewH);
@@ -146,52 +163,83 @@ export class GameScene extends window.Phaser.Scene {
         }
 
         if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
+
+        if (this.gameMode === "RACE" && this.raceFinishText?.visible) {
+            if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) {
+                this.raceFinishText.setVisible(false);
+                this.resetGame();
+            }
+            if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) {
+                this.exitToMenu();
+            }
+        }
+
+        if (this.gameMode === "RACE" && !this.raceFinished && this.lapsTimer.getCurrentLap() >= 1) {
+            this.showRaceFinish();
+        }
+
         if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
         if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
 
         const control = getControlState(this);
-        if (this.countdown?.isActive()) {
+        if (countdownWasActive || (this.gameMode === "RACE" && this.raceFinished)) {
             control.up = false;
             control.down = false;
+            control.left = false;
+            control.right = false;
         }
 
         this.carController.update(dt, control, this.worldSize, this.worldSize);
-
         this.lapsTimer.update(dt);
-
         const pos = this.carController.getPosition();
         this.lapsTimer.checkpointUpdate(pos);
 
         if (this.p2Controller) {
-            const control2 = {
+            let control2 = {
                 up: this.cursors.up.isDown,
                 down: this.cursors.down.isDown,
                 left: this.cursors.left.isDown,
                 right: this.cursors.right.isDown,
             };
-            if (this.countdown?.isActive()) {
+            if (countdownWasActive || (this.gameMode === "RACE" && this.raceFinished)) {
                 control2.up = false;
                 control2.down = false;
+                control2.left = false;
+                control2.right = false;
             }
             this.p2Controller.update(dt, control2, this.worldSize, this.worldSize);
         }
 
         if (this.aiController) {
-            if (this.countdown?.isActive()) {
+            // 🔸 KLUCZOWA ZMIANA: Tworzymy pusty control dla AI po zakończeniu wyścigu
+            if (countdownWasActive) {
                 this.aiController.throttleLock = true;
+                this.aiController.updateAI(dt, this.worldSize, this.worldSize);
+            } else if (this.gameMode === "RACE" && this.raceFinished) {
+                // 🔸 Po zakończeniu wyścigu AI używa pustego kontrolu (jak gracz)
+                this.aiController.throttleLock = false;
+                // Zamiast updateAI, używamy update z pustym controlem
+                const emptyControl = {
+                    up: false,
+                    down: false,
+                    left: false,
+                    right: false
+                };
+                this.aiController.update(dt, emptyControl, this.worldSize, this.worldSize);
+            } else {
+                this.aiController.throttleLock = false;
+                this.aiController.updateAI(dt, this.worldSize, this.worldSize);
             }
-            this.aiController.updateAI(dt, this.worldSize, this.worldSize);
         }
 
         const carPos = this.carController.getPosition();
         const aiCarPos = this.aiController ? this.aiController.getPosition() : this.p2Controller ? this.p2Controller.getPosition() : null;
-        this.world.drawTiles(carPos.x, carPos.y);
+        if (this.world) this.world.drawTiles(carPos.x, carPos.y);
 
         if (skidMarks?.enabled) {
-            const skidMarksList = [{ controller: this.carController, skidMarks: skidMarks }];
+            const skidMarksList = [{ controller: this.carController, skidMarks }];
             if (this.aiController && skidMarksAI) skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
             if (this.p2Controller && skidMarksAI) skidMarksList.push({ controller: this.p2Controller, skidMarks: skidMarksAI });
-
             updateSkidMarks(this, tileSize, skidMarksList);
         }
 
@@ -202,20 +250,29 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager?.update(dt);
 
         if (this.hudCamera) this.hudCamera.setRotation(0);
-        if (this.hudContainer) this.hudContainer.rotation = 0;
-        if (this.gasBtn) this.gasBtn.rotation = 0;
-        if (this.brakeBtn) this.brakeBtn.rotation = 0;
+    }
+
+    showRaceFinish() {
+        if (this.gameMode === "RACE" && this.raceFinishText) {
+            this.raceFinished = true;
+            this.raceFinishText.setVisible(true);
+        }
     }
 
     resetGame() {
         const worldData = this.worldData || window._worldData;
         const start = worldData.startPos;
 
+        this.raceFinished = false;
         this.carController.resetState(start.x, start.y);
 
         if (this.aiController && this.worldData.waypoints?.length > 0) {
             const aiStart = this.worldData.waypoints[0];
             this.aiController.resetState(aiStart.x, aiStart.y);
+        }
+
+        if (this.p2Controller) {
+            this.p2Controller.resetState(start.x, start.y);
         }
 
         if (this.world) {
@@ -227,12 +284,9 @@ export class GameScene extends window.Phaser.Scene {
 
         this.cameraManager?.reset();
         skidMarks?.clear();
-        if (skidMarksAI) {
-            skidMarksAI.clear();
-        }
+        if (skidMarksAI) skidMarksAI.clear();
 
         this.countdown.start();
-
         this.lapsTimer.reset();
     }
 

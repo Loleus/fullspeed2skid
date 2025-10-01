@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.1.0';
+const CACHE_NAME = 'fullspeed2skid-v2.1.1';
 const ASSETS = [
   // Root and main files  
   '/fullspeed2skid/',
@@ -71,6 +71,8 @@ const ASSETS = [
   '/fullspeed2skid/src/scenes/HudScene.js',
   '/fullspeed2skid/src/scenes/LoadingScene.js',
   '/fullspeed2skid/src/scenes/MenuScene.js',
+  '/fullspeed2skid/src/scenes/menuUI.js',
+  '/fullspeed2skid/src/scenes/hiscoresOverlay.js',
 
   // src/ui
   '/fullspeed2skid/src/ui/hudManager.js',

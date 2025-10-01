@@ -22,7 +22,7 @@ export class HiscoreOverlay {
     this.hiscoreContainer.setDepth(999);
 
     const bg = this.scene.add.graphics();
-    bg.fillStyle(0x1f2f3f, 0.9);
+    bg.fillStyle(Phaser.Display.Color.RGBStringToColor("rgba(20, 48, 46, 1)").color, 0.9);
     bg.fillRoundedRect(-300, -200, 600, 400, 20);
     this.hiscoreContainer.add(bg);
 
@@ -37,19 +37,19 @@ export class HiscoreOverlay {
     const trackKey = `track${this.scene.selectedTrack + 1}`;
     const scores = hiscores.tracks?.[trackKey] || [];
 
-    const title = this.scene.add.text(0, -160, `HISCORE - ${this.scene.tracks[this.scene.selectedTrack].label}`, {
-      fontFamily: 'Stormfaze',
-      fontSize: '32px',
-      color: '#ffffff'
+    const title = this.scene.add.text(0, -136, `HISCORE - ${this.scene.tracks[this.scene.selectedTrack].label}`, {
+      fontFamily: 'Harting',
+      fontSize: '43px',
+      color: '#ed4c16ff'
     }).setOrigin(0.5);
     this.hiscoreContainer.add(title);
 
     scores.forEach((entry, i) => {
-      const line = this.scene.add.text(-250, -100 + i * 60,
+      const line = this.scene.add.text(-226, -70 + i * 60,
         `${entry.place}. ${entry.nick}  ${entry.totalTime}  [${entry.bestLap}]`, {
-        fontFamily: 'Stormfaze',
+        fontFamily: 'Harting',
         fontSize: '24px',
-        color: '#83b1afff'
+        color: '#f0b5a1ff'
       });
       this.hiscoreContainer.add(line);
     });

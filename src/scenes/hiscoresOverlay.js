@@ -37,7 +37,7 @@ export class HiscoreOverlay {
     const trackKey = `track${this.scene.selectedTrack + 1}`;
     const scores = hiscores.tracks?.[trackKey] || [];
 
-    const title = this.scene.add.text(0, -136, `HISCORE - ${this.scene.tracks[this.scene.selectedTrack].label}`, {
+    const title = this.scene.add.text(0, -136, `HISCORES - ${this.scene.tracks[this.scene.selectedTrack].label}`, {
       fontFamily: 'Harting',
       fontSize: '43px',
       color: '#ed4c16ff'

@@ -102,7 +102,7 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-        const totalLaps = this.gameMode === "RACE" ? 3 : 100;
+        const totalLaps = this.gameMode === "RACE" ? 5 : 100;
         this.lapsTimer = new LapsTimer(this, this.gameMode, totalLaps);
         this.lapsTimer.initializeCheckpoints(worldData.checkpoints);
 
@@ -174,7 +174,7 @@ export class GameScene extends window.Phaser.Scene {
             }
         }
 
-        if (this.gameMode === "RACE" && !this.raceFinished && this.lapsTimer.getCurrentLap() >= 1) {
+        if (this.gameMode === "RACE" && !this.raceFinished && this.lapsTimer.isRaceFinished()) {
             this.showRaceFinish();
         }
 

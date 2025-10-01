@@ -102,7 +102,7 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-        const totalLaps = this.gameMode === "RACE" ? 5 : 100;
+        const totalLaps = this.gameMode === "RACE" ? 3 : 100;
         this.lapsTimer = new LapsTimer(this, this.gameMode, totalLaps);
         this.lapsTimer.initializeCheckpoints(worldData.checkpoints);
 
@@ -119,13 +119,13 @@ export class GameScene extends window.Phaser.Scene {
             this.raceFinishText = this.add.text(
                 viewW / 2,
                 viewH / 3,
-                'RACE FINISH',
+                'RACE FINISHED!',
                 {
                     fontFamily: 'Stormfaze',
-                    fontSize: '50px',
-                    color: '#ff0000'
+                    fontSize: '100px',
+                    color: '#ff000080'
                 }
-            ).setOrigin(0.5).setDepth(10).setVisible(false);
+            ).setOrigin(0.5).setDepth(10).setVisible(false).setShadow(3, 3, '#a71c00ff', 4, false, true)
             this.hudRoot.add(this.raceFinishText);
         }
 

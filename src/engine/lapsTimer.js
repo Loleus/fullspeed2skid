@@ -1,5 +1,5 @@
 export class LapsTimer {
-    constructor(scene, gameMode = "PRACTICE", totalLaps = 3) {
+    constructor(scene, gameMode = "PRACTICE", totalLaps) {
         this.scene = scene;
         this.gameMode = gameMode;
         this.totalLaps = gameMode === "PRACTICE" ? 100 : totalLaps;

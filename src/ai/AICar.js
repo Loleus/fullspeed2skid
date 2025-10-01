@@ -157,6 +157,9 @@ export class AICar extends Car {
   }
 
   updateAI(dt, worldW, worldH) {
+
+
+
     const state = this.getFullState();
 
     // Debug
@@ -274,6 +277,11 @@ export class AICar extends Car {
     super.update(dt, control, worldW, worldH);
   }
 
+
+
+
+
+  
   // --- Wrappery delegujące do modułów (metody mają te same nazwy jak oryginalnie) ---
   _getSafeTarget() { return this.aiDriving._getSafeTarget(); }
   _checkWaypointCompletion() { return this.aiDriving._checkWaypointCompletion(); }

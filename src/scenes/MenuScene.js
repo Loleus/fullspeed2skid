@@ -26,7 +26,7 @@ export class MenuScene extends Phaser.Scene {
       { label: this.gameMode, key: 'mode' },
       { label: this.tracks[this.selectedTrack].label, key: 'track' },
       { label: 'START', key: 'start' },
-      { label: 'HISCORE', key: 'hiscore' },
+      { label: 'HISCORES', key: 'hiscore' },
       { label: 'FSCREEN', key: 'fullscreen' }
     ];
 

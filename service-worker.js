@@ -1,6 +1,6 @@
-const CACHE_NAME = 'fullspeed2skid-v2.1.1';
+const CACHE_NAME = 'fullspeed2skid-v2.1.2';
 const ASSETS = [
-  // Root and main files  
+  // Root and main files
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
   '/fullspeed2skid/manifest.json',

@@ -22,18 +22,18 @@ export class LoadingScene extends window.Phaser.Scene {
     const { width, height } = this.sys.game.canvas;
     // this.cameras.main.setBackgroundColor('#000');
         this.add.tileSprite(0, 0, width, height, 'tile').setOrigin(0, 0);
-    const btnWidth = 300;
-    const btnHeight = 60;
-    const padding = 5;
+    const btnWidth = 720;
+    const btnHeight = 80;
+    const padding = 55;
     // Tło przycisku
-    this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, 0x444444, 1)
+    this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, Phaser.Display.Color.RGBStringToColor("rgba(20, 107, 48, 1)").color, 1)
       .setOrigin(0.5)
-      .setAlpha(0.2);
+      .setAlpha(0.5);
     // Tekst
     const loadingText = this.add.text(width / 2, height / 2, 'loading...', {
       fontFamily: 'Stormfaze',
-      fontSize: '21px',
-      color: '#728a99ff',
+      fontSize: '71px',
+      color: '#40b390ff',
       align: 'center',
       padding: { left: padding, right: padding, top: padding, bottom: padding },
     }).setOrigin(0.5);

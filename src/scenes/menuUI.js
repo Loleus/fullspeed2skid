@@ -9,7 +9,7 @@ export class MenuUI {
 
     this.menuStyle = {
       buttonWidth: 256,
-      buttonHeight: 130,
+      buttonHeight: 160,
       buttonMargin: 10,
       buttonPadding: 8,
       buttonAlpha: 0.4,
@@ -17,7 +17,7 @@ export class MenuUI {
       shadowButtonFillColor: 0x000000,
       buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(33, 143, 153, 1)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(6, 64, 56, 1)").color,
-      buttonFontSize: '22px',
+      buttonFontSize: '28px',
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#40b390ff',
       buttonDisabledColor: '#666',
@@ -26,13 +26,13 @@ export class MenuUI {
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
         buttonWidth: 280,
-        buttonHeight: 160,
+        buttonHeight: 200,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(216, 66, 20, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(245, 102, 31, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
         buttonTextColor: '#f45019ff',
         interactionRadiusOffset: 0,
-        buttonFontSize: '38px',
+        buttonFontSize: '48px',
       }
     };
   }
@@ -169,7 +169,7 @@ export class MenuUI {
   createLogo() {
     const { width, height } = this.scene.sys.game.canvas;
     const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-    const y = height / 2 + oy - h - 140;
+    const y = height / 2 + oy - h - 120;
 
     const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',
@@ -213,7 +213,8 @@ export class MenuUI {
   updateButtonText(key, newText) {
     const btn = this.menuButtons.find(b => b.key === key);
     if (btn && btn.text) {
-      btn.text.setText(newText);
+      console.log(key=="track");
+      key!=="track" ?  btn.text.setText(key+"\n"+newText) : btn.text.setText("SELECT\n"+newText) ;
     }
   }
 

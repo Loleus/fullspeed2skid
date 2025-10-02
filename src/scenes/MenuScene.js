@@ -23,11 +23,11 @@ export class MenuScene extends Phaser.Scene {
     if (this.selectedTrack < 0 || this.selectedTrack >= this.tracks.length) this.selectedTrack = 0;
 
     const buttons = [
-      { label: this.gameMode, key: 'mode' },
-      { label: this.tracks[this.selectedTrack].label, key: 'track' },
+      { label: "MODE\n" + this.gameMode, key: 'mode' },
+      { label: "SELECT\n" + this.tracks[this.selectedTrack].label, key: 'track' },
       { label: 'START', key: 'start' },
-      { label: 'HISCORES', key: 'hiscore' },
-      { label: 'FSCREEN', key: 'fullscreen' }
+      { label: 'HI\nSCORES', key: 'hiscore' },
+      { label: 'FULL\nSCREEN', key: 'fullscreen' }
     ];
 
     this.ui.createButtons(buttons, this.handleMenuButton);

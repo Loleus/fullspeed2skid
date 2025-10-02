@@ -174,7 +174,7 @@ export class MenuUI {
     const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',
       fontSize: '54px',
-      color: '#D72638',
+      color: '#d00505ff',
       align: 'center'
     }).setShadow(2, 2, '#000', 4, false, true);
 

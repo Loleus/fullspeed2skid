@@ -12,16 +12,16 @@ export class MenuUI {
       buttonHeight: 130,
       buttonMargin: 10,
       buttonPadding: 8,
-      buttonAlpha: 0.28,
-      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 84, 91, 1)").color,
+      buttonAlpha: 0.4,
+      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 107, 48, 1)").color,
       shadowButtonFillColor: 0x000000,
       buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(33, 143, 153, 1)").color,
-      buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(0, 43, 36)").color,
+      buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(6, 64, 56, 1)").color,
       buttonFontSize: '22px',
       buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#83b1a3ff',
+      buttonTextColor: '#40b390ff',
       buttonDisabledColor: '#666',
-      offsetY: 60,
+      offsetY: 80,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
@@ -30,7 +30,7 @@ export class MenuUI {
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(216, 66, 20, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(245, 102, 31, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
-        buttonTextColor: '#ed4c16ff',
+        buttonTextColor: '#f45019ff',
         interactionRadiusOffset: 0,
         buttonFontSize: '38px',
       }
@@ -169,7 +169,7 @@ export class MenuUI {
   createLogo() {
     const { width, height } = this.scene.sys.game.canvas;
     const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-    const y = height / 2 + oy - h - 100;
+    const y = height / 2 + oy - h - 140;
 
     const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',

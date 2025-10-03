@@ -205,7 +205,7 @@ createLogo() {
     fontSize: '54px',
     color: '#f00000',
     align: 'center'
-  }).setShadow(-2, -2, '#ff7741ff', 2 , false, true);
+  }).setShadow(-1, -1, '#ff7741ff', 2 , false, true);
 
   // Tekst z cieniem
   const text1Shadow = this.scene.add.text(0, 0, 'Full Speed 2', {

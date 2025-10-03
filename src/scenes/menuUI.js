@@ -9,12 +9,12 @@ export class MenuUI {
     this.logo = null;
 
     this.menuStyle = {
-      buttonWidth: 256,
-      buttonHeight: 160,
-      buttonMargin: 10,
-      buttonPadding: 8,
+      buttonWidth: 240,
+      buttonHeight: 180,
+      buttonMargin: 0,
+      buttonPadding: 1,
       buttonAlpha: 0.4,
-      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 87, 107, 1)").color,
+      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 88, 107, 1)").color,
       shadowButtonFillColor: 0x000000,
       buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(33, 143, 153, 1)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(6, 64, 56, 1)").color,
@@ -22,12 +22,12 @@ export class MenuUI {
       buttonFontFamily: 'Stormfaze',
       buttonTextColor: '#40adb3ff',
       buttonDisabledColor: '#666',
-      offsetY: 50,
+      offsetY: 30,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
-        buttonWidth: 280,
-        buttonHeight: 200,
+        buttonWidth: 256,
+        buttonHeight: 230,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(216, 66, 20, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(245, 102, 31, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
@@ -198,14 +198,14 @@ export class MenuUI {
 createLogo() {
   const { width, height } = this.scene.sys.game.canvas;
   const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-  const y = height / 2 + oy - h - 90;
+  const y = height / 2 + oy - h - 50;
   // Tekst z glowem (nałożony na ten sam tekst)
   const text1Glow = this.scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
     color: '#f00000',
     align: 'center'
-  }).setShadow(-1, -1, '#ff7741ff', 2 , false, true);
+  }).setShadow(-2, -2, '#ffab6cff', 1 , false, true);
 
   // Tekst z cieniem
   const text1Shadow = this.scene.add.text(0, 0, 'Full Speed 2', {
@@ -213,23 +213,23 @@ createLogo() {
     fontSize: '54px',
     color: '#d80000ff',
     align: 'center'
-  }).setShadow(3, 3, '#240000ff', 2, false, true);
+  }).setShadow(3, 3, '#240000ff', 1, false, true);
 
 
   // Tekst z glowem
   const text2Glow = this.scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
-    fontSize: '72px',
+    fontSize: '80px',
     color: 'rgba(254, 236, 207, 1)',
     align: 'center'
-  }).setShadow(-2, -2, '#fffdeeff', 2, false, true);
+  }).setShadow(-2, -2, '#fdf8d8ff', 1 , false, true);
   // Tekst z cieniem
   const text2Shadow = this.scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
-    fontSize: '72px',
+    fontSize: '80px',
     color: 'rgba(254, 236, 207, 1)',
     align: 'center'
-  }).setShadow(4, 4, '#240000ff', 2, false, true);
+  }).setShadow(1, 1, '#000000ff', 3, false, true);
 
 
   const totalTitleWidth = text1Shadow.width + text2Shadow.width;

@@ -29,18 +29,18 @@ export class HudScene extends window.Phaser.Scene {
     const viewW = this.sys.game.config.width;
     const viewH = this.sys.game.config.height;
 
-    const btnRadius = 60;
-    const margin = 30;
-    const y = viewH - btnRadius - margin - 40;
+    const btnRadius = 80;
+    const margin = 10;
+    const y = viewH - btnRadius - margin - 10;
 
     this.gasBtn = this.add.circle(btnRadius + margin, y, btnRadius, 0x00cc00)
-      .setAlpha(0.3)
+      .setAlpha(0.2)
       .setStrokeStyle(3, 0xffffff)
       .setInteractive();
     console.log('Created gasBtn');
 
     this.brakeBtn = this.add.circle(viewW - btnRadius - margin, y, btnRadius, 0xcc0000)
-      .setAlpha(0.3)
+      .setAlpha(0.2)
       .setStrokeStyle(3, 0xffffff)
       .setInteractive();
     console.log('Created brakeBtn');

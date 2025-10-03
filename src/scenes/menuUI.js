@@ -1,3 +1,4 @@
+
 export class MenuUI {
   constructor(scene) {
     this.scene = scene;
@@ -13,15 +14,15 @@ export class MenuUI {
       buttonMargin: 10,
       buttonPadding: 8,
       buttonAlpha: 0.4,
-      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 107, 48, 1)").color,
+      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 87, 107, 1)").color,
       shadowButtonFillColor: 0x000000,
       buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(33, 143, 153, 1)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(6, 64, 56, 1)").color,
       buttonFontSize: '28px',
       buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#40b390ff',
+      buttonTextColor: '#40adb3ff',
       buttonDisabledColor: '#666',
-      offsetY: 80,
+      offsetY: 50,
       shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
@@ -36,6 +37,7 @@ export class MenuUI {
       }
     };
   }
+
 
   createBackground() {
     const { width, height } = this.scene.sys.game.canvas;
@@ -166,32 +168,87 @@ export class MenuUI {
     return this.menuButtons;
   }
 
-  createLogo() {
-    const { width, height } = this.scene.sys.game.canvas;
-    const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-    const y = height / 2 + oy - h - 120;
+  // createLogo() {
+  //   const { width, height } = this.scene.sys.game.canvas;
+  //   const { buttonHeight: h, offsetY: oy } = this.menuStyle;
+  //   const y = height / 2 + oy - h - 90;
 
-    const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
-      fontFamily: 'skid',
-      fontSize: '54px',
-      color: '#d00505ff',
-      align: 'center'
-    }).setShadow(2, 2, '#000', 4, false, true);
+  //   const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
+  //     fontFamily: 'skid',
+  //     fontSize: '54px',
+  //     color: '#d80000ff',
+  //     align: 'center'
+  //   }).setShadow(3, 3, '#5e0000ff', 2, false, true);
 
-    const text2 = this.scene.add.text(0, 0, 'Skid', {
-      fontFamily: 'punk_kid',
-      fontSize: '72px',
-      color: 'rgba(248, 248, 242, 0.79)',
-      align: 'center'
-    });
+  //   const text2 = this.scene.add.text(0, 0, 'Skid', {
+  //     fontFamily: 'punk_kid',
+  //     fontSize: '72px',
+  //     color: 'rgba(254, 236, 207, 1)',
+  //     align: 'center'
+  //   }).setShadow(3, 3, '#430101ff', 1, false, true);
 
-    const totalTitleWidth = text1.width + text2.width;
-    const startX = width / 2 - totalTitleWidth / 2;
-    text1.setPosition(startX, y).setOrigin(0, 0.5);
-    text2.setPosition(startX + text1.width + 30, y + (text1.height - text2.height) / 2 - 60).setOrigin(0, 0.5);
+  //   const totalTitleWidth = text1.width + text2.width;
+  //   const startX = width / 2 - totalTitleWidth / 2;
+  //   text1.setPosition(startX, y).setOrigin(0, 0.5);
+  //   text2.setPosition(startX + text1.width + 30, y + (text1.height - text2.height) / 2 - 60).setOrigin(0, 0.5);
 
-    this.logo = { text1, text2 };
-  }
+  //   this.logo = { text1, text2 };
+  // }
+
+createLogo() {
+  const { width, height } = this.scene.sys.game.canvas;
+  const { buttonHeight: h, offsetY: oy } = this.menuStyle;
+  const y = height / 2 + oy - h - 90;
+  // Tekst z glowem (nałożony na ten sam tekst)
+  const text1Glow = this.scene.add.text(0, 0, 'Full Speed 2', {
+    fontFamily: 'skid',
+    fontSize: '54px',
+    color: '#f00000',
+    align: 'center'
+  }).setShadow(-2, -2, '#ff7741ff', 2 , false, true);
+
+  // Tekst z cieniem
+  const text1Shadow = this.scene.add.text(0, 0, 'Full Speed 2', {
+    fontFamily: 'skid',
+    fontSize: '54px',
+    color: '#d80000ff',
+    align: 'center'
+  }).setShadow(3, 3, '#240000ff', 2, false, true);
+
+
+  // Tekst z glowem
+  const text2Glow = this.scene.add.text(0, 0, 'Skid', {
+    fontFamily: 'punk_kid',
+    fontSize: '72px',
+    color: 'rgba(254, 236, 207, 1)',
+    align: 'center'
+  }).setShadow(-2, -2, '#fffdeeff', 2, false, true);
+  // Tekst z cieniem
+  const text2Shadow = this.scene.add.text(0, 0, 'Skid', {
+    fontFamily: 'punk_kid',
+    fontSize: '72px',
+    color: 'rgba(254, 236, 207, 1)',
+    align: 'center'
+  }).setShadow(4, 4, '#240000ff', 2, false, true);
+
+
+  const totalTitleWidth = text1Shadow.width + text2Shadow.width;
+  const startX = width / 2 - totalTitleWidth / 2;
+
+  text1Shadow.setPosition(startX, y).setOrigin(0, 0.5);
+  text1Glow.setPosition(startX, y).setOrigin(0, 0.5);
+
+  text2Shadow.setPosition(startX + text1Shadow.width + 30, y + (text1Shadow.height - text2Shadow.height) / 2 - 60).setOrigin(0, 0.5);
+  text2Glow.setPosition(startX + text1Shadow.width + 30, y + (text1Shadow.height - text2Shadow.height) / 2 - 60).setOrigin(0, 0.5);
+
+  this.logo = {
+    text1: text1Shadow,
+    text2: text2Shadow,
+    text1Glow,
+    text2Glow
+  };
+}
+
 
   drawButton(g, fill, alpha, stroke, w, h) {
     g.clear();
@@ -213,8 +270,8 @@ export class MenuUI {
   updateButtonText(key, newText) {
     const btn = this.menuButtons.find(b => b.key === key);
     if (btn && btn.text) {
-      console.log(key=="track");
-      key!=="track" ?  btn.text.setText(key+"\n"+newText) : btn.text.setText("SELECT\n"+newText) ;
+      console.log(key == "track");
+      key !== "track" ? btn.text.setText(key + "\n" + newText) : btn.text.setText("SELECT\n" + newText);
     }
   }
 
@@ -248,7 +305,7 @@ export class MenuUI {
     });
   }
 
-enableAllButtons(onButtonClick) {
+  enableAllButtons(onButtonClick) {
     this.menuButtons.forEach(btn => {
       if (btn.hitCircle) {
         btn.hitCircle.setInteractive({ useHandCursor: true });

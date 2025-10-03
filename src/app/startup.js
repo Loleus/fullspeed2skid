@@ -33,7 +33,7 @@ function startGameNormally() {
   // Dynamically import główny plik gry jako moduł JS
   const script = document.createElement("script");
   script.type = "module";
-  script.src = "src/app/main.js";
+  script.src = "src/app/main.js"; // Wersjonowanie dla cache'owania
   document.body.appendChild(script);
 }
 
@@ -85,7 +85,21 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 // Rejestracja Service Workera — zapewnia cache'owanie, tryb offline itp.
 if ('serviceWorker' in navigator) {
+
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data.type === 'NEW_VERSION_AVAILABLE') {
+      const refresh = confirm('Nowa wersja gry jest dostępna! Odświeżyć teraz?');
+      if (refresh && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: 'SKIP_WAITING' });
+        window.location.reload();
+      }
+    }
+  });
+
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js');
+    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js')
+      .then(registration => {
+        registration.update(); // Wymuś sprawdzenie nowej wersji
+      });
   });
 }

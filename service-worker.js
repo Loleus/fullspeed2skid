@@ -31,7 +31,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/levels/scene_3.svg',
   '/fullspeed2skid/assets/levels/scene_4.svg',
   '/fullspeed2skid/assets/levels/tracks.json',
-  
+
   // src/ai
   '/fullspeed2skid/src/ai/AICar.js',
   '/fullspeed2skid/src/ai/aiConfig.js',
@@ -97,6 +97,7 @@ self.addEventListener('install', event => {
       })
   );
   self.skipWaiting();
+  self.clients.claim();
 });
 
 // Aktywacja service workera
@@ -115,6 +116,11 @@ self.addEventListener('activate', event => {
     })
   );
   self.clients.claim();
+  self.clients.matchAll().then(clients => {
+    clients.forEach(client => {
+      client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
+    });
+  });
 });
 
 // Interceptowanie żądań sieciowych
@@ -122,50 +128,47 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') {
     return;
   }
+  const url = new URL(event.request.url);
 
-  if (event.request.url.includes('chrome-extension') || 
-      event.request.url.includes('extension') ||
-      event.request.url.includes('devtools')) {
+  if (url.origin !== location.origin) return;
+
+  if (event.request.url.includes('chrome-extension') ||
+    event.request.url.includes('extension') ||
+    event.request.url.includes('devtools')) {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request, {ignoreSearch: true})
-      .then(response => {
-        if (response) {
-          console.log('[SW] Serving from cache:', event.request.url);
-          return response;
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        console.log('[SW] Serving from cache:', event.request.url);
+        return cachedResponse;
+      }
+
+      console.log('[SW] Fetching from network:', event.request.url);
+      return fetch(event.request).then(networkResponse => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
         }
 
-        console.log('[SW] Fetching from network:', event.request.url);
-        return fetch(event.request)
-          .then(response => {
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseToCache);
+          console.log('[SW] Cached new resource:', event.request.url);
+        });
 
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-                console.log('[SW] Cached new resource:', event.request.url);
-              });
-
-            return response;
-          })
-          .catch(error => {
-            console.error('[SW] Fetch failed:', error);
-            return new Response('Offline - Brak połączenia z internetem', {
-              status: 503,
-              statusText: 'Service Unavailable',
-              headers: new Headers({
-                'Content-Type': 'text/plain'
-              })
-            });
-          });
-      })
+        return networkResponse;
+      }).catch(error => {
+        console.error('[SW] Fetch failed:', error);
+        return new Response('Offline - Brak połączenia z internetem', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({ 'Content-Type': 'text/plain' })
+        });
+      });
+    })
   );
+
 });
 
 // Obsługa wiadomości od aplikacji

@@ -1,7 +1,7 @@
 // Import scen gry (ekran ładowania, menu, właściwa rozgrywka, HUD)
-import { MenuScene } from '../scenes/MenuScene.js';
+import { MenuScene } from '../scenes/MenuScene.js?v=3.2.0';
 import { LoadingScene } from '../scenes/LoadingScene.js';
-import { GameScene } from '../engine/game.js';
+import { GameScene } from '../engine/game.js?v=3.2.0';
 import { HudScene } from '../scenes/HudScene.js';
 
 // Rozmiar pojedynczego kafelka (używany np. w mapach)
@@ -39,26 +39,22 @@ const config = {
 // Inicjalizacja nowej gry Phaser i przypisanie do zmiennej globalnej
 window._phaserGame = new Phaser.Game(config);
 
-// Funkcja pomocnicza do wykrywania urządzeń iOS
-function isIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent);
+function isMobile() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-// Dynamiczne skalowanie canvasa na iOS — aby dopasować się do dostępnego obszaru
 function resizeGameCanvas() {
-  if (!isIOS()) return;
+  if (!isMobile()) return;
 
   const canvas = document.querySelector('canvas');
   if (!canvas) return;
 
-  // Jeśli użytkownik jest w trybie fullscreen, pozostaw domyślny rozmiar
   if (document.fullscreenElement) {
     canvas.style.width = '';
     canvas.style.height = '';
     return;
   }
 
-  // Dopasowanie rozmiaru canvasa do proporcji gry (1280:720)
   const w = window.innerWidth;
   const h = window.innerHeight;
   const aspect = 1280 / 720;
@@ -74,11 +70,12 @@ function resizeGameCanvas() {
   canvas.style.width = newW + 'px';
   canvas.style.height = newH + 'px';
   canvas.style.display = 'block';
-  canvas.style.margin = '0 auto'; // centrowanie canvasu
+  canvas.style.margin = '0 auto';
 }
 
+
 // Obsługa zdarzeń związanych z rozmiarem i orientacją urządzenia na iOS
-if (isIOS()) {
+if (isMobile()) {
   window.addEventListener('resize', resizeGameCanvas);
   window.addEventListener('orientationchange', () => setTimeout(resizeGameCanvas, 300));
   document.addEventListener('fullscreenchange', resizeGameCanvas);

@@ -14,26 +14,26 @@ export class MenuUI {
       buttonMargin: 0,
       buttonPadding: 1,
       buttonAlpha: 0.5,
-      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 88, 107, 1)").color,
+      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 112, 137, 1)").color,
       shadowButtonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color,
-      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(15, 120, 129, 1)").color,
-      buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(6, 64, 56, 1)").color,
+      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(1, 130, 159, 1)").color,
+      buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 68, 79, 1)").color,
       buttonFontSize: '28px',
-      buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#04a9a3ff',
+      buttonFontFamily: 'Harting',
+      buttonTextColor: '#0095abff',
       buttonDisabledColor: '#666',
       offsetY: 30,
-      shadowOffsetDefault: { x: 4, y: 4 },
-      shadowOffsetPressed: { x: -5, y: -5 },
+      shadowOffsetDefault: { x: 7, y: 7 },
+      shadowOffsetPressed: { x: -4, y: -4 },
       customStartStyle: {
         buttonWidth: 256,
         buttonHeight: 230,
-        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(177, 41, 0, 1)").color,
-        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(214, 65, 5, 1)").color,
-        buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
-        buttonTextColor: '#f3580aff',
+        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(205, 68, 0, 1)").color,
+        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(239, 68, 0, 1)").color,
+        buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(108, 59, 0, 1)").color,
+        buttonTextColor: '#e24b00ff',
         interactionRadiusOffset: 0,
-        buttonFontSize: '48px',
+        buttonFontSize: '58px',
       }
     };
   }
@@ -198,7 +198,7 @@ export class MenuUI {
 createLogo() {
   const { width, height } = this.scene.sys.game.canvas;
   const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-  const y = height / 2 + oy - h - 50;
+  const y = height / 2 + oy - h - 80;
   // Tekst z glowem (nałożony na ten sam tekst)
   const text1Glow = this.scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
@@ -253,8 +253,9 @@ createLogo() {
   drawButton(g, fill, alpha, stroke, w, h) {
     g.clear();
     const radius = Math.min(w, h) / 2;
+
     g.fillStyle(fill, alpha);
-    g.lineStyle(0, stroke);
+    g.lineStyle(5, stroke);
     g.fillCircle(0, 0, radius);
     g.strokeCircle(0, 0, radius);
   }
@@ -271,7 +272,7 @@ createLogo() {
     const btn = this.menuButtons.find(b => b.key === key);
     if (btn && btn.text) {
       console.log(key == "track");
-      key !== "track" ? btn.text.setText(key + "\n" + newText) : btn.text.setText("SELECT\n" + newText);
+      key !== "track" ? btn.text.setText("MODE\n" + newText) : btn.text.setText("SELECT\n" + newText);
     }
   }
 

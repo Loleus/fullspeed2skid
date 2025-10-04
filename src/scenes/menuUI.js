@@ -16,22 +16,22 @@ export class MenuUI {
       buttonAlpha: 0.4,
       buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 88, 107, 1)").color,
       shadowButtonFillColor: 0x000000,
-      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(33, 143, 153, 1)").color,
+      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(15, 120, 129, 1)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(6, 64, 56, 1)").color,
       buttonFontSize: '28px',
       buttonFontFamily: 'Stormfaze',
-      buttonTextColor: '#40adb3ff',
+      buttonTextColor: '#04a9a3ff',
       buttonDisabledColor: '#666',
       offsetY: 30,
-      shadowOffsetDefault: { x: 5, y: 5 },
+      shadowOffsetDefault: { x: 6, y: 5 },
       shadowOffsetPressed: { x: -3, y: -3 },
       customStartStyle: {
         buttonWidth: 256,
         buttonHeight: 230,
-        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(216, 66, 20, 1)").color,
-        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(245, 102, 31, 1)").color,
+        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(177, 41, 0, 1)").color,
+        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(214, 65, 5, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(100, 0, 0)").color,
-        buttonTextColor: '#f45019ff',
+        buttonTextColor: '#f3580aff',
         interactionRadiusOffset: 0,
         buttonFontSize: '48px',
       }
@@ -203,33 +203,33 @@ createLogo() {
   const text1Glow = this.scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: '#f00000',
+    color: '#350000ff',
     align: 'center'
-  }).setShadow(-2, -2, '#ffab6cff', 1 , false, true);
+  }).setShadow(0, -2, '#ff9466ff', 3 , false, true);
 
   // Tekst z cieniem
   const text1Shadow = this.scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: '#d80000ff',
+    color: '#aa0000ff',
     align: 'center'
-  }).setShadow(3, 3, '#240000ff', 1, false, true);
+  }).setShadow(0, 3, '#ed560bff', 1, false, true);
 
 
   // Tekst z glowem
   const text2Glow = this.scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
     fontSize: '80px',
-    color: 'rgba(254, 236, 207, 1)',
+    color: 'rgba(87, 24, 8, 1)',
     align: 'center'
-  }).setShadow(-2, -2, '#fdf8d8ff', 1 , false, true);
+  }).setShadow(1, -1, '#fbd5b5ff', 6 , false, true);
   // Tekst z cieniem
   const text2Shadow = this.scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
     fontSize: '80px',
-    color: 'rgba(254, 236, 207, 1)',
+    color: 'rgba(0, 39, 55, 1)',
     align: 'center'
-  }).setShadow(1, 1, '#000000ff', 3, false, true);
+  }).setShadow(-3, 3, '#e82a00ff', 1, false, true);
 
 
   const totalTitleWidth = text1Shadow.width + text2Shadow.width;
@@ -254,7 +254,7 @@ createLogo() {
     g.clear();
     const radius = Math.min(w, h) / 2;
     g.fillStyle(fill, alpha);
-    g.lineStyle(2, stroke);
+    g.lineStyle(0, stroke);
     g.fillCircle(0, 0, radius);
     g.strokeCircle(0, 0, radius);
   }

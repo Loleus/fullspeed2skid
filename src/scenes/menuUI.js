@@ -13,9 +13,9 @@ export class MenuUI {
       buttonHeight: 180,
       buttonMargin: 0,
       buttonPadding: 1,
-      buttonAlpha: 0.4,
+      buttonAlpha: 0.5,
       buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(20, 88, 107, 1)").color,
-      shadowButtonFillColor: 0x000000,
+      shadowButtonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color,
       buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(15, 120, 129, 1)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(6, 64, 56, 1)").color,
       buttonFontSize: '28px',
@@ -23,8 +23,8 @@ export class MenuUI {
       buttonTextColor: '#04a9a3ff',
       buttonDisabledColor: '#666',
       offsetY: 30,
-      shadowOffsetDefault: { x: 6, y: 5 },
-      shadowOffsetPressed: { x: -3, y: -3 },
+      shadowOffsetDefault: { x: 4, y: 4 },
+      shadowOffsetPressed: { x: -5, y: -5 },
       customStartStyle: {
         buttonWidth: 256,
         buttonHeight: 230,
@@ -205,7 +205,7 @@ createLogo() {
     fontSize: '54px',
     color: '#350000ff',
     align: 'center'
-  }).setShadow(0, -2, '#ff9466ff', 3 , false, true);
+  }).setShadow(0, -2, '#fbd5b5ff', 3 , false, true);
 
   // Tekst z cieniem
   const text1Shadow = this.scene.add.text(0, 0, 'Full Speed 2', {
@@ -213,7 +213,7 @@ createLogo() {
     fontSize: '54px',
     color: '#aa0000ff',
     align: 'center'
-  }).setShadow(0, 3, '#ed560bff', 1, false, true);
+  }).setShadow(0, 3, '#e82a00ff', 1, false, true);
 
 
   // Tekst z glowem

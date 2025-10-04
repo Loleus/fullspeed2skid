@@ -35,20 +35,20 @@ export class HudScene extends window.Phaser.Scene {
 
     this.gasBtn = this.add.circle(btnRadius + margin, y, btnRadius, 0x00cc00)
       .setAlpha(0.2)
-      .setStrokeStyle(3, 0xffffff)
+      .setStrokeStyle(3, 0xffadff)
       .setInteractive();
     console.log('Created gasBtn');
 
     this.brakeBtn = this.add.circle(viewW - btnRadius - margin, y, btnRadius, 0xcc0000)
       .setAlpha(0.2)
-      .setStrokeStyle(3, 0xffffff)
+      .setStrokeStyle(3, 0xffadff)
       .setInteractive();
     console.log('Created brakeBtn');
 
-    this.gasText = this.add.text(btnRadius + margin, y, '↑', { font: '48px Arial', color: '#fff' })
+    this.gasText = this.add.text(btnRadius + margin, y, '↑', { font: '48px Arial', color: '#fffaddff' })
       .setOrigin(0.5);
 
-    this.brakeText = this.add.text(viewW - btnRadius - margin, y, '↓', { font: '48px Arial', color: '#fff' })
+    this.brakeText = this.add.text(viewW - btnRadius - margin, y, '↓', { font: '48px Arial', color: '#fffaddff' })
       .setOrigin(0.5);
 
    const startX = 10;
@@ -56,28 +56,28 @@ const startY = 10;
 const btnSpacing = 10;
 const buttonRadius = 40;
 
-this.vBtn = this.add.circle(startX + buttonRadius, startY + buttonRadius, buttonRadius, 0x0000cc)
+this.vBtn = this.add.circle(startX + buttonRadius, startY + buttonRadius, buttonRadius, 0x000099)
   .setAlpha(0.3)
-  .setStrokeStyle(3, 0xffffff)
+  .setStrokeStyle(3, 0xffadff)
   .setInteractive();
 
-this.vText = this.add.text(startX + buttonRadius, startY + buttonRadius, 'V', { font: '48px Arial', color: '#fff' })
+this.vText = this.add.text(startX + buttonRadius, startY + buttonRadius, 'V', { font: '48px Arial', color: '#fffaddff' })
   .setOrigin(0.5);
 
-this.rBtn = this.add.circle(startX + buttonRadius * 3 + btnSpacing, startY + buttonRadius, buttonRadius, 0x00cc00)
+this.rBtn = this.add.circle(startX + buttonRadius * 3 + btnSpacing, startY + buttonRadius, buttonRadius, 0x009900)
   .setAlpha(0.3)
-  .setStrokeStyle(3, 0xffffff)
+  .setStrokeStyle(3, 0xffadff)
   .setInteractive();
 
-this.rText = this.add.text(startX + buttonRadius * 3 + btnSpacing, startY + buttonRadius, 'R', { font: '48px Arial', color: '#fff' })
+this.rText = this.add.text(startX + buttonRadius * 3 + btnSpacing, startY + buttonRadius, 'R', { font: '48px Arial', color: '#fffaddff' })
   .setOrigin(0.5);
 
-this.xBtn = this.add.circle(startX + buttonRadius * 5 + btnSpacing * 2, startY + buttonRadius, buttonRadius, 0xcc0000)
+this.xBtn = this.add.circle(startX + buttonRadius * 5 + btnSpacing * 2, startY + buttonRadius, buttonRadius, 0x990000)
   .setAlpha(0.3)
-  .setStrokeStyle(3, 0xffffff)
+  .setStrokeStyle(3, 0xffadff)
   .setInteractive();
 
-this.xText = this.add.text(startX + buttonRadius * 5 + btnSpacing * 2, startY + buttonRadius, 'X', { font: '48px Arial', color: '#fff' })
+this.xText = this.add.text(startX + buttonRadius * 5 + btnSpacing * 2, startY + buttonRadius, 'X', { font: '48px Arial', color: '#fffaddff' })
   .setOrigin(0.5);
 
     this.control = {};

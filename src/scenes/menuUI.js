@@ -20,10 +20,10 @@ export class MenuUI {
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 68, 79, 1)").color,
       buttonFontSize: '28px',
       buttonFontFamily: 'Harting',
-      buttonTextColor: '#0095abff',
+      buttonTextColor: '#19b9d1ff',
       buttonDisabledColor: '#666',
       offsetY: 30,
-      shadowOffsetDefault: { x: 7, y: 7 },
+      shadowOffsetDefault: { x: 5, y: 5 },
       shadowOffsetPressed: { x: -4, y: -4 },
       customStartStyle: {
         buttonWidth: 256,
@@ -31,7 +31,7 @@ export class MenuUI {
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(205, 68, 0, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(239, 68, 0, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(108, 59, 0, 1)").color,
-        buttonTextColor: '#e24b00ff',
+        buttonTextColor: '#f06824ff',
         interactionRadiusOffset: 0,
         buttonFontSize: '58px',
       }
@@ -119,7 +119,7 @@ export class MenuUI {
         color: btn.disabled ? style.buttonDisabledColor : style.buttonTextColor,
         align: 'center',
         padding: { left: style.buttonPadding, right: style.buttonPadding, top: style.buttonPadding, bottom: style.buttonPadding }
-      }).setOrigin(0.5).setShadow(2, 2, '#000', 3, false, true);
+      }).setOrigin(0.5).setShadow(2, 2, '#000', 1, false, true);
 
       const container = this.scene.add.container(x + style.buttonWidth / 2, y, [shadow, bg, text]);
 

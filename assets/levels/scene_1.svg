@@ -16,7 +16,7 @@
 		}
 
 		.st3 {
-			fill: rgba(255,255,255,0.7);
+			fill: rgba(254,255,244,0.5);
 		}
 	</style>
 	<rect id="BACKGROUND_grass" y="0" width="1024" height="1024" />

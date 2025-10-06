@@ -9,7 +9,7 @@ export class MenuUI {
     this.logo = null;
 
     this.menuStyle = {
-      buttonWidth: 230,
+      buttonWidth: 256,
       buttonHeight: 170,
       buttonMargin: 0,
       buttonPadding: 1,
@@ -23,10 +23,10 @@ export class MenuUI {
       buttonTextColor: '#19b9d1ff',
       buttonDisabledColor: '#666',
       offsetY: 30,
-      shadowOffsetDefault: { x: 5, y: 5 },
-      shadowOffsetPressed: { x: -4, y: -4 },
+      shadowOffsetDefault: { x: 6, y: 4 },
+      shadowOffsetPressed: { x: -4, y: -5 },
       customStartStyle: {
-        buttonWidth: 230,
+        buttonWidth: 256,
         buttonHeight: 210,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(205, 68, 0, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(239, 68, 0, 1)").color,

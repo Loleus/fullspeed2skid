@@ -168,33 +168,6 @@ export class MenuUI {
     return this.menuButtons;
   }
 
-  // createLogo() {
-  //   const { width, height } = this.scene.sys.game.canvas;
-  //   const { buttonHeight: h, offsetY: oy } = this.menuStyle;
-  //   const y = height / 2 + oy - h - 90;
-
-  //   const text1 = this.scene.add.text(0, 0, 'Full Speed 2', {
-  //     fontFamily: 'skid',
-  //     fontSize: '54px',
-  //     color: '#d80000ff',
-  //     align: 'center'
-  //   }).setShadow(3, 3, '#5e0000ff', 2, false, true);
-
-  //   const text2 = this.scene.add.text(0, 0, 'Skid', {
-  //     fontFamily: 'punk_kid',
-  //     fontSize: '72px',
-  //     color: 'rgba(254, 236, 207, 1)',
-  //     align: 'center'
-  //   }).setShadow(3, 3, '#430101ff', 1, false, true);
-
-  //   const totalTitleWidth = text1.width + text2.width;
-  //   const startX = width / 2 - totalTitleWidth / 2;
-  //   text1.setPosition(startX, y).setOrigin(0, 0.5);
-  //   text2.setPosition(startX + text1.width + 30, y + (text1.height - text2.height) / 2 - 60).setOrigin(0, 0.5);
-
-  //   this.logo = { text1, text2 };
-  // }
-
 createLogo() {
   const { width, height } = this.scene.sys.game.canvas;
   const { buttonHeight: h, offsetY: oy } = this.menuStyle;

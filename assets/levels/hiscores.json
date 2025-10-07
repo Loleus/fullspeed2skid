@@ -4,104 +4,104 @@
       {
         "place": 1,
         "nick": "ABC",
-        "totalTime": "0:03'03\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 2,
         "nick": "XYZ",
-        "totalTime": "0:03'13\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 3,
         "nick": "J99",
-        "totalTime": "0:03'23\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 4,
         "nick": "QWE",
-        "totalTime": "0:03'33\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       }
     ],
     "track2": [
       {
         "place": 1,
         "nick": "ABC",
-        "totalTime": "0:03'03\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 2,
         "nick": "XYZ",
-        "totalTime": "0:03'13\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 3,
         "nick": "J99",
-        "totalTime": "0:03'23\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 4,
         "nick": "QWE",
-        "totalTime": "0:03'33\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       }
     ],
     "track3": [
       {
         "place": 1,
         "nick": "ABC",
-        "totalTime": "0:03'03\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 2,
         "nick": "XYZ",
-        "totalTime": "0:03'13\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 3,
         "nick": "J99",
-        "totalTime": "0:03'23\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 4,
         "nick": "QWE",
-        "totalTime": "0:03'33\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       }
     ],
     "track4": [
       {
         "place": 1,
         "nick": "ABC",
-        "totalTime": "0:03'03\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 2,
         "nick": "XYZ",
-        "totalTime": "0:03'13\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 3,
         "nick": "J99",
-        "totalTime": "0:03'23\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       },
       {
         "place": 4,
         "nick": "QWE",
-        "totalTime": "0:03'33\"45",
-        "bestLap": "0:00'38\"00"
+        "totalTime": 180.00,
+        "bestLap": 30.00
       }
     ]
   }

@@ -1,4 +1,3 @@
-
 export class MenuUI {
   constructor(scene) {
     this.scene = scene;
@@ -37,7 +36,6 @@ export class MenuUI {
       }
     };
   }
-
 
   createBackground() {
     const { width, height } = this.scene.sys.game.canvas;
@@ -164,7 +162,7 @@ export class MenuUI {
       const isAfterStart = i > startIndex;
       x += style.buttonWidth + (isAfterStart ? style.buttonMargin : 0);
     });
-
+    
     return this.menuButtons;
   }
 
@@ -188,7 +186,6 @@ createLogo() {
     align: 'center'
   }).setShadow(0, 3, '#e82a00ff', 1, false, true);
 
-
   // Tekst z glowem
   const text2Glow = this.scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
@@ -203,7 +200,6 @@ createLogo() {
     color: 'rgba(0, 39, 55, 1)',
     align: 'center'
   }).setShadow(-3, 3, '#e82a00ff', 1, false, true);
-
 
   const totalTitleWidth = text1Shadow.width + text2Shadow.width;
   const startX = width / 2 - totalTitleWidth / 2;
@@ -222,11 +218,9 @@ createLogo() {
   };
 }
 
-
   drawButton(g, fill, alpha, stroke, w, h) {
     g.clear();
     const radius = Math.min(w, h) / 2;
-
     g.fillStyle(fill, alpha);
     g.lineStyle(5, stroke);
     g.fillCircle(0, 0, radius);
@@ -247,78 +241,6 @@ createLogo() {
       console.log(key == "track");
       key !== "track" ? btn.text.setText("MODE\n" + newText) : btn.text.setText("SELECT\n" + newText);
     }
-  }
-
-  disableAllButtons() {
-    this.menuButtons.forEach(btn => {
-      if (btn.hitCircle) {
-        btn.hitCircle.removeAllListeners();
-        btn.hitCircle.disableInteractive();
-      }
-      if (btn.bg) {
-        btn.bg.clear();
-        this.drawButton(
-          btn.bg,
-          this.menuStyle.buttonDisabledColor,
-          this.menuStyle.buttonAlpha,
-          this.menuStyle.buttonStrokeColor,
-          btn.style.buttonWidth,
-          btn.style.buttonHeight
-        );
-      }
-      if (btn.key === 'start' && btn.shadow) {
-        this.drawShadow(
-          btn.shadow,
-          this.menuStyle.shadowOffsetDefault,
-          btn.style.buttonWidth,
-          btn.style.buttonHeight,
-          this.menuStyle.shadowButtonFillColor,
-          this.menuStyle.buttonAlpha
-        );
-      }
-    });
-  }
-
-  enableAllButtons(onButtonClick) {
-    this.menuButtons.forEach(btn => {
-      if (btn.hitCircle) {
-        btn.hitCircle.setInteractive({ useHandCursor: true });
-
-        const isStart = btn.key === 'start';
-        const style = isStart ? { ...this.menuStyle, ...this.menuStyle.customStartStyle } : this.menuStyle;
-
-        btn.hitCircle.removeAllListeners();
-        btn.hitCircle.on('pointerover', () =>
-          this.drawButton(btn.bg, style.buttonHoverColor, style.buttonAlpha, style.buttonStrokeColor, style.buttonWidth, style.buttonHeight)
-        );
-        btn.hitCircle.on('pointerout', () =>
-          this.drawButton(btn.bg, style.buttonFillColor, style.buttonAlpha, style.buttonStrokeColor, style.buttonWidth, style.buttonHeight)
-        );
-        btn.hitCircle.on('pointerdown', () =>
-          this.drawShadow(btn.shadow, style.shadowOffsetPressed, style.buttonWidth, style.buttonHeight, style.shadowButtonFillColor, style.buttonAlpha)
-        );
-        btn.hitCircle.on('pointerup', () => {
-          this.drawShadow(btn.shadow, style.shadowOffsetDefault, style.buttonWidth, style.buttonHeight, style.shadowButtonFillColor, style.buttonAlpha);
-          if (onButtonClick) {
-            onButtonClick(btn.key);
-          }
-        });
-      }
-
-      if (btn.bg) {
-        btn.bg.clear();
-        const isStart = btn.key === 'start';
-        const fillColor = isStart ? this.menuStyle.customStartStyle.buttonFillColor : this.menuStyle.buttonFillColor;
-        this.drawButton(
-          btn.bg,
-          fillColor,
-          this.menuStyle.buttonAlpha,
-          this.menuStyle.buttonStrokeColor,
-          btn.style.buttonWidth,
-          btn.style.buttonHeight
-        );
-      }
-    });
   }
 
   destroy() {

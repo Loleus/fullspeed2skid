@@ -1,5 +1,6 @@
 import { HiscoreOverlay } from './hiscoresOverlay.js';
 import { MenuUI } from './menuUI.js';
+import { HiscoreManager } from './hiscoreManager.js';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -10,14 +11,23 @@ export class MenuScene extends Phaser.Scene {
     this.selectedTrack = window._selectedTrack ?? 0;
     this.gameMode = window._gameMode || 'PRACTICE';
     this.handleMenuButton = this.handleButton.bind(this);
+    this.hiscoreManager = new HiscoreManager({
+      storageKey: 'mygame_hiscores',
+      templatePath: 'assets/levels/hiscores.json',
+      maxEntries: 4
+    });
   }
 
   async create() {
+
     try {
-      const res = await fetch('assets/levels/hiscores.json');
-      this.hiscores = await res.json();
+      const data = await this.hiscoreManager.init();
+      this.hiscores = data;
+      window._hiscores = this.hiscores;
     } catch (e) {
-      console.warn('Nie udało się wczytać hiscores.json', e);
+      console.warn('Nie udało się zainicjalizować HiscoreManager', e);
+      this.hiscores = { tracks: {} };
+      window._hiscores = this.hiscores;
     }
     this.ui = new MenuUI(this);
     this.hiscoreOverlay = new HiscoreOverlay(this);
@@ -39,6 +49,7 @@ export class MenuScene extends Phaser.Scene {
 
     this.ui.createButtons(buttons, this.handleMenuButton);
     this.ui.createLogo();
+    window._hiscores = this.hiscores;
   }
 
   async fetchTracks() {

@@ -30,7 +30,7 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     init(data) {
-        console.log(this.scene.manager.keys.MenuScene.hiscores.tracks);
+        console.log(window._hiscores.tracks);
         this.worldData = data.worldData;
         this.worldData.startFix = data.startFix;
         this.gameMode = data.gameMode || "PRACTICE";

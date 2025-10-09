@@ -30,6 +30,7 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     init(data) {
+        console.log(this.scene.manager.keys.MenuScene.hiscores.tracks);
         this.worldData = data.worldData;
         this.worldData.startFix = data.startFix;
         this.gameMode = data.gameMode || "PRACTICE";
@@ -256,7 +257,6 @@ export class GameScene extends window.Phaser.Scene {
         if (this.gameMode === "RACE" && this.raceFinishText) {
             this.raceFinished = true;
             this.raceFinishText.setVisible(true);
-            console.log(this.lapsTimer._totalFormatted);
         }
     }
 

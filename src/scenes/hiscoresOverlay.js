@@ -26,13 +26,7 @@ export class HiscoreOverlay {
     bg.fillRoundedRect(-300, -200, 600, 400, 20);
     this.hiscoreContainer.add(bg);
 
-    let hiscores = {};
-    try {
-      const res = await fetch('assets/levels/hiscores.json');
-      hiscores = await res.json();
-    } catch (e) {
-      console.warn('Nie udało się wczytać hiscores.json', e);
-    }
+    let hiscores = this.scene.hiscores;
 
     const trackKey = `track${this.scene.selectedTrack + 1}`;
     const scores = hiscores.tracks?.[trackKey] || [];

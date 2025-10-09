@@ -5,6 +5,7 @@ export class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
     this.isOverlayOpen = false;
+    this.hiscores = [];
     this.tracks = window._tracks || [];
     this.selectedTrack = window._selectedTrack ?? 0;
     this.gameMode = window._gameMode || 'PRACTICE';
@@ -12,6 +13,12 @@ export class MenuScene extends Phaser.Scene {
   }
 
   async create() {
+    try {
+      const res = await fetch('assets/levels/hiscores.json');
+      this.hiscores = await res.json();
+    } catch (e) {
+      console.warn('Nie udało się wczytać hiscores.json', e);
+    }
     this.ui = new MenuUI(this);
     this.hiscoreOverlay = new HiscoreOverlay(this);
 

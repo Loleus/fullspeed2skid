@@ -8,7 +8,7 @@ export class MenuUI {
     this.logo = null;
 
     this.menuStyle = {
-      buttonWidth: 256,
+      buttonWidth: 210,
       buttonHeight: 170,
       buttonMargin: 0,
       buttonPadding: 1,

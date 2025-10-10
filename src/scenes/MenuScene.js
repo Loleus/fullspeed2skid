@@ -1,20 +1,51 @@
 import { HiscoreOverlay } from './hiscoresOverlay.js';
 import { MenuUI } from './menuUI.js';
+import { HiscoreManager } from './hiscoreManager.js';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
     this.isOverlayOpen = false;
+    this.hiscores = [];
     this.tracks = window._tracks || [];
     this.selectedTrack = window._selectedTrack ?? 0;
     this.gameMode = window._gameMode || 'PRACTICE';
     this.handleMenuButton = this.handleButton.bind(this);
+    this.hiscoreManager = new HiscoreManager({
+      storageKey: 'mygame_hiscores',
+      templatePath: 'assets/levels/hiscores.json',
+      maxEntries: 4
+    });
   }
 
   async create() {
+    try {
+      const data = await this.hiscoreManager.init();
+      this.hiscores = data;
+      window._hiscores = this.hiscores;
+    } catch (e) {
+      console.warn('Nie udało się zainicjalizować HiscoreManager', e);
+      this.hiscores = { tracks: {} };
+      window._hiscores = this.hiscores;
+    }
+
+    // Dodaj tło jeśli tekstura jest załadowana
+    const { width, height } = this.sys.game.canvas;
+    if (this.textures.exists('bgc')) {
+      const bg = this.add.image(0, 0, 'bgc').setOrigin(0, 0);
+      bg.setDisplaySize(width, height);
+      bg.setScrollFactor(0);
+      bg.setDepth(-1000); // bardzo nisko, żeby UI było nad tłem
+    } else {
+      // jeśli tekstura nie istnieje, unikamy wywołania add.image (zapobiega zielonym placeholderom)
+      console.warn('[MenuScene] Tekstura bgc nie jest dostępna w Texture Manager - tło nie zostanie dodane');
+    }
+
     this.ui = new MenuUI(this);
     this.hiscoreOverlay = new HiscoreOverlay(this);
 
+    // UI może mieć własne tło; jeśli MenuUI.createBackground tworzy placeholdery,
+    // upewnij się że nie generuje TileSprite z tym samym kluczem co bgc.
     this.ui.createBackground();
     this.ui.createGradientOverlay();
 
@@ -32,6 +63,7 @@ export class MenuScene extends Phaser.Scene {
 
     this.ui.createButtons(buttons, this.handleMenuButton);
     this.ui.createLogo();
+    window._hiscores = this.hiscores;
   }
 
   async fetchTracks() {

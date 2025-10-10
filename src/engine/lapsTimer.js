@@ -77,37 +77,38 @@ export class LapsTimer {
         this.updateLapTimerDisplay();
     }
 
-    updateLapTimerDisplay() {
-        const totalMs = Math.floor(this.lapTimes.total * 1000);
+    msToStandardTime(ms) {
+        const totalMs = Math.floor(ms);
         const hours = Math.floor(totalMs / 3600000);
         const minutes = Math.floor((totalMs % 3600000) / 60000);
         const seconds = Math.floor((totalMs % 60000) / 1000);
-        const millis = Math.floor((totalMs % 1000) / 10);
+        const centiseconds = Math.floor((totalMs % 1000) / 10);
 
-        const formattedMain = `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${millis.toString().padStart(2, '0')}`;
+        return `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${centiseconds.toString().padStart(2, '0')}`;
+    }   
 
+    updateLapTimerDisplay() {
+        // użyj helpera dla całkowitego czasu
+        const totalMs = Math.floor(this.lapTimes.total * 1000);
+        const formattedMain = this.msToStandardTime(totalMs);
+        this._totalFormatted = formattedMain;
         if (this.lapTimerMainText) {
             this.lapTimerMainText.setText(`TOTAL: ${formattedMain}`);
         }
 
-        // BEST LAP: z milisekundami (centysekundy)
+        // BEST LAP: użyj tej samej funkcji pomocniczej
         if (this.bestLapText) {
             const best = this.lapTimes.bestLap;
             if (best && best > 0) {
                 const bestMs = Math.floor(best * 1000);
-                const bhours = Math.floor(bestMs / 3600000);
-                const bminutes = Math.floor((bestMs % 3600000) / 60000);
-                const bseconds = Math.floor((bestMs % 60000) / 1000);
-                const bmillis = Math.floor((bestMs % 1000) / 10);
-                const formattedBest = `${bhours}:${bminutes.toString().padStart(2, '0')}'${bseconds.toString().padStart(2, '0')}"${bmillis.toString().padStart(2,'0')}`;
-                // przykład: 0:01'23"45  (ostatnie 45 to centysekundy)
+                const formattedBest = this.msToStandardTime(bestMs);
                 this.bestLapText.setText(`BEST LAP: ${formattedBest}`);
             } else {
                 this.bestLapText.setText(`BEST LAP: 0:00'00"00`);
             }
         }
     }
-
+    
     updateLapsDisplay() {
         const dispLaps = this.gameMode === "RACE" ? `LAPS:${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
         if (this.lapsText) {

@@ -13,13 +13,13 @@ export class MenuUI {
       buttonMargin: 0,
       buttonPadding: 1,
       buttonAlpha: 0.5,
-      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 112, 137, 1)").color,
+      buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(91, 137, 0, 1)").color,
       shadowButtonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color,
-      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(1, 130, 159, 1)").color,
-      buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 68, 79, 1)").color,
+      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(123, 184, 0, 1)").color,
+      buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(38, 57, 0, 1)").color,
       buttonFontSize: '28px',
       buttonFontFamily: 'Harting',
-      buttonTextColor: '#19b9d1ff',
+      buttonTextColor: 'rgba(141, 211, 0, 1)',
       buttonDisabledColor: '#666',
       offsetY: 30,
       shadowOffsetDefault: { x: 6, y: 4 },
@@ -27,10 +27,10 @@ export class MenuUI {
       customStartStyle: {
         buttonWidth: 256,
         buttonHeight: 210,
-        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(205, 68, 0, 1)").color,
+        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(225, 60, 0, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(239, 68, 0, 1)").color,
-        buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(108, 59, 0, 1)").color,
-        buttonTextColor: '#f06824ff',
+        buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(83, 37, 0, 1)").color,
+        buttonTextColor: '#ff821cff',
         interactionRadiusOffset: 0,
         buttonFontSize: '58px',
       }
@@ -76,10 +76,10 @@ export class MenuUI {
 
   updateGradient(ctx, width, height) {
     const g = ctx.createLinearGradient(0, 0, 0, height);
-    g.addColorStop(0, 'rgba(30, 61, 85, 1)');
+    g.addColorStop(0, 'rgba(26, 26, 41, 1)');
     g.addColorStop(this.gradientState.stop1, 'rgba(43, 82, 114, 0.3)');
-    g.addColorStop(this.gradientState.stop2, 'rgba(44, 44, 44, 0.3)');
-    g.addColorStop(1, 'rgba(44, 44, 44, 1)');
+    g.addColorStop(this.gradientState.stop2, 'rgba(43, 82, 114, 0.3)');
+    g.addColorStop(1, 'rgba(26, 26, 41, 1)');
     ctx.clearRect(0, 0, width, height);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, width, height);
@@ -197,7 +197,7 @@ createLogo() {
   const text2Shadow = this.scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
     fontSize: '80px',
-    color: 'rgba(0, 39, 55, 1)',
+    color: 'rgba(29, 25, 17, 1)',
     align: 'center'
   }).setShadow(-3, 3, '#e82a00ff', 1, false, true);
 

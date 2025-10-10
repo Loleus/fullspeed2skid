@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.1.5';
+const CACHE_NAME = 'fullspeed2skid-v2.1.6';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -21,9 +21,12 @@ const ASSETS = [
   '/fullspeed2skid/assets/images/asphalt1.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',
   '/fullspeed2skid/assets/images/stone.jpg',
+  '/fullspeed2skid/assets/images/stone2.jpg',
+  '/fullspeed2skid/assets/images/stone3.jpg',
   '/fullspeed2skid/assets/images/water.jpg',
   '/fullspeed2skid/assets/images/cobblestone.jpg',
   '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
+  '/fullspeed2skid/assets/images/bgc.jpg',
 
   // assets/levels
   '/fullspeed2skid/assets/levels/scene_1.svg',
@@ -73,6 +76,7 @@ const ASSETS = [
   '/fullspeed2skid/src/scenes/MenuScene.js',
   '/fullspeed2skid/src/scenes/menuUI.js',
   '/fullspeed2skid/src/scenes/hiscoresOverlay.js',
+  '/fullspeed2skid/src/scenes/hiscoresManager.js',
 
   // src/ui
   '/fullspeed2skid/src/ui/hudManager.js',

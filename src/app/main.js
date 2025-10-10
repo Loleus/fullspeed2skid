@@ -1,6 +1,6 @@
 // Import scen gry (ekran ładowania, menu, właściwa rozgrywka, HUD)
 import { MenuScene } from '../scenes/MenuScene.js?v=2.1.9';
-import { LoadingScene } from '../scenes/LoadingScene.js?v=2.1.9';
+import { LoadingScene } from '../scenes/LoadingScene.js?v=2.2.0';
 import { GameScene } from '../engine/game.js?v=2.1.9';
 import { HudScene } from '../scenes/HudScene.js?v=2.1.9';
 

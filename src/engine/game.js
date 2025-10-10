@@ -11,6 +11,7 @@ import { createHUD } from "../ui/hudManager.js";
 import { AICar } from "../ai/AICar.js";
 import { CountdownManager } from "./countdownManager.js";
 import { LapsTimer } from "./lapsTimer.js";
+import { HiscoreManager } from "../scenes/hiscoreManager.js";
 
 let skidMarks = null;
 let skidMarksAI = null;
@@ -23,6 +24,7 @@ export class GameScene extends window.Phaser.Scene {
         this.gameMode = "PRACTICE";
         this.collisionsEnabled = true;
         this.raceFinished = false;
+        this.hiscoreChecked = false;
     }
 
     isMobile() {
@@ -257,6 +259,64 @@ export class GameScene extends window.Phaser.Scene {
         if (this.gameMode === "RACE" && this.raceFinishText) {
             this.raceFinished = true;
             this.raceFinishText.setVisible(true);
+            this.handleHiscorePrompt(); // NEW
+        }
+    }
+    
+    handleHiscorePrompt() {
+        if (this.hiscoreChecked) return;
+        this.hiscoreChecked = true;
+    
+        try {
+            const trackIndex = (window._selectedTrack ?? 0);
+            const trackKey = `track${trackIndex + 1}`;
+    
+            // Zbierz czasy z LapsTimer
+            const { total, bestLap } = this.lapsTimer.getLapTimes();
+            const totalTime = Number(total);     // sekundy
+            const best = Number(bestLap || 0);   // sekundy
+    
+            // Przygotuj managera na podstawie istniejących danych
+            const mgr = new HiscoreManager({
+                storageKey: 'mygame_hiscores',
+                templatePath: 'assets/levels/hiscores.json',
+                maxEntries: 4
+            });
+    
+            // Użyj danych z menu, żeby nie robić async init jeszcze raz
+            if (window._hiscores && window._hiscores.tracks) {
+                mgr.data = JSON.parse(JSON.stringify(window._hiscores));
+            }
+    
+            // Sprawdź kwalifikację
+            const current = mgr.getForTrack(trackKey); // kopia tabeli
+            const maxEntries = mgr.maxEntries || 4;
+    
+            const qualifies = (() => {
+                if (current.length < maxEntries) return true;
+                const worst = current[current.length - 1];
+                if (totalTime < worst.totalTime) return true;
+                if (totalTime === worst.totalTime && best < worst.bestLap) return true;
+                return false;
+            })();
+    
+            if (!qualifies) return;
+    
+            // Prompt o nick
+            const defaultNick = 'PLAYER';
+            const nick = (window.prompt('NEW HISCORE! ENTER YOUR NAME:', defaultNick) || defaultNick).trim().slice(0, 10);
+            if (!nick) return;
+    
+            // Zapis do tabeli i localStorage
+            const updated = mgr.addScore(trackKey, { nick, totalTime, bestLap: best });
+    
+            // Zaktualizuj globalne dane, żeby menu/overlay widział nową tabelę
+            window._hiscores = mgr.getAll();
+    
+            // (Opcjonalnie) log lub lekki feedback
+            console.log('[Hiscore] Updated', trackKey, updated);
+        } catch (e) {
+            console.warn('[Hiscore] Failed to process hiscore', e);
         }
     }
 

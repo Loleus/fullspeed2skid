@@ -4,6 +4,15 @@ export class HiscoreOverlay {
     this.blocker = null;
     this.hiscoreContainer = null;
   }
+  msToStandardTime(ms) {
+    const totalMs = Math.floor(ms * 1000); // konwersja sekund na milisekundy
+    const hours = Math.floor(totalMs / 3600000);
+    const minutes = Math.floor((totalMs % 3600000) / 60000);
+    const seconds = Math.floor((totalMs % 60000) / 1000);
+    const centiseconds = Math.floor((totalMs % 1000) / 10);
+  
+    return `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${centiseconds.toString().padStart(2, '0')}`;
+  }
 
   async show() {
     if (this.scene.isOverlayOpen) return;
@@ -40,7 +49,7 @@ export class HiscoreOverlay {
 
     scores.forEach((entry, i) => {
       const line = this.scene.add.text(-226, -70 + i * 60,
-        `${entry.place}. ${entry.nick}  ${entry.totalTime}  [${entry.bestLap}]`, {
+        `${entry.place}. ${entry.nick}  ${this.msToStandardTime(entry.totalTime)}  [${this.msToStandardTime(entry.bestLap)}]`, {
         fontFamily: 'Harting',
         fontSize: '24px',
         color: '#f0b5a1ff'

@@ -8,10 +8,10 @@ export class MenuUI {
     this.logo = null;
 
     this.menuStyle = {
-      buttonWidth: 220,
-      buttonHeight: 170,
+      buttonWidth: 200,
+      buttonHeight: 160,
       buttonMargin: 0,
-      buttonPadding: 1,
+      buttonPadding: 30,
       buttonAlpha: 0.67,
       buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(91, 137, 0, 1)").color,
       shadowButtonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color,
@@ -25,8 +25,8 @@ export class MenuUI {
       shadowOffsetDefault: { x: 6, y: 4 },
       shadowOffsetPressed: { x: -4, y: -5 },
       customStartStyle: {
-        buttonWidth: 210,
-        buttonHeight: 210,
+        buttonWidth: 200,
+        buttonHeight: 230,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(225, 60, 0, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 81, 0, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(83, 37, 0, 1)").color,

@@ -175,26 +175,26 @@ export class MenuUI {
       fontSize: '54px',
       color: '#ae0000ff',
       align: 'center'
-    }).setShadow(0, -2, '#fbd5b5ff', 3 , false, true);
+    }).setShadow(0, -2, '#ffe5c7ff', 3 , false, true);
 
     const text1Shadow = this.scene.add.text(0, 0, 'Full Speed 2', {
       fontFamily: 'skid',
       fontSize: '54px',
       color: '#000000ff',
       align: 'center'
-    }).setShadow(2, 3, '#330a00ff', 1, false, true);
+    }).setShadow(3, 4, '#330a00ff', 1, false, true);
 
     const text2Glow = this.scene.add.text(0, 0, 'Skid', {
       fontFamily: 'punk_kid',
       fontSize: '80px',
-      color: 'rgba(35, 52, 72, 1)',
+      color: 'rgba(0, 0, 0, 0)',
       align: 'center'
-    }).setShadow(1, -1, '#fbd5b5ff', 6 , false, true);
+    }).setShadow(3, -3, '#fff1e5ff', 6 , false, true);
 
     const text2Shadow = this.scene.add.text(0, 0, 'Skid', {
       fontFamily: 'punk_kid',
       fontSize: '80px',
-      color: 'rgba(29, 25, 17, 1)',
+      color: 'rgba(0, 0, 0, 1)',
       align: 'center'
     }).setShadow(-3, 3, '#c2b0abff', 1, false, true);
 

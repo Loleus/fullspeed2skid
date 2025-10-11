@@ -1,4 +1,4 @@
-import { Car } from './car.js';
+import { Car } from './Car.js';
 
 export class PlayerCar extends Car {
   constructor(scene, carSprite, worldData, playerIndex = 1) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.2.0';
+const CACHE_NAME = 'fullspeed2skid-v2.2.2';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -29,38 +29,28 @@ const ASSETS = [
   '/fullspeed2skid/assets/images/bgc.jpg',
 
   // assets/levels
+  '/fullspeed2skid/assets/levels/hiscores.json',
   '/fullspeed2skid/assets/levels/scene_1.svg',
   '/fullspeed2skid/assets/levels/scene_2.svg',
   '/fullspeed2skid/assets/levels/scene_3.svg',
   '/fullspeed2skid/assets/levels/scene_4.svg',
   '/fullspeed2skid/assets/levels/tracks.json',
 
-  // src/ai
-  '/fullspeed2skid/src/ai/AICar.js',
-  '/fullspeed2skid/src/ai/aiConfig.js',
-  '/fullspeed2skid/src/ai/aiDriving.js',
-  '/fullspeed2skid/src/ai/aiRecovery.js',
-
   // src/app
   '/fullspeed2skid/src/app/main.js',
   '/fullspeed2skid/src/app/startup.js',
 
   // src/cameras
-  '/fullspeed2skid/src/cameras/cameras.js',
-  '/fullspeed2skid/src/cameras/classicCamera.js',
-  '/fullspeed2skid/src/cameras/fpvCamera.js',
+  '/fullspeed2skid/src/cameras/CameraManager.js',
+  '/fullspeed2skid/src/cameras/ClassicCamera.js',
+  '/fullspeed2skid/src/cameras/FPVCamera.js',
 
   // src/core
+  '/fullspeed2skid/src/core/constants.js',
   '/fullspeed2skid/src/core/phaser.js',
-
-  // src/engine
-  '/fullspeed2skid/src/engine/countdownManager.js',
-  '/fullspeed2skid/src/engine/game.js',
-  '/fullspeed2skid/src/engine/lapsTimer.js',
-  '/fullspeed2skid/src/engine/skidMarksManager.js',
-  '/fullspeed2skid/src/engine/svgPhaserWorldLoader.js',
-  '/fullspeed2skid/src/engine/textureManager.js',
-  '/fullspeed2skid/src/engine/world.js',
+  // src/game
+  '/fullspeed2skid/src/game/CountdownManager.js',
+  '/fullspeed2skid/src/game/LapsTimer.js',
 
   // src/input
   '/fullspeed2skid/src/input/controlsManager.js',
@@ -69,22 +59,34 @@ const ASSETS = [
 
   // src/rendering
   '/fullspeed2skid/src/rendering/skidMarks.js',
+  '/fullspeed2skid/src/rendering/SkidMarksManager.js',
 
   // src/scenes
+  '/fullspeed2skid/src/scenes/GameScene.js',
+  '/fullspeed2skid/src/scenes/hiscoresManager.js',
+  '/fullspeed2skid/src/scenes/hiscoresOverlay.js',
   '/fullspeed2skid/src/scenes/HudScene.js',
   '/fullspeed2skid/src/scenes/LoadingScene.js',
   '/fullspeed2skid/src/scenes/MenuScene.js',
   '/fullspeed2skid/src/scenes/menuUI.js',
-  '/fullspeed2skid/src/scenes/hiscoresOverlay.js',
-  '/fullspeed2skid/src/scenes/hiscoresManager.js',
 
   // src/ui
   '/fullspeed2skid/src/ui/hudManager.js',
 
   // src/vehicles
-  '/fullspeed2skid/src/vehicles/car.js',
-  '/fullspeed2skid/src/vehicles/carConfig.js',
+  '/fullspeed2skid/src/vehicles/Car.js',
+  '/fullspeed2skid/src/vehicles/CarConfig.js',
   '/fullspeed2skid/src/vehicles/PlayerCar.js',
+
+  // src/vehicles/ai
+  '/fullspeed2skid/src/vehicles/ai/AICar.js',
+  '/fullspeed2skid/src/vehicles/ai/aiConfig.js',
+  '/fullspeed2skid/src/vehicles/ai/aiDriving.js',
+
+  // src/world
+  '/fullspeed2skid/src/world/TextureManager.js',
+  '/fullspeed2skid/src/world/World.js',
+  '/fullspeed2skid/src/world/WorldLoader.js',
 ];
 
 // Instalacja service workera

@@ -1,16 +1,16 @@
-import { CameraManager } from "../cameras/cameras.js";
+import { CameraManager } from "../cameras/CameraManager.js";
 import { PlayerCar } from "../vehicles/PlayerCar.js";
-import { World } from "./world.js";
-import { tileSize } from "../app/main.js";
+import { World } from "../world/World.js";
+import { TILE_SIZE } from "../core/constants.js";
 import { SkidMarks } from "../rendering/skidMarks.js";
-import { preloadWorldTextures } from "./textureManager.js";
+import { preloadWorldTextures } from "../world/TextureManager.js";
 import { getControlState } from "../input/controlsManager.js";
-import { updateSkidMarks } from "./skidMarksManager.js";
+import { updateSkidMarks } from "../rendering/SkidMarksManager.js";
 import { createKeyboardBindings } from "../input/keyboardManager.js";
 import { createHUD } from "../ui/hudManager.js";
-import { AICar } from "../ai/AICar.js";
-import { CountdownManager } from "./countdownManager.js";
-import { LapsTimer } from "./lapsTimer.js";
+import { AICar } from "../vehicles/ai/AICar.js";
+import { CountdownManager } from "../game/CountdownManager.js";
+import { LapsTimer } from "../game/LapsTimer.js";
 import { HiscoreManager } from "../scenes/hiscoreManager.js";
 
 let skidMarks = null;
@@ -43,7 +43,7 @@ export class GameScene extends window.Phaser.Scene {
 
     preload() {
         if (window._worldData?.tiles) {
-            preloadWorldTextures(this, window._worldData.tiles, tileSize);
+            preloadWorldTextures(this, window._worldData.tiles, TILE_SIZE);
         }
         this.load.image("car_p1", "assets/images/car.png");
         this.load.image("car_p2", "assets/images/car_X.png");
@@ -132,7 +132,7 @@ export class GameScene extends window.Phaser.Scene {
             this.hudRoot.add(this.raceFinishText);
         }
 
-        this.world = new World(this, worldData, tileSize, viewW, viewH);
+        this.world = new World(this, worldData, TILE_SIZE, viewW, viewH);
         if (worldData.worldSize) this.worldSize = worldData.worldSize;
 
         if (this.minimapa) {
@@ -243,7 +243,7 @@ export class GameScene extends window.Phaser.Scene {
             const skidMarksList = [{ controller: this.carController, skidMarks }];
             if (this.aiController && skidMarksAI) skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
             if (this.p2Controller && skidMarksAI) skidMarksList.push({ controller: this.p2Controller, skidMarks: skidMarksAI });
-            updateSkidMarks(this, tileSize, skidMarksList);
+            updateSkidMarks(this, TILE_SIZE, skidMarksList);
         }
 
         if (this.minimapa && this.world) {

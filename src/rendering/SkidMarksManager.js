@@ -1,4 +1,4 @@
-    export function updateSkidMarks(scene, tileSize, pairs = []) {
+export function updateSkidMarks(scene, tileSize, pairs = []) {
     const dirtyTiles = new Set();
 
     for (const { controller, skidMarks } of pairs) {
@@ -46,5 +46,4 @@
     }
 
     dirtyTiles.forEach((tile) => tile.texture.refresh());
-    }
-    
+}

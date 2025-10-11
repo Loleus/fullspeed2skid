@@ -1,5 +1,5 @@
-import { World } from '../engine/world.js';
-import { tileSize, worldH } from '../app/main.js';
+import { World } from '../world/World.js';
+import { TILE_SIZE, WORLD_HEIGHT } from '../core/constants.js';
 
 export class LoadingScene extends window.Phaser.Scene {
   constructor() {
@@ -53,7 +53,7 @@ export class LoadingScene extends window.Phaser.Scene {
     if (this.trackFile) {
       loadingText.setText('LOADING TRACK...');
       const svgPath = `assets/levels/${this.trackFile}`;
-      const worldData = await World.loadWorld(svgPath, worldH, tileSize);
+      const worldData = await World.loadWorld(svgPath, WORLD_HEIGHT, TILE_SIZE);
       worldData.svgPath = svgPath;
       worldData.startFix = this.startFix;
       this.scene.start('GameScene', { 
@@ -69,7 +69,7 @@ export class LoadingScene extends window.Phaser.Scene {
   }
 
   createWorldTemplate() {
-    const worldSize = worldH;
+    const worldSize = WORLD_HEIGHT;
     const canvas = document.createElement('canvas');
     canvas.width = worldSize;
     canvas.height = worldSize;
@@ -77,9 +77,9 @@ export class LoadingScene extends window.Phaser.Scene {
 
     const grassImg = this.textures.get('grass').getSourceImage();
 
-    for (let x = 0; x < worldSize; x += tileSize) {
-      for (let y = 0; y < worldSize; y += tileSize) {
-        ctx.drawImage(grassImg, x, y, tileSize, tileSize);
+    for (let x = 0; x < worldSize; x += TILE_SIZE) {
+      for (let y = 0; y < worldSize; y += TILE_SIZE) {
+        ctx.drawImage(grassImg, x, y, TILE_SIZE, TILE_SIZE);
       }
     }
 

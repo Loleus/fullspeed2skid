@@ -1,4 +1,3 @@
-// ClassicCamera.js - moduł kamery klasycznej
 export class ClassicCamera {
   constructor(scene, car, params = {}) {
     this.scene = scene;

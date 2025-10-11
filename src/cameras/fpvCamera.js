@@ -1,4 +1,3 @@
-// FPVCamera.js - System kamery FPV (First Person View)
 // Kamera leci w helikopterze nad autem i próbuje je dogonić z opóźnieniem
 
 export class FPVCamera {

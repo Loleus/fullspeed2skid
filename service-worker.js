@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.2.2';
+const CACHE_NAME = 'fullspeed2skid-v2.2.3';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -41,13 +41,14 @@ const ASSETS = [
   '/fullspeed2skid/src/app/startup.js',
 
   // src/cameras
-  '/fullspeed2skid/src/cameras/CameraManager.js',
   '/fullspeed2skid/src/cameras/ClassicCamera.js',
   '/fullspeed2skid/src/cameras/FPVCamera.js',
+  '/fullspeed2skid/src/cameras/CameraManager.js',
 
   // src/core
   '/fullspeed2skid/src/core/constants.js',
   '/fullspeed2skid/src/core/phaser.js',
+
   // src/game
   '/fullspeed2skid/src/game/CountdownManager.js',
   '/fullspeed2skid/src/game/LapsTimer.js',

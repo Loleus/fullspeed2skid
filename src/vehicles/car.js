@@ -1,5 +1,4 @@
 import { carConfig } from './CarConfig.js';
-
 export class Car {
   constructor(scene, carSprite, worldData) {
     this.scene = scene;

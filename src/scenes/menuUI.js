@@ -19,7 +19,7 @@ export class MenuUI {
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(38, 57, 0, 1)").color,
       buttonFontSize: '28px',
       buttonFontFamily: 'Harting',
-      buttonTextColor: 'rgba(141, 211, 0, 1)',
+      buttonTextColor: 'rgba(181, 222, 0, 1)',
       buttonDisabledColor: '#666',
       offsetY: 30,
       shadowOffsetDefault: { x: 6, y: 4 },
@@ -30,7 +30,7 @@ export class MenuUI {
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(225, 60, 0, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(255, 81, 0, 1)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(83, 37, 0, 1)").color,
-        buttonTextColor: '#ff821cff',
+        buttonTextColor: '#fba912ff',
         interactionRadiusOffset: 0,
         buttonFontSize: '58px',
       }

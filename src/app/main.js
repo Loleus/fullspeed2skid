@@ -1,8 +1,8 @@
 // Import scen gry (ekran ładowania, menu, właściwa rozgrywka, HUD)
-import { MenuScene } from '../scenes/MenuScene.js?v=';
-import { LoadingScene } from '../scenes/LoadingScene.js?v=2.2.1';
-import { GameScene } from '../scenes/GameScene.js?v=2.2.1';
-import { HudScene } from '../scenes/HudScene.js?v=2.2.1';
+import { MenuScene } from '../scenes/MenuScene.js?v=2.2.2';
+import { LoadingScene } from '../scenes/LoadingScene.js?v=2.2.2';
+import { GameScene } from '../scenes/GameScene.js?v=2.2.2';
+import { HudScene } from '../scenes/HudScene.js?v=2.2.2';
 
 // Import stałych globalnych
 import { TILE_SIZE, WORLD_HEIGHT, GAME_CONFIG } from '../core/constants.js';

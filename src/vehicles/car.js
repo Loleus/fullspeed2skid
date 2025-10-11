@@ -1,4 +1,4 @@
-import { carConfig } from './carConfig.js';
+import { carConfig } from './CarConfig.js';
 
 export class Car {
   constructor(scene, carSprite, worldData) {

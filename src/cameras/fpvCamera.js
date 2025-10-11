@@ -1,4 +1,4 @@
-// fpvCamera.js - System kamery FPV (First Person View)
+// FPVCamera.js - System kamery FPV (First Person View)
 // Kamera leci w helikopterze nad autem i próbuje je dogonić z opóźnieniem
 
 export class FPVCamera {
@@ -173,4 +173,4 @@ export class FPVCamera {
       cam.setRotation(-this.cameraAngle);
     }
   }
-} 
+}

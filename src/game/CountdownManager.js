@@ -1,4 +1,4 @@
-// countdownManager.js
+// CountdownManager.js
 
 export class CountdownManager {
     constructor(scene) {

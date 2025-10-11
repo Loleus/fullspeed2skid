@@ -1,5 +1,5 @@
-// world.js - logika świata, kafli, minimapy i typów nawierzchni
-import { loadSVGPhaserWorld, createMinimapTextureFromSVG } from './svgPhaserWorldLoader.js';
+// World.js - logika świata, kafli, minimapy i typów nawierzchni
+import { loadSVGPhaserWorld, createMinimapTextureFromSVG } from './WorldLoader.js';
 
 export class World {
   constructor(scene, worldData, tileSize, viewW, viewH) {
@@ -127,4 +127,4 @@ export class World {
   getStartPosition() {
     return this.worldData.startPos;
   }
-} 
+}

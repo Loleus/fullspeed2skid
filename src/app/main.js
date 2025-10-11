@@ -1,35 +1,38 @@
 // Import scen gry (ekran ładowania, menu, właściwa rozgrywka, HUD)
-import { MenuScene } from '../scenes/MenuScene.js?v=2.1.9';
-import { LoadingScene } from '../scenes/LoadingScene.js?v=2.2.0';
-import { GameScene } from '../engine/game.js?v=2.1.9';
-import { HudScene } from '../scenes/HudScene.js?v=2.1.9';
+import { MenuScene } from '../scenes/MenuScene.js?v=';
+import { LoadingScene } from '../scenes/LoadingScene.js?v=2.2.1';
+import { GameScene } from '../scenes/GameScene.js?v=2.2.1';
+import { HudScene } from '../scenes/HudScene.js?v=2.2.1';
+
+// Import stałych globalnych
+import { TILE_SIZE, WORLD_HEIGHT, GAME_CONFIG } from '../core/constants.js';
 
 // Rozmiar pojedynczego kafelka (używany np. w mapach)
-const tileSize  = 256;
+const tileSize  = TILE_SIZE;
 // Wysokość świata gry (możliwe do przewijania poziomy itp.)
-const worldH    = 2048;
+const worldH    = WORLD_HEIGHT;
 
 // Konfiguracja silnika Phaser
 const config = {
-  type: Phaser.AUTO, // automatyczny wybór WebGL lub Canvas
-  width: 1280,        // szerokość widocznego obszaru gry
-  height: 720,        // wysokość widocznego obszaru gry
+  type: Phaser[GAME_CONFIG.type], // automatyczny wybór WebGL lub Canvas
+  width: GAME_CONFIG.width,        // szerokość widocznego obszaru gry
+  height: GAME_CONFIG.height,      // wysokość widocznego obszaru gry
   scale: {
-    mode: Phaser.Scale.FIT,               // dopasowanie do okna przeglądarki
-    autoCenter: Phaser.Scale.CENTER_BOTH, // centrowanie gry w oknie
-    width: 1280,
-    height: 720
+    mode: Phaser.Scale[GAME_CONFIG.scale.mode],               // dopasowanie do okna przeglądarki
+    autoCenter: Phaser.Scale[GAME_CONFIG.scale.autoCenter], // centrowanie gry w oknie
+    width: GAME_CONFIG.scale.width,
+    height: GAME_CONFIG.scale.height
   },
   render: {
-    pixelArt: true,         // tryb pixel-art (brak wygładzania)
-    antialias: false,       // brak antyaliasingu
-    disableContextMenu: true // blokuj menu po kliknięciu prawym przyciskiem myszy
+    pixelArt: GAME_CONFIG.render.pixelArt,         // tryb pixel-art (brak wygładzania)
+    antialias: GAME_CONFIG.render.antialias,       // brak antyaliasingu
+    disableContextMenu: GAME_CONFIG.render.disableContextMenu // blokuj menu po kliknięciu prawym przyciskiem myszy
   },
   physics: {
-    default: 'arcade',      // silnik fizyczny typu arcade
+    default: GAME_CONFIG.physics.default,      // silnik fizyczny typu arcade
     arcade: {
-      gravity: { y: 0 },    // brak grawitacji (gra 2D typu top-down)
-      debug: false          // tryb debugowania fizyki wyłączony
+      gravity: GAME_CONFIG.physics.arcade.gravity,    // brak grawitacji (gra 2D typu top-down)
+      debug: GAME_CONFIG.physics.arcade.debug          // tryb debugowania fizyki wyłączony
     }
   },
   scene: [LoadingScene, MenuScene, GameScene, HudScene], // sceny w grze

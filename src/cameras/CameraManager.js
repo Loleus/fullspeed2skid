@@ -1,6 +1,6 @@
-// cameras.js - główny moduł zarządzania kamerami
-import { FPVCamera } from './fpvCamera.js';
-import { ClassicCamera } from './classicCamera.js';
+// CameraManager.js - główny moduł zarządzania kamerami
+import { FPVCamera } from './FPVCamera.js';
+import { ClassicCamera } from './ClassicCamera.js';
 
 export class CameraManager {
   constructor(scene, car, worldSize) {
@@ -16,7 +16,7 @@ export class CameraManager {
         bounds: { x: 0, y: 0, width: worldSize, height: worldSize }
       },
       fpv: {
-        // parametry FPV będą w module fpvCamera.js
+        // parametry FPV będą w module FPVCamera.js
       }
     };
     
@@ -79,4 +79,4 @@ export class CameraManager {
   getCurrentCamera() {
     return this.currentCamera;
   }
-} 
+}

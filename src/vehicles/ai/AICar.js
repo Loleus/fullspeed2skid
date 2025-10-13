@@ -1,7 +1,7 @@
-// AICar.js
 import { Car } from "../Car.js";
 import { aiConfig } from "./aiConfig.js";
 import { AIDriving } from "./aiDriving.js";
+import { CollisionManager } from "./CollisionManager.js";
 
 export class AICar extends Car {
   constructor(scene, carSprite, worldData, waypoints) {
@@ -38,6 +38,16 @@ export class AICar extends Car {
       throttleCooldown: 0,
       totalTimer: 0
     };
+
+    // Parametry kolizji z graczem
+    this.collisionWithPlayer = {
+      isReversing: false,
+      reverseStartTime: 0,
+      reverseDuration: 0
+    };
+    
+    // Inicjalizacja menedżera kolizji
+    this.collisionManager = new CollisionManager();
 
     // Inicjalizacja modułu AI driving
     this.aiDriving = new AIDriving(this);
@@ -262,6 +272,37 @@ export class AICar extends Car {
 
     this.steerCommand = steer;
 
+    // Sprawdź czy jesteśmy w trybie unikania gracza
+    if (this.collisionWithPlayer.isReversing) {
+      const now = Date.now();
+      const reverseElapsed = now - this.collisionWithPlayer.reverseStartTime;
+      
+      if (reverseElapsed >= this.collisionWithPlayer.reverseDuration) {
+        // Zakończ manewr unikania
+        this.collisionWithPlayer.isReversing = false;
+        this.collisionManager.reset();
+      } else {
+        // Cofaj w kierunku poprzedniego waypointa
+        const prevWaypoint = this.waypoints[this.currentWaypointIndex];
+        const angleToWaypoint = Math.atan2(
+          prevWaypoint.y - this.carY,
+          prevWaypoint.x - this.carX
+        );
+        const angleDiff = this._normalizeAngle(angleToWaypoint - state.carAngle);
+        
+        control = {
+          left: angleDiff < -0.1,
+          right: angleDiff > 0.1,
+          up: false,
+          down: true
+        };
+        
+        super.update(dt, control, worldW, worldH);
+        return;
+      }
+    }
+
+    // Standardowe sterowanie
     let control = {
       left: steer < -0.005,
       right: steer > 0.005,
@@ -305,21 +346,40 @@ export class AICar extends Car {
     }
   }
 
-  handleCollision(prevX, prevY, worldW, worldH) {
+  handleCollision(prevX, prevY, worldW, worldH, collidedObject) {
     super.handleCollision(prevX, prevY, worldW, worldH);
 
-    // Jeśli jesteśmy na drodze, jedź prosto po odbiciu
+    // Sprawdzamy czy kolizja była z graczem
+    if (collidedObject?.isPlayer) {
+      // Użyj menedżera kolizji do sprawdzenia czy powinniśmy rozpocząć unikanie
+      if (!this.collisionManager) {
+        this.collisionManager = new CollisionManager();
+      }
+
+      if (this.collisionManager.handlePlayerCollision(this, collidedObject)) {
+        // Rozpocznij manewr unikania
+        this.collisionWithPlayer.isReversing = true;
+        this.collisionWithPlayer.reverseStartTime = Date.now();
+        this.collisionWithPlayer.reverseDuration = this.collisionManager.getAvoidanceDuration();
+                
+        // Zmniejszamy index waypointa o 1, aby cofnąć się do poprzedniego punktu
+        this.currentWaypointIndex = Math.max(0, this.currentWaypointIndex - 1);
+        
+        console.log('[AI] Rozpoczynam manewr unikania gracza');
+        return;
+      }
+    }
+
+    // Standardowa logika dla innych kolizji
     let surfaceHere = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
     let onRoad = surfaceHere !== 'obstacle';
 
     if (onRoad) {
       console.log('[AI] Collision on road – applying post-collision grace');
-      // Dopasowane do wąskich dróg i modelu rowerowego
-      // Czas na odbicie: zsynchronizowany z collisionImmunity ~0.2s, trzymamy kierunek dłużej
       this.postCollision.active = true;
-      this.postCollision.steerHoldTimer = 0.4; // utrzymaj prosto, bez skrętu
-      this.postCollision.throttleCooldown = 0.25; // chwilowo bez gazu po odbiciu
-      this.postCollision.totalTimer = 0.8; // całe okno łaski
+      this.postCollision.steerHoldTimer = 0.4;
+      this.postCollision.throttleCooldown = 0.25;
+      this.postCollision.totalTimer = 0.8;
     }
   }
 

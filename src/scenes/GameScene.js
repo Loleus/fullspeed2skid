@@ -268,8 +268,9 @@ export class GameScene extends window.Phaser.Scene {
         this.hiscoreChecked = true;
     
         try {
-            const trackIndex = (window._selectedTrack ?? 0);
-            const trackKey = `track${trackIndex + 1}`;
+            // Użyj bezpośrednio numeru trasy (track1, track2, track3) zamiast indeksu z listy
+            const trackNum = (window._selectedTrack || 0) + 1;  // Dodajemy 1 bo indeksy są od 0
+            const trackKey = `track${trackNum}`;
     
             // Zbierz czasy z LapsTimer
             const { total, bestLap } = this.lapsTimer.getLapTimes();

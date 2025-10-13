@@ -217,6 +217,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   // Mapowanie typów powierzchni na unikalne kolory (R,G,B)
   const surfaceTypeColors = {
     asphalt: [0, 0, 0],
+    asphalt1: [0, 0, 200],
     cobblestone: [128, 128, 128],
     gravel: [180, 180, 0],
     grass: [0, 255, 0],
@@ -228,11 +229,10 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   for (const [type, rgb] of Object.entries(surfaceTypeColors)) {
     colorToSurfaceType[rgb.join(',')] = type;
   }
-// ...
 
-// Rasteryzacja warstwy "layout"
+  // Rasteryzacja warstwy "layout"
 
-if (layoutGroup) {
+  if (layoutGroup) {
     const layoutElements = Array.from(layoutGroup.children);
     layoutElements.forEach((element) => {
       const path2d = svgElementToPath2D(element, scale);
@@ -259,9 +259,6 @@ if (layoutGroup) {
       }
     });
   }
-
-// ...
-
 
   // Przygotuj canvas do rasteryzacji
   const surfCanvas = document.createElement('canvas');
@@ -398,6 +395,7 @@ if (layoutGroup) {
   // Domyślne parametry nawierzchni (możesz je potem edytować globalnie)
   const surfaceParams = {
     asphalt: { grip: 1.0 },
+    asphalt1: { grip: 0.95 },
     cobblestone: { grip: 0.9 }, // przykładowa wartość
     gravel: { grip: 0.8 },
     grass: { grip: 0.6 },
@@ -586,13 +584,7 @@ if (layoutGroup) {
 }
 
 // ===================== MINIMAPA: generowanie tekstury z SVG =====================
-/**
- * Tworzy minimapę na podstawie SVG i rejestruje ją jako teksturę Phaser.
- * @param {Phaser.Scene} scene - scena Phaser, do której dodajemy teksturę
- * @param {string} svgUrl - ścieżka do pliku SVG
- * @param {number} outputSize - rozmiar minimapy (domyślnie 128)
- * @returns {Promise<string>} - klucz tekstury Phaser
- */
+
 export function createMinimapTextureFromSVG(scene, svgUrl, outputSize = 128) {
   return createMinimapFromSVG(svgUrl, outputSize).then(canvas => {
     const key = 'minimap-' + Date.now();

@@ -40,7 +40,7 @@ export class LapsTimer {
             fontSize: "55px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(22, 72, 10,0.5)",
+            backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 12, right: 12, top: 4, bottom: -4 },
         })
         .setOrigin(0.5, 0)
@@ -53,7 +53,7 @@ export class LapsTimer {
             fontSize: "25px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(22, 72, 10,0.5)",
+            backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 6, right: 8, top: 0, bottom: 4 },
         })
         .setOrigin(0.5, 0)
@@ -66,7 +66,7 @@ export class LapsTimer {
             fontSize: "20px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(22, 72, 10,0.5)",
+            backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 13, right: 15, top: 4, bottom: 4 },
         })
         .setOrigin(0.5, 0)

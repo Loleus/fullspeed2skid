@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.2.4';
+const CACHE_NAME = 'fullspeed2skid-v2.2.5';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -83,6 +83,7 @@ const ASSETS = [
   '/fullspeed2skid/src/vehicles/ai/AICar.js',
   '/fullspeed2skid/src/vehicles/ai/aiConfig.js',
   '/fullspeed2skid/src/vehicles/ai/aiDriving.js',
+  '/fullspeed2skid/src/vehicles/ai/CollisionManager.js',
 
   // src/world
   '/fullspeed2skid/src/world/TextureManager.js',

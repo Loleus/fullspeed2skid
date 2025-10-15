@@ -32,16 +32,16 @@ export class LoadingScene extends window.Phaser.Scene {
     const padding = 55;
 
     // Tło przycisku
-    this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, Phaser.Display.Color.RGBStringToColor("rgba(20, 87, 107, 1)").color, 1)
+    this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, Phaser.Display.Color.RGBStringToColor("rgba(70, 105, 0, 1)").color, 1)
       .setOrigin(0.5)
-      .setAlpha(0.5)
+      .setAlpha(0.87)
       .setDepth(10);
 
     // Tekst ładowania
     const loadingText = this.add.text(width / 2, height / 2, 'loading...', {
       fontFamily: 'Stormfaze',
       fontSize: '71px',
-      color: '#408bb3ff',
+      color: 'rgba(148, 182, 0, 1)',
       align: 'center',
       padding: { left: padding, right: padding, top: padding, bottom: padding },
     }).setOrigin(0.5).setDepth(11);

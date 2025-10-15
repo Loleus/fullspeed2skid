@@ -58,9 +58,9 @@ export class CountdownManager {
         this.text = this.scene.add.text(width / 2, height / 2, displayText, {
             fontFamily: 'Stormfaze',
             fontSize: '160px',
-            color: '#80e12aff',
+            color: 'rgba(148, 182, 0, 1)',
             align: 'center'
-        }).setOrigin(0.5).setDepth(1000).setShadow(3, 3, '#0f0', 4, false, true);
+        }).setOrigin(0.5).setDepth(1000).setShadow(3, 3, 'rgba(91, 137, 0, 1)', 4, false, true);
 
         this.text.setAlpha(0).setScale(0.5);
 

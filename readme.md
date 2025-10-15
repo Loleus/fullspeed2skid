@@ -1,30 +1,48 @@
-# Full Speed 2 Skid
+# 🚗 Full Speed 2 SKID
 
-## Sterowanie
-- **Strzałka w górę**: przyspieszenie
-- **Strzałka w dół**: hamowanie / cofanie
-- **Strzałka w lewo/prawo**: skręt
-- **V**: przełączanie między kamerą klasyczną a FPV
+**Full Speed 2 SKID** to dynamiczna gra samochodowa dla dwóch graczy z widokiem z góry, stworzona w technologii **Phaser.js** i **JavaScript**.
 
-## Moduły w src/
+---
 
-### main.js
-Główny moduł gry - koordynuje wszystkie komponenty, obsługuje ładowanie, UI (FPS, loading screen), inicjalizację Phaser i główną pętlę gry.
+## 🎮 Sterowanie
 
-### car.js
-Moduł auta z fizyką - zawiera klasę `Car` z realistycznym modelem fizyki, sterowaniem, kolizjami (elipsa), driftem/poślizgiem, oporami aerodynamicznymi i toczenia. Parametry auta (masa, prędkość, skręt) są łatwo konfigurowalne.
+### Gracz 1 (Strzałki)
+- ⬆️ **Strzałka w górę** – przyspieszenie
+- ⬇️ **Strzałka w dół** – hamowanie / cofanie
+- ⬅️➡️ **Strzałki lewo/prawo** – skręt
 
-### world.js
-Moduł świata - klasa `World` zarządza ładowaniem SVG, dynamicznym rysowaniem kafli, minimapą, typami nawierzchni (asfalt, trawa, żwir, woda) i pozycją startową. Zawiera statyczną metodę `loadWorld()` do ładowania poziomów.
+### Gracz 2 (WSAD)
+- **W** – przyspieszenie
+- **S** – hamowanie / cofanie
+- **A / D** – skręt
 
-### cameras.js
-Główny moduł kamer - klasa `CameraManager` zarządza przełączaniem między kamerami, inicjalizacją i aktualizacją. Centralne miejsce kontroli systemu kamer.
+---
 
-### classicCamera.js
-Moduł kamery klasycznej - klasa `ClassicCamera` obsługuje tradycyjną kamerę podążającą za autem z konfigurowalnymi parametrami śledzenia i granicami świata.
+## 🕹️ Klawisze funkcyjne
+- **V** – zmiana widoku kamery (klasyczny / FPV)
+- **R** – reset gry
+- **X** – wyjście z gry
 
-### fpvCamera.js
-Moduł kamery FPV - klasa `FPVCamera` implementuje kamerę pierwszej osoby z opóźnionym śledzeniem, rotacją i efektami helikoptera nad autem.
+---
 
-### svgPhaserWorldLoader.js
-Moduł ładowania poziomów - parsuje pliki SVG, tworzy tekstury kafli, generuje minimapę i zwraca dane świata z informacjami o nawierzchni i przeszkodach.
+## 📦 Technologie
+- [Phaser.js](https://phaser.io/) – silnik gry 2D
+- JavaScript – logika gry i interakcje
+- HTML/CSS = alerty, prompty systemowe
+
+---
+
+## 📸 Co tam jest na razie
+- Dwa tryby: ćwiczenia / wyścig
+- Gra dla dwóch graczy na jednym ekranie
+- Różne trasy (można dodać swoje - wszystko w pliku SVG)
+- Widok z góry z możliwością przełączenia na FPV
+- Efekty wizualne: ślady opon (poślizgi)
+- tablica wyników
+
+---
+
+## 🚀 Uruchomienie
+1. Sklonuj repozytorium:
+   ```bash
+   git clone https://github.com/Loleus/fullspeed2skid.git

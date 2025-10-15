@@ -1,6 +1,6 @@
 # 🚗 Full Speed 2 SKID
 
-**Full Speed 2 SKID** to dynamiczna gra samochodowa dla dwóch graczy z widokiem z góry, stworzona w technologii **Phaser.js** i **JavaScript**.
+**
 
 ---
 

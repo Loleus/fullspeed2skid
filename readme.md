@@ -1,6 +1,5 @@
 # 🚗 Full Speed 2 SKID
 
-**
 
 ---
 

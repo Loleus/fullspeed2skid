@@ -1,8 +1,8 @@
-import { HiscoreOverlay } from './hiscoresOverlay.js';
-import { MenuUI } from './menuUI.js';
-import { HiscoreManager } from './hiscoreManager.js';
+import { HiscoreOverlay } from '../menuUI/hiscoresOverlay.js';
+import { MenuUI } from '../menuUI/menuUI.js';
+import { HiscoreManager } from '../game/hiscoreManager.js';
 
-export class MenuScene extends Phaser.Scene {
+export class MenuScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
     this.isOverlayOpen = false;
@@ -52,13 +52,14 @@ export class MenuScene extends Phaser.Scene {
     if (!this.tracks.length) this.tracks = await this.fetchTracks();
     if (!this.tracks.length) this.tracks = [{ label: 'TRACK 1', file: 'scene_1.svg' }];
     if (this.selectedTrack < 0 || this.selectedTrack >= this.tracks.length) this.selectedTrack = 0;
-
+    this.musicOn = false;
     const buttons = [
       { label: "MODE\n" + this.gameMode, key: 'mode' },
       { label: "SELECT\n" + this.tracks[this.selectedTrack].label, key: 'track' },
       { label: 'START', key: 'start' },
       { label: 'HI\nSCORES', key: 'hiscore' },
-      { label: 'FULL\nSCREEN', key: 'fullscreen' }
+      { label: 'FULL\nSCREEN', key: 'fullscreen' },
+      { label: "MUSIC\nOFF", key: 'music' },
     ];
 
     this.ui.createButtons(buttons, this.handleMenuButton);
@@ -105,6 +106,9 @@ export class MenuScene extends Phaser.Scene {
       this.ui.updateButtonText('mode', this.gameMode);
     } else if (key === 'hiscore') {
       this.showHiscoreOverlay();
+    } else if (key === 'music') {
+      this.musicOn = !this.musicOn;
+      this.ui.updateButtonText('music', this.musicOn ? 'ON' : 'OFF');
     }
   }
 

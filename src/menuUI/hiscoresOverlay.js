@@ -1,3 +1,4 @@
+import { drawButton, drawShadow } from './menuUI_createButtons_drawUtils.js';
 export class HiscoreOverlay {
   constructor(scene) {
     this.scene = scene;
@@ -89,7 +90,7 @@ export class HiscoreOverlay {
         btn.hitCircle.removeAllListeners();
       }
       if (btn.bg) {
-        this.scene.ui.drawButton(
+        drawButton(
           btn.bg, 
           style.buttonFillColor, 
           style.buttonAlpha,
@@ -121,7 +122,7 @@ export class HiscoreOverlay {
         btn.hitCircle.setInteractive({ useHandCursor: true });
         
         btn.hitCircle.on('pointerover', () =>
-          this.scene.ui.drawButton(
+          drawButton(
             btn.bg,
             style.buttonHoverColor,
             style.buttonAlpha,
@@ -132,7 +133,7 @@ export class HiscoreOverlay {
         );
 
         btn.hitCircle.on('pointerout', () =>
-          this.scene.ui.drawButton(
+          drawButton(
             btn.bg,
             style.buttonFillColor,
             style.buttonAlpha,
@@ -143,7 +144,7 @@ export class HiscoreOverlay {
         );
 
         btn.hitCircle.on('pointerdown', () => {
-          this.scene.ui.drawShadow(
+          drawShadow(
             btn.shadow,
             style.shadowOffsetPressed,
             style.buttonWidth,
@@ -155,7 +156,7 @@ export class HiscoreOverlay {
         });
 
         btn.hitCircle.on('pointerup', () =>
-          this.scene.ui.drawShadow(
+          drawShadow(
             btn.shadow,
             style.shadowOffsetDefault,
             style.buttonWidth,

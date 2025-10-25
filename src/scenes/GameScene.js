@@ -3,15 +3,15 @@ import { PlayerCar } from "../vehicles/PlayerCar.js";
 import { World } from "../world/World.js";
 import { TILE_SIZE } from "../core/constants.js";
 import { SkidMarks } from "../rendering/skidMarks.js";
+import { updateSkidMarks } from "../rendering/SkidMarksManager.js";
 import { preloadWorldTextures } from "../world/TextureManager.js";
 import { getControlState } from "../input/controlsManager.js";
-import { updateSkidMarks } from "../rendering/SkidMarksManager.js";
 import { createKeyboardBindings } from "../input/keyboardManager.js";
-import { createHUD } from "../ui/hudManager.js";
+import { createHUD } from "../game/hudManager.js";
 import { AICar } from "../vehicles/ai/AICar.js";
 import { CountdownManager } from "../game/CountdownManager.js";
 import { LapsTimer } from "../game/LapsTimer.js";
-import { HiscoreManager } from "../scenes/hiscoreManager.js";
+import { HiscoreManager } from "../game/hiscoreManager.js";
 
 let skidMarks = null;
 let skidMarksAI = null;

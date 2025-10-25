@@ -37,13 +37,11 @@ export class MenuUI {
         buttonFontSize: '58px',
       },
       customMusicStyle: {
-        buttonWidth: 130,
-        buttonHeight: 130,
         buttonMargin: 0,
         buttonAlpha: 0.67,
         interactionRadiusOffset: 0,
         buttonFontSize: '28px',
-        offsetY: 80,
+        offsetY: 60,
       }
     };
   }

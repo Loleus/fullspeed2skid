@@ -50,6 +50,10 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     async create() {
+        if (!this.registry.get('audioEnabled')) {
+            console.log('Muting audio as per registry setting');
+            this.sound.mute = true;
+        }
         const worldData = this.worldData || window._worldData;
         const viewW = this.sys.game.config.width;
         const viewH = this.sys.game.config.height;
@@ -262,37 +266,37 @@ export class GameScene extends window.Phaser.Scene {
             this.handleHiscorePrompt(); // NEW
         }
     }
-    
+
     handleHiscorePrompt() {
         if (this.hiscoreChecked) return;
         this.hiscoreChecked = true;
-    
+
         try {
             // Użyj bezpośrednio numeru trasy (track1, track2, track3) zamiast indeksu z listy
             const trackNum = (window._selectedTrack || 0) + 1;  // Dodajemy 1 bo indeksy są od 0
             const trackKey = `track${trackNum}`;
-    
+
             // Zbierz czasy z LapsTimer
             const { total, bestLap } = this.lapsTimer.getLapTimes();
             const totalTime = Number(total);     // sekundy
             const best = Number(bestLap || 0);   // sekundy
-    
+
             // Przygotuj managera na podstawie istniejących danych
             const mgr = new HiscoreManager({
                 storageKey: 'mygame_hiscores',
                 templatePath: 'assets/levels/hiscores.json',
                 maxEntries: 4
             });
-    
+
             // Użyj danych z menu, żeby nie robić async init jeszcze raz
             if (window._hiscores && window._hiscores.tracks) {
                 mgr.data = JSON.parse(JSON.stringify(window._hiscores));
             }
-    
+
             // Sprawdź kwalifikację
             const current = mgr.getForTrack(trackKey); // kopia tabeli
             const maxEntries = mgr.maxEntries || 4;
-    
+
             const qualifies = (() => {
                 if (current.length < maxEntries) return true;
                 const worst = current[current.length - 1];
@@ -300,20 +304,20 @@ export class GameScene extends window.Phaser.Scene {
                 if (totalTime === worst.totalTime && best < worst.bestLap) return true;
                 return false;
             })();
-    
+
             if (!qualifies) return;
-    
+
             // Prompt o nick
             const defaultNick = 'PLAYER';
             const nick = (window.prompt('NEW HISCORE! ENTER YOUR NAME:', defaultNick) || defaultNick).trim().slice(0, 10);
             if (!nick) return;
-    
+
             // Zapis do tabeli i localStorage
             const updated = mgr.addScore(trackKey, { nick, totalTime, bestLap: best });
-    
+
             // Zaktualizuj globalne dane, żeby menu/overlay widział nową tabelę
             window._hiscores = mgr.getAll();
-    
+
             // (Opcjonalnie) log lub lekki feedback
             console.log('[Hiscore] Updated', trackKey, updated);
         } catch (e) {

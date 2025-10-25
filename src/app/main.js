@@ -17,6 +17,10 @@ const config = {
   type: Phaser[GAME_CONFIG.type], // automatyczny wybór WebGL lub Canvas
   width: GAME_CONFIG.width,        // szerokość widocznego obszaru gry
   height: GAME_CONFIG.height,      // wysokość widocznego obszaru gry
+  audio: {
+  disableWebAudio: false, // Web Audio jest aktywne
+  noAudio: false           // Audio jest dostępne
+},
   scale: {
     mode: Phaser.Scale[GAME_CONFIG.scale.mode],               // dopasowanie do okna przeglądarki
     autoCenter: Phaser.Scale[GAME_CONFIG.scale.autoCenter], // centrowanie gry w oknie

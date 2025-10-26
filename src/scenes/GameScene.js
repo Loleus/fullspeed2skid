@@ -33,6 +33,10 @@ export class GameScene extends window.Phaser.Scene {
 
     init(data) {
         console.log(window._hiscores.tracks);
+        this.ambience = data.ambience;
+        if (this.ambience && !this.ambience.isPlaying) {
+            this.ambience.play();
+        };
         this.worldData = data.worldData;
         this.worldData.startFix = data.startFix;
         this.gameMode = data.gameMode || "PRACTICE";
@@ -47,13 +51,42 @@ export class GameScene extends window.Phaser.Scene {
         }
         this.load.image("car_p1", "assets/images/car.png");
         this.load.image("car_p2", "assets/images/car_X.png");
+        this.load.audio('applause', 'assets/samples/game_applause.mp3');
+        this.load.audio('idle', 'assets/samples/game_idle.mp3');
+        this.load.audio('off', 'assets/samples/game_off.mp3');
+        this.load.audio('on', 'assets/samples/game_on.mp3');
+        this.load.audio('race', 'assets/samples/game_race.wav');
+        this.load.audio('slide', 'assets/samples/game_slide.mp3');
     }
+    initAudio() {
+        if (this.musicOn) {
+            this.idle = this.sound.add('idle', { volume: 1.0, loop: true });
+            this.applause = this.sound.add('applause', { volume: 1.0 });
+            this.off = this.sound.add('off', { volume: 1.0 });
+            this.on = this.sound.add('on', { volume: 1.0 });
+            this.race = this.sound.add('race', { volume: 1.0, loop: true });
+            this.slide = this.sound.add('slide', { volume: 1.0 });
+        }
 
+    }
     async create() {
+        console.log(this.registry.get('audioEnabled'));
         if (!this.registry.get('audioEnabled')) {
             console.log('Muting audio as per registry setting');
             this.sound.mute = true;
+            console.log("niemagrac");
         }
+        if (this.sound.mute !== undefined) {
+            this.musicOn = !this.sound.mute;
+            this.initAudio()
+            console.log("magrac")
+        }
+        if (this.musicOn && this.idle && !this.idle.isPlaying) {
+            this.time.delayedCall(500, () => {
+                this.idle.play();
+            });
+        }
+
         const worldData = this.worldData || window._worldData;
         const viewW = this.sys.game.config.width;
         const viewH = this.sys.game.config.height;
@@ -155,6 +188,7 @@ export class GameScene extends window.Phaser.Scene {
 
         this.countdown = new CountdownManager(this);
         this.countdown.start();
+        console.log(this.carController);
     }
 
     update(time, dt) {
@@ -190,6 +224,18 @@ export class GameScene extends window.Phaser.Scene {
 
         const control = getControlState(this);
         if (countdownWasActive || (this.gameMode === "RACE" && this.raceFinished)) {
+                    if (!this.sound.mute) { 
+                      if (this.race.isPlaying && (!control.up || !control.down)) {
+                            this.race && this.race.stop();
+                            if (!this.idle.isPlaying) {
+                                this.off && this.off.play();
+                                this.time.delayedCall(700, () => {
+                                    this.idle && this.idle.play();
+                                })
+            
+                            };
+                        }
+                    }
             control.up = false;
             control.down = false;
             control.left = false;
@@ -257,6 +303,26 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager?.update(dt);
 
         if (this.hudCamera) this.hudCamera.setRotation(0);
+        if (!this.sound.mute) {
+            if ((control.up || control.down) && !this.on.isPlaying && !this.race.isPlaying) {
+                this.on && this.on.play();
+                this.time.delayedCall(550, () => {
+                    this.race && this.race.play();
+                    this.idle && this.idle.stop();
+                    this.on.stop()
+                });
+            } else if (this.race.isPlaying && !control.up && !control.down) {
+                this.race && this.race.stop();
+                if (!this.idle.isPlaying) {
+                    this.off && this.off.play();
+                    this.time.delayedCall(750, () => {
+                        this.idle && this.idle.play();
+                    })
+    
+                };
+            }
+
+        }
     }
 
     showRaceFinish() {
@@ -357,6 +423,11 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     exitToMenu() {
-        this.scene.start("MenuScene");
+        if( this.musicOn ) {
+            this.ambience.stop();
+        this.idle.stop();
+    }
+    this.scene.start("MenuScene");
+
     }
 }

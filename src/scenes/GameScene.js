@@ -64,12 +64,18 @@ export class GameScene extends window.Phaser.Scene {
             this.applause = this.sound.add('applause', { volume: 1.0 });
             this.off = this.sound.add('off', { volume: 1.0 });
             this.on = this.sound.add('on', { volume: 1.0 });
-            this.race = this.sound.add('race', { volume: 1.0, loop: true });
+            this.race = this.sound.add('race', { volume: 1.0, rate: 1.0, loop: true });
             this.slide = this.sound.add('slide', { volume: 1.0 });
         }
 
     }
     async create() {
+        this.maxPitch = 2.0;        // maksymalny pitch
+        this.minPitch = 0.0;        // pitch docelowy po puszczeniu
+        this.accelRate = 1.5;       // pitch na sekundę podczas wciskania
+        this.decayRate = 1.0;       // pitch na sekundę podczas puszczania
+        this.pitch = 0.0;           // aktualny pitch
+        this.isThrottle = false;    // czy gaz wciśnięty
         console.log(this.registry.get('audioEnabled'));
         if (!this.registry.get('audioEnabled')) {
             console.log('Muting audio as per registry setting');
@@ -224,18 +230,18 @@ export class GameScene extends window.Phaser.Scene {
 
         const control = getControlState(this);
         if (countdownWasActive || (this.gameMode === "RACE" && this.raceFinished)) {
-                    if (!this.sound.mute) { 
-                      if (this.race.isPlaying && (!control.up || !control.down)) {
-                            this.race && this.race.stop();
-                            if (!this.idle.isPlaying) {
-                                this.off && this.off.play();
-                                this.time.delayedCall(700, () => {
-                                    this.idle && this.idle.play();
-                                })
-            
-                            };
-                        }
-                    }
+            if (!this.sound.mute) {
+                if (this.race.isPlaying && (!control.up || !control.down)) {
+                    this.race && this.race.stop();
+                    if (!this.idle.isPlaying) {
+                        this.off && this.off.play();
+                        this.time.delayedCall(700, () => {
+                            this.idle && this.idle.play();
+                        })
+
+                    };
+                }
+            }
             control.up = false;
             control.down = false;
             control.left = false;
@@ -304,6 +310,29 @@ export class GameScene extends window.Phaser.Scene {
 
         if (this.hudCamera) this.hudCamera.setRotation(0);
         if (!this.sound.mute) {
+
+            if ((control.up || control.down) && !this.isThrottle) {
+                this.isThrottle = true;
+            } else if ((!control.up || !control.down) && this.isThrottle) {
+                this.isThrottle = false;
+            }
+
+            // Jeśli gaz trzymany, zwiększ pitch do maxPitch
+            if (this.isThrottle) {
+                this.pitch += this.accelRate * dt;
+                if (this.pitch > this.maxPitch) this.pitch = this.maxPitch;
+            } else {
+                // Jeśli puszczony, opadaj do minPitch
+                this.pitch -= this.decayRate * dt;
+                if (this.pitch < this.minPitch) this.pitch = this.minPitch;
+            }
+
+            // Zaktualizuj rate (pitch) dźwięku. W Phaser rate odpowiada prędkości odtwarzania.
+            // Jeśli używasz WebAudio API bezpośrednio, to manipuluj playbackRate albo detune zależnie od potrzeb.
+            // Opcjonalnie: zmiana głośności zależnie od pitch dla efektu
+            // this.loopSound.setVolume(0.5 + 0.5 * Math.min(this.pitch / this.maxPitch, 1));
+            this.race.setRate(1.0 + this.pitch);
+
             if ((control.up || control.down) && !this.on.isPlaying && !this.race.isPlaying) {
                 this.on && this.on.play();
                 this.time.delayedCall(550, () => {
@@ -312,14 +341,15 @@ export class GameScene extends window.Phaser.Scene {
                     this.on.stop()
                 });
             } else if (this.race.isPlaying && !control.up && !control.down) {
-                this.race && this.race.stop();
-                if (!this.idle.isPlaying) {
-                    this.off && this.off.play();
-                    this.time.delayedCall(750, () => {
-                        this.idle && this.idle.play();
-                    })
-    
-                };
+                if (this.race.rate < 1.05) {
+                    this.race && this.race.stop();
+                    if (!this.idle.isPlaying) {
+                        this.off && this.off.play();
+                        this.time.delayedCall(750, () => {
+                            this.idle && this.idle.play();
+                        })
+                    };
+                }
             }
 
         }
@@ -423,11 +453,11 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     exitToMenu() {
-        if( this.musicOn ) {
+        if (this.musicOn) {
             this.ambience.stop();
-        this.idle.stop();
-    }
-    this.scene.start("MenuScene");
+            this.idle.stop();
+        }
+        this.scene.start("MenuScene");
 
     }
 }

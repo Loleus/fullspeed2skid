@@ -57,6 +57,7 @@ export class GameScene extends window.Phaser.Scene {
         this.load.audio('on', 'assets/samples/game_on.mp3');
         this.load.audio('race', 'assets/samples/game_race.wav');
         this.load.audio('slide', 'assets/samples/game_slide.mp3');
+        this.load.audio('countdown', 'assets/samples/game_countdown.mp3');
     }
     initAudio() {
         if (this.musicOn) {
@@ -66,14 +67,15 @@ export class GameScene extends window.Phaser.Scene {
             this.on = this.sound.add('on', { volume: 1.0 });
             this.race = this.sound.add('race', { volume: 1.0, rate: 1.0, loop: true });
             this.slide = this.sound.add('slide', { volume: 1.0 });
+            this.countdownSound = this.sound.add('countdown', { volume: 1.0 });
         }
 
     }
     async create() {
-        this.maxPitch = 0.3;        // maksymalny pitch
-        this.minPitch = -0.1;        // pitch docelowy po puszczeniu
-        this.accelRate = 1.5;       // pitch na sekundę podczas wciskania
-        this.decayRate = 1.01;       // pitch na sekundę podczas puszczania
+        this.maxPitch = 0.24;        // maksymalny pitch
+        this.minPitch = -0.2;        // pitch docelowy po puszczeniu
+        this.accelRate = 1.2;       // pitch na sekundę podczas wciskania
+        this.decayRate = 0.2;       // pitch na sekundę podczas puszczania
         this.pitch = 0.0;           // aktualny pitch
         this.isThrottle = false;    // czy gaz wciśnięty
 
@@ -92,6 +94,7 @@ export class GameScene extends window.Phaser.Scene {
         if (this.musicOn && this.idle && !this.idle.isPlaying) {
             this.time.delayedCall(0, () => {
                 this.idle.play();
+                this.countdownSound.play();
             });
         }
 
@@ -316,14 +319,14 @@ export class GameScene extends window.Phaser.Scene {
         if (this.hudCamera) this.hudCamera.setRotation(0);
         if (!this.sound.mute) {
 
-            if(this.race.isPlaying) {
+            if (this.race.isPlaying) {
 
                 if ((control.up || control.down) && !this.isThrottle) {
                     this.isThrottle = true;
                 } else if ((!control.up || !control.down) && this.isThrottle) {
                     this.isThrottle = false;
                 }
-    
+
                 // Jeśli gaz trzymany, zwiększ pitch do maxPitch
                 if (this.isThrottle) {
                     this.pitch += this.accelRate * dt;
@@ -343,33 +346,35 @@ export class GameScene extends window.Phaser.Scene {
 
             if ((control.up || control.down) && !this.on.isPlaying && !this.race.isPlaying && this.carController.throttleLock == false) {
                 this.on && this.on.play();
-                this.time.delayedCall(772, () => {
+                this.time.delayedCall(672, () => {
                     this.race && this.race.play();
                     this.idle && this.idle.stop();
                     this.on.stop()
                 });
             } else if (this.race.isPlaying && !control.up && !control.down && this.carController.throttleLock == false) {
-
+                if (this.race.rate >= 1.001) {
+                    return
+                }
                 if (this.race.rate < 1.001) {
                     this.race && this.race.stop();
                     if (!this.idle.isPlaying && !this.race.isPlaying) {
                         this.off && this.off.play();
-                        this.time.delayedCall(1120, () => {
+                        this.time.delayedCall(800, () => {
                             this.idle && this.idle.play();
                         })
                     };
                 }
             } else if (this.carController.throttleLock == true && (control.up || control.down)) {
-                    control.up = false;
-                    control.down = false;
-                    this.race && this.race.stop();
-                    if (!this.idle.isPlaying && !this.off.isPlaying) {
-                        this.off && this.off.play();
-                        this.pitch = 0.0;
-                        this.time.delayedCall(700, () => {
-                            this.idle && this.idle.play();
-                        })
-                    };
+                control.up = false;
+                control.down = false;
+                this.race && this.race.stop();
+                if (!this.idle.isPlaying && !this.off.isPlaying) {
+                    this.off && this.off.play();
+                    this.pitch = 0.0;
+                    this.time.delayedCall(800, () => {
+                        this.idle && this.idle.play();
+                    })
+                };
             }
         }
     }
@@ -468,6 +473,7 @@ export class GameScene extends window.Phaser.Scene {
         if (skidMarksAI) skidMarksAI.clear();
 
         this.countdown.start();
+        this.countdownSound.play();
         this.lapsTimer.reset();
     }
 

@@ -61,7 +61,7 @@ export class GameScene extends window.Phaser.Scene {
     }
     initAudio() {
         if (this.musicOn) {
-            this.idle = this.sound.add('idle', { volume: 1.0, loop: true });
+            this.idle = this.sound.add('idle', { volume: 0.67, loop: true });
             this.applause = this.sound.add('applause', { volume: 1.0 });
             this.off = this.sound.add('off', { volume: 1.0 });
             this.on = this.sound.add('on', { volume: 1.0 });
@@ -72,10 +72,10 @@ export class GameScene extends window.Phaser.Scene {
 
     }
     async create() {
-        this.maxPitch = 0.24;        // maksymalny pitch
-        this.minPitch = -0.2;        // pitch docelowy po puszczeniu
-        this.accelRate = 1.2;       // pitch na sekundę podczas wciskania
-        this.decayRate = 0.2;       // pitch na sekundę podczas puszczania
+        this.maxPitch = 0.33;        // maksymalny pitch
+        this.minPitch = -0.33;        // pitch docelowy po puszczeniu
+        this.accelRate = 0.7;       // pitch na sekundę podczas wciskania
+        this.decayRate = 0.3;       // pitch na sekundę podczas puszczania
         this.pitch = 0.0;           // aktualny pitch
         this.isThrottle = false;    // czy gaz wciśnięty
 

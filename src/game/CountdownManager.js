@@ -54,7 +54,7 @@ export class CountdownManager {
             this.tween = null;
         }
 
-        const displayText = ['3', '2', '1', 'START'][this.phase] || '';
+        const displayText = ['3', '2', '1', 'GO!'][this.phase] || '';
         this.text = this.scene.add.text(width / 2, height / 2, displayText, {
             fontFamily: 'Stormfaze',
             fontSize: '160px',
@@ -69,7 +69,7 @@ export class CountdownManager {
             alpha: 1,
             scaleX: 1,
             scaleY: 1,
-            duration: 200,
+            duration: 210,
             ease: 'Back.easeOut',
             onComplete: () => {
                 this.scene.time.delayedCall(300, () => {

@@ -56,6 +56,7 @@ export class GameScene extends window.Phaser.Scene {
         this.load.audio('off', 'assets/samples/game_off.mp3');
         this.load.audio('on', 'assets/samples/game_on.mp3');
         this.load.audio('race', 'assets/samples/game_race.wav');
+        this.load.audio('race_max', 'assets/samples/game_race_up.wav');
         this.load.audio('slide', 'assets/samples/game_slide.mp3');
         this.load.audio('countdown', 'assets/samples/game_countdown.mp3');
     }
@@ -66,6 +67,7 @@ export class GameScene extends window.Phaser.Scene {
             this.off = this.sound.add('off', { volume: 1.0 });
             this.on = this.sound.add('on', { volume: 1.0 });
             this.race = this.sound.add('race', { volume: 1.0, rate: 1.0, loop: true });
+            this.race_max = this.sound.add('race_max', { volume: 1.0, rate: 1.0, loop: true });
             this.slide = this.sound.add('slide', { volume: 1.0 });
             this.countdownSound = this.sound.add('countdown', { volume: 1.0 });
         }
@@ -353,6 +355,9 @@ export class GameScene extends window.Phaser.Scene {
                 });
             } else if (this.race.isPlaying && !control.up && !control.down && this.carController.throttleLock == false) {
                 if (this.race.rate >= 1.001) {
+                    if (this.race.rate = 1.5) {
+                        this.race.pause();
+                    }
                     return
                 }
                 if (this.race.rate < 1.001) {

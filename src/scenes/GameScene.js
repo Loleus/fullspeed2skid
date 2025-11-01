@@ -53,20 +53,20 @@ export class GameScene extends window.Phaser.Scene {
         this.load.audio('race_max', 'assets/samples/game_race.wav');
         this.load.audio('slide', 'assets/samples/game_slide.mp3');
         this.load.audio('countdown', 'assets/samples/game_countdown.mp3');
-        this.load.audio('menu_music', 'assets/samples/menu_music.mp3');
+        this.load.audio('game_music', 'assets/samples/game_music.mp3');
     }
 
     initAudio() {
         if (this.musicOn) {
             this.idle = this.sound.add('idle', { volume: 0.2, loop: true });
             this.applause = this.sound.add('applause', { volume: 1.0 });
-            this.off = this.sound.add('off', { volume: 0.2 });
-            this.on = this.sound.add('on', { volume: 0.2 });
-            this.race = this.sound.add('race', { volume: 0.2, rate: 1.0, loop: true });
-            this.race_max = this.sound.add('race_max', { volume: 0.2, rate: 1.5, loop: true });
+            this.off = this.sound.add('off', { volume: 0.1 });
+            this.on = this.sound.add('on', { volume: 0.1 });
+            this.race = this.sound.add('race', { volume: 0.1, rate: 1.0, loop: true });
+            this.race_max = this.sound.add('race_max', { volume: 0.1, rate: 1.5, loop: true });
             this.slide = this.sound.add('slide', { volume: 0.2 });
             this.countdownSound = this.sound.add('countdown', { volume: 0.5 });
-            this.music = this.sound.add('menu_music', { volume: 0.3, loop: true });
+            this.music = this.sound.add('game_music', { volume: 0.3, loop: true });
         }
     }
 
@@ -277,14 +277,15 @@ export class GameScene extends window.Phaser.Scene {
 
             if (countdownWasActive) {
                 if (!this.idle.isPlaying && !this.countdownSound.isPlaying) {
-                    this.music.play();
                     this.countdownSound.play();
+                    this.music.play();
                 }
                 return
             }
             if (this.raceFinished) {
                 if (this.race.isPlaying && (!control.up || !control.down)) {
                     this.race && this.race.stop();
+                    this.music.stop();
                     if (!this.idle.isPlaying) {
                         this.off && this.off.play();
                         this.time.delayedCall(700, () => {
@@ -295,13 +296,13 @@ export class GameScene extends window.Phaser.Scene {
             }
 
 
-if (this.slide.isPlaying && (this.carController.getWheelSlip([0,2]) >= 0.5 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
-     return
-} else if (!this.slide.isPlaying && (this.carController.getWheelSlip([0,2]) >= 0.5 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
-this.slide.play()
-} else {
-    this.slide.stop();
-}
+            if (this.slide.isPlaying && (this.carController.getWheelSlip([0, 2]) >= 0.5 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
+                return
+            } else if (!this.slide.isPlaying && (this.carController.getWheelSlip([0, 2]) >= 0.5 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
+                this.slide.play()
+            } else {
+                this.slide.stop();
+            }
             if (this.race.isPlaying) {
                 if ((control.up || control.down) && !this.isThrottle) {
                     this.isThrottle = true;
@@ -310,11 +311,11 @@ this.slide.play()
                 }
                 // Jeśli gaz trzymany, zwiększ pitch do maxPitch
                 if (this.isThrottle) {
-                    this.pitch += (this.carController.getFullState().speed/2000) * dt;
+                    this.pitch += (this.carController.getLocalSpeed() / 2000) * dt;
                     if (this.pitch > this.maxPitch) this.pitch = this.maxPitch;
                 } else {
                     // Jeśli puszczony, opadaj do minPitch
-                    this.pitch -= (this.carController.getFullState().speed/2000) * dt;
+                    this.pitch -= (this.carController.getLocalSpeed() / 2000) * dt;
                     if (this.pitch < this.minPitch) this.pitch = this.minPitch;
                 }
             }

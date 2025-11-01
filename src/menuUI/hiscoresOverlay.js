@@ -11,7 +11,7 @@ export class HiscoreOverlay {
     const minutes = Math.floor((totalMs % 3600000) / 60000);
     const seconds = Math.floor((totalMs % 60000) / 1000);
     const centiseconds = Math.floor((totalMs % 1000) / 10);
-  
+
     return `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${centiseconds.toString().padStart(2, '0')}`;
   }
 
@@ -77,10 +77,11 @@ export class HiscoreOverlay {
 
   disableMenuButtons() {
     if (!this.scene.ui?.menuButtons) return;
-    
+
     this.scene.ui.menuButtons.forEach(btn => {
       const isStart = btn.key === 'start';
-      const style = isStart ? { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customStartStyle } : this.scene.ui.menuStyle;
+      const isMusic = btn.key === 'music';
+      const style = isStart ? { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customStartStyle } : !isMusic ? this.scene.ui.menuStyle : { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customMusicStyle };
 
       if (btn.container) {
         btn.container.setAlpha(0.5);
@@ -91,8 +92,8 @@ export class HiscoreOverlay {
       }
       if (btn.bg) {
         drawButton(
-          btn.bg, 
-          style.buttonFillColor, 
+          btn.bg,
+          style.buttonFillColor,
           style.buttonAlpha,
           style.buttonStrokeColor,
           style.buttonWidth,
@@ -107,10 +108,11 @@ export class HiscoreOverlay {
 
   enableMenuButtons() {
     if (!this.scene.ui?.menuButtons) return;
-    
+
     this.scene.ui.menuButtons.forEach(btn => {
       const isStart = btn.key === 'start';
-      const style = isStart ? { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customStartStyle } : this.scene.ui.menuStyle;
+      const isMusic = btn.key === 'music';
+      const style = isStart ? { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customStartStyle } : !isMusic ? this.scene.ui.menuStyle : { ...this.scene.ui.menuStyle, ...this.scene.ui.menuStyle.customMusicStyle };
 
       if (btn.container) {
         btn.container.setAlpha(1);
@@ -120,7 +122,7 @@ export class HiscoreOverlay {
       }
       if (btn.hitCircle) {
         btn.hitCircle.setInteractive({ useHandCursor: true });
-        
+
         btn.hitCircle.on('pointerover', () =>
           drawButton(
             btn.bg,

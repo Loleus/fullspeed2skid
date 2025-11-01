@@ -37,11 +37,16 @@ export class MenuUI {
         buttonFontSize: '58px',
       },
       customMusicStyle: {
+        buttonWidth: 120,
+        buttonHeight: 130,
         buttonMargin: 0,
-        buttonAlpha: 0.67,
         interactionRadiusOffset: 0,
-        buttonFontSize: '28px',
-        offsetY: 60,
+        buttonFontSize: '24px',
+        buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 139, 177, 1)").color,
+        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 208, 231, 1)").color,
+        buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 69, 83, 1)").color,
+        buttonTextColor: '#2adfffff',
+        offsetY: 90,
       }
     };
   }

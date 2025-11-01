@@ -1,21 +1,15 @@
+import { VehicleFactory } from "../services/VehicleFactory.js";
 import { CameraManager } from "../cameras/CameraManager.js";
-import { PlayerCar } from "../vehicles/PlayerCar.js";
 import { World } from "../world/World.js";
 import { TILE_SIZE } from "../core/constants.js";
-import { SkidMarks } from "../rendering/skidMarks.js";
-import { updateSkidMarks } from "../rendering/SkidMarksManager.js";
 import { preloadWorldTextures } from "../world/TextureManager.js";
 import { getControlState } from "../input/controlsManager.js";
 import { createKeyboardBindings } from "../input/keyboardManager.js";
 import { createHUD } from "../game/hudManager.js";
-import { AICar } from "../vehicles/ai/AICar.js";
 import { CountdownManager } from "../game/CountdownManager.js";
 import { LapsTimer } from "../game/LapsTimer.js";
-import { HiscoreManager } from "../game/hiscoreManager.js";
-
-let skidMarks = null;
-let skidMarksAI = null;
-let skidMarksEnabled = true;
+import { HiscoreService } from "../services/HiscoreService.js";
+import { SkidMarksSystem } from "../game/SkidMarksSystem.js";
 
 export class GameScene extends window.Phaser.Scene {
     constructor() {
@@ -56,28 +50,26 @@ export class GameScene extends window.Phaser.Scene {
         this.load.audio('off', 'assets/samples/game_off.mp3');
         this.load.audio('on', 'assets/samples/game_on.mp3');
         this.load.audio('race', 'assets/samples/game_race.wav');
-        this.load.audio('race_max', 'assets/samples/game_race_up.wav');
+        this.load.audio('race_max', 'assets/samples/game_race.wav');
         this.load.audio('slide', 'assets/samples/game_slide.mp3');
         this.load.audio('countdown', 'assets/samples/game_countdown.mp3');
     }
     initAudio() {
         if (this.musicOn) {
-            this.idle = this.sound.add('idle', { volume: 0.67, loop: true });
+            this.idle = this.sound.add('idle', { volume: 0.2, loop: true });
             this.applause = this.sound.add('applause', { volume: 1.0 });
-            this.off = this.sound.add('off', { volume: 1.0 });
-            this.on = this.sound.add('on', { volume: 1.0 });
-            this.race = this.sound.add('race', { volume: 1.0, rate: 1.0, loop: true });
-            this.race_max = this.sound.add('race_max', { volume: 1.0, rate: 1.0, loop: true });
+            this.off = this.sound.add('off', { volume: 0.2 });
+            this.on = this.sound.add('on', { volume: 0.2 });
+            this.race = this.sound.add('race', { volume: 0.2, rate: 1.0, loop: true });
+            this.race_max = this.sound.add('race_max', { volume: 0.2, rate: 1.5, loop: true });
             this.slide = this.sound.add('slide', { volume: 1.0 });
-            this.countdownSound = this.sound.add('countdown', { volume: 1.0 });
+            this.countdownSound = this.sound.add('countdown', { volume: 0.5 });
         }
 
     }
     async create() {
-        this.maxPitch = 0.33;        // maksymalny pitch
-        this.minPitch = -0.33;        // pitch docelowy po puszczeniu
-        this.accelRate = 0.7;       // pitch na sekundę podczas wciskania
-        this.decayRate = 0.3;       // pitch na sekundę podczas puszczania
+        this.maxPitch = 0.5;        // maksymalny pitch
+        this.minPitch = 0.0;        // pitch docelowy po puszczeniu
         this.pitch = 0.0;           // aktualny pitch
         this.isThrottle = false;    // czy gaz wciśnięty
 
@@ -93,18 +85,11 @@ export class GameScene extends window.Phaser.Scene {
             this.initAudio()
             console.log("magrac")
         }
-        if (this.musicOn && this.idle && !this.idle.isPlaying) {
-            this.time.delayedCall(0, () => {
-                this.idle.play();
-                this.countdownSound.play();
-            });
-        }
 
         const worldData = this.worldData || window._worldData;
         const viewW = this.sys.game.config.width;
         const viewH = this.sys.game.config.height;
         const start = worldData.startPos;
-        const startYOffset = 0;
 
         const keys = createKeyboardBindings(this);
         this.cursors = keys.cursors;
@@ -113,49 +98,33 @@ export class GameScene extends window.Phaser.Scene {
         this.rKey = keys.rKey;
         this.xKey = keys.xKey;
 
-        this.car = this.physics.add.sprite(start.x, start.y + startYOffset, "car_p1");
-        this.car.setOrigin(0.5).setDepth(2);
-        this.car.body.allowRotation = false;
-
-        this.carController = new PlayerCar(this, this.car, worldData);
-        this.carController.resetState(start.x, start.y + startYOffset);
-
+        const factory = new VehicleFactory(this, worldData);
+        const { controller, sprite, speed } = factory.createPlayer({ x: start.x, y: start.y });
+        this.carController = controller;
+        this.car = sprite;
+        console.log("PLAYER SPEED:", this.speed);
         const twoPlayers = !!worldData?.twoPlayers;
+
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
             const aiStart = this.worldData.waypoints[0];
-            const aiStartYOffset = 0;
-
-            this.aiCarSprite = this.physics.add.sprite(aiStart.x, aiStart.y + aiStartYOffset, "car_p2");
-            this.aiCarSprite.setOrigin(0.5).setDepth(2);
-            this.aiCarSprite.body.allowRotation = false;
-
-            this.aiController = new AICar(this, this.aiCarSprite, this.worldData, this.worldData.waypoints);
-            this.aiController.resetState(aiStart.x, aiStart.y + aiStartYOffset);
-
-            skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-
-            if (this.collisionsEnabled) {
-                this.carController.opponentController = this.aiController;
-                this.aiController.opponentController = this.carController;
-            }
+            this.aiController = factory.createAI({ x: aiStart.x, y: aiStart.y, waypoints: this.worldData.waypoints });
+            if (this.collisionsEnabled) factory.linkOpponents(this.carController, this.aiController);
         } else if (twoPlayers) {
-            const p2YOffset = 0;
-            this.p2CarSprite = this.physics.add.sprite(start.x, start.y + p2YOffset, "car_p2");
-            this.p2CarSprite.setOrigin(0.5).setDepth(2);
-            this.p2CarSprite.body.allowRotation = false;
-
-            this.p2Controller = new PlayerCar(this, this.p2CarSprite, worldData);
-            this.p2Controller.resetState(start.x, start.y + p2YOffset);
-
-            skidMarksAI = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-            this.carController.opponentController = this.p2Controller;
-            this.p2Controller.opponentController = this.carController;
+            this.p2Controller = factory.createPlayer({ x: start.x, y: start.y, texture: "car_p2" });
+            factory.linkOpponents(this.carController, this.p2Controller);
         }
+
+        this.skidMarksSystem = new SkidMarksSystem(this, { enabled: true, wheelWidth: 12, tileSize: TILE_SIZE });
+        this.skidMarksSystem.register(this.carController);
+        if (this.aiController) this.skidMarksSystem.register(this.aiController);
+        if (this.p2Controller) this.skidMarksSystem.register(this.p2Controller);
+
+        window.dispatchEvent(new Event("game-ready"));
 
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-        const totalLaps = this.gameMode === "RACE" ? 3 : 100;
+        const totalLaps = this.gameMode === "RACE" ? 1 : 100;
         this.lapsTimer = new LapsTimer(this, this.gameMode, totalLaps);
         this.lapsTimer.initializeCheckpoints(worldData.checkpoints);
 
@@ -196,9 +165,7 @@ export class GameScene extends window.Phaser.Scene {
             this.hudCamera.setRotation(0);
         }
 
-        window.dispatchEvent(new Event("game-ready"));
-        skidMarks = new SkidMarks({ enabled: skidMarksEnabled, wheelWidth: 12 });
-        console.log("SkidMarks initialized:", skidMarks);
+        this.hiscoreService = new HiscoreService({});
         this.countdown = new CountdownManager(this);
         this.countdown.start();
         console.log(this.carController);
@@ -208,6 +175,7 @@ export class GameScene extends window.Phaser.Scene {
         dt /= 1000;
 
         const countdownWasActive = this.countdown?.isActive();
+
         if (this.countdown?.isActive()) {
             this.countdown.update(dt);
         }
@@ -237,22 +205,6 @@ export class GameScene extends window.Phaser.Scene {
 
         const control = getControlState(this);
         if (countdownWasActive || (this.gameMode === "RACE" && this.raceFinished)) {
-
-
-            if (!this.sound.mute) {
-                if (this.race.isPlaying && (!control.up || !control.down)) {
-                    this.race && this.race.stop();
-                    if (!this.idle.isPlaying) {
-                        this.off && this.off.play();
-                        this.time.delayedCall(700, () => {
-                            this.idle && this.idle.play();
-                        })
-
-                    };
-                }
-            }
-
-
             control.up = false;
             control.down = false;
             control.left = false;
@@ -304,14 +256,12 @@ export class GameScene extends window.Phaser.Scene {
 
         const carPos = this.carController.getPosition();
         const aiCarPos = this.aiController ? this.aiController.getPosition() : this.p2Controller ? this.p2Controller.getPosition() : null;
-        if (this.world) this.world.drawTiles(carPos.x, carPos.y);
 
-        if (skidMarks?.enabled) {
-            const skidMarksList = [{ controller: this.carController, skidMarks }];
-            if (this.aiController && skidMarksAI) skidMarksList.push({ controller: this.aiController, skidMarks: skidMarksAI });
-            if (this.p2Controller && skidMarksAI) skidMarksList.push({ controller: this.p2Controller, skidMarks: skidMarksAI });
-            updateSkidMarks(this, TILE_SIZE, skidMarksList);
-        }
+        if (this.world) this.world.drawTiles(carPos.x, carPos.y);
+        let skidy = this.skidMarksSystem._list.length > 0;
+        let burnout = this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true;
+        this.skidMarksSystem.update()
+        console.log("SKID MARKS COUNT:", skidy && burnout ? this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] : 0);
 
         if (this.minimapa && this.world) {
             this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
@@ -319,23 +269,49 @@ export class GameScene extends window.Phaser.Scene {
 
         this.cameraManager?.update(dt);
         if (this.hudCamera) this.hudCamera.setRotation(0);
+
         if (!this.sound.mute) {
 
-            if (this.race.isPlaying) {
+            if (countdownWasActive) {
+                if (!this.idle.isPlaying && !this.countdownSound.isPlaying) {
+                    // this.idle.play();
+                    this.countdownSound.play();
+                }
+                return
+            }
+            if (this.raceFinished) {
+                if (this.race.isPlaying && (!control.up || !control.down)) {
+                    this.race && this.race.stop();
+                    if (!this.idle.isPlaying) {
+                        this.off && this.off.play();
+                        this.time.delayedCall(700, () => {
+                            this.idle && this.idle.play();
+                        })
+                    };
+                }
+            }
 
+
+if (this.slide.isPlaying && (this.carController.getWheelSlip([0,2]) >= 0.5 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
+     return
+} else if (!this.slide.isPlaying && (this.carController.getWheelSlip([0,2]) >= 0.5 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
+this.slide.play()
+} else {
+    this.slide.stop();
+}
+            if (this.race.isPlaying) {
                 if ((control.up || control.down) && !this.isThrottle) {
                     this.isThrottle = true;
-                } else if ((!control.up || !control.down) && this.isThrottle) {
+                } else if ((!control.up && !control.down) && this.isThrottle) {
                     this.isThrottle = false;
                 }
-
                 // Jeśli gaz trzymany, zwiększ pitch do maxPitch
                 if (this.isThrottle) {
-                    this.pitch += this.accelRate * dt;
+                    this.pitch += (this.carController.getFullState().speed/1000) * dt;
                     if (this.pitch > this.maxPitch) this.pitch = this.maxPitch;
                 } else {
                     // Jeśli puszczony, opadaj do minPitch
-                    this.pitch -= this.decayRate * dt;
+                    this.pitch -= (this.carController.getFullState().speed/1000) * dt;
                     if (this.pitch < this.minPitch) this.pitch = this.minPitch;
                 }
             }
@@ -346,18 +322,20 @@ export class GameScene extends window.Phaser.Scene {
             // this.loopSound.setVolume(0.5 + 0.5 * Math.min(this.pitch / this.maxPitch, 1));
             this.race.setRate(1.0 + this.pitch);
 
-            if ((control.up || control.down) && !this.on.isPlaying && !this.race.isPlaying && this.carController.throttleLock == false) {
+            if ((control.up || control.down) && !this.on.isPlaying && !this.race.isPlaying && !this.race_max.isPlaying && this.carController.throttleLock == false) {
                 this.on && this.on.play();
                 this.time.delayedCall(672, () => {
                     this.race && this.race.play();
                     this.idle && this.idle.stop();
                     this.on.stop()
                 });
-            } else if (this.race.isPlaying && !control.up && !control.down && this.carController.throttleLock == false) {
+            } else if ((control.up || control.down) && this.race.isPlaying && this.carController.throttleLock == false) {
+                if (this.race.rate >= 1.49) {
+                    this.race.pause();
+                    this.race_max && this.race_max.play();
+                }
+            } else if (!control.up && !control.down && this.race.isPlaying && this.carController.throttleLock == false) {
                 if (this.race.rate >= 1.001) {
-                    if (this.race.rate = 1.5) {
-                        this.race.pause();
-                    }
                     return
                 }
                 if (this.race.rate < 1.001) {
@@ -369,10 +347,14 @@ export class GameScene extends window.Phaser.Scene {
                         })
                     };
                 }
+            } else if (this.race_max.isPlaying && !control.up && !control.down && this.carController.throttleLock == false) {
+                this.race_max && this.race_max.stop();
+                this.race && this.race.resume();
             } else if (this.carController.throttleLock == true && (control.up || control.down)) {
                 control.up = false;
                 control.down = false;
                 this.race && this.race.stop();
+                this.race_max && this.race_max.stop();
                 if (!this.idle.isPlaying && !this.off.isPlaying) {
                     this.off && this.off.play();
                     this.pitch = 0.0;
@@ -395,59 +377,10 @@ export class GameScene extends window.Phaser.Scene {
     handleHiscorePrompt() {
         if (this.hiscoreChecked) return;
         this.hiscoreChecked = true;
-
-        try {
-            // Użyj bezpośrednio numeru trasy (track1, track2, track3) zamiast indeksu z listy
-            const trackNum = (window._selectedTrack || 0) + 1;  // Dodajemy 1 bo indeksy są od 0
-            const trackKey = `track${trackNum}`;
-
-            // Zbierz czasy z LapsTimer
-            const { total, bestLap } = this.lapsTimer.getLapTimes();
-            const totalTime = Number(total);     // sekundy
-            const best = Number(bestLap || 0);   // sekundy
-
-            // Przygotuj managera na podstawie istniejących danych
-            const mgr = new HiscoreManager({
-                storageKey: 'mygame_hiscores',
-                templatePath: 'assets/levels/hiscores.json',
-                maxEntries: 4
-            });
-
-            // Użyj danych z menu, żeby nie robić async init jeszcze raz
-            if (window._hiscores && window._hiscores.tracks) {
-                mgr.data = JSON.parse(JSON.stringify(window._hiscores));
-            }
-
-            // Sprawdź kwalifikację
-            const current = mgr.getForTrack(trackKey); // kopia tabeli
-            const maxEntries = mgr.maxEntries || 4;
-
-            const qualifies = (() => {
-                if (current.length < maxEntries) return true;
-                const worst = current[current.length - 1];
-                if (totalTime < worst.totalTime) return true;
-                if (totalTime === worst.totalTime && best < worst.bestLap) return true;
-                return false;
-            })();
-
-            if (!qualifies) return;
-
-            // Prompt o nick
-            const defaultNick = 'PLAYER';
-            const nick = (window.prompt('NEW HISCORE! ENTER YOUR NAME:', defaultNick) || defaultNick).trim().slice(0, 10);
-            if (!nick) return;
-
-            // Zapis do tabeli i localStorage
-            const updated = mgr.addScore(trackKey, { nick, totalTime, bestLap: best });
-
-            // Zaktualizuj globalne dane, żeby menu/overlay widział nową tabelę
-            window._hiscores = mgr.getAll();
-
-            // (Opcjonalnie) log lub lekki feedback
-            console.log('[Hiscore] Updated', trackKey, updated);
-        } catch (e) {
-            console.warn('[Hiscore] Failed to process hiscore', e);
-        }
+        this.hiscoreService.tryQualify({
+            trackIndex: window._selectedTrack || 0,
+            lapsTimer: this.lapsTimer
+        });
     }
 
     resetGame() {
@@ -474,11 +407,13 @@ export class GameScene extends window.Phaser.Scene {
         }
 
         this.cameraManager?.reset();
-        skidMarks?.clear();
-        if (skidMarksAI) skidMarksAI.clear();
+
+        this.skidMarksSystem.clear();
 
         this.countdown.start();
-        this.countdownSound.play();
+        if (this.musicOn) {
+            this.countdownSound.play();
+        }
         this.lapsTimer.reset();
     }
 

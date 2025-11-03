@@ -7,7 +7,38 @@ export class HiscoreService {
     this.templatePath = templatePath;
     this.maxEntries = maxEntries;
   }
+  checked({ trackIndex, lapsTimer }) {
+    try {
+      const trackNum = (trackIndex || 0) + 1;
+      const trackKey = `track${trackNum}`;
 
+      const { total, bestLap } = lapsTimer.getLapTimes();
+      const totalTime = Number(total);
+      const best = Number(bestLap || 0);
+
+      const mgr = new HiscoreManager({
+        storageKey: this.storageKey,
+        templatePath: this.templatePath,
+        maxEntries: this.maxEntries
+      });
+
+      if (window._hiscores?.tracks) {
+        mgr.data = JSON.parse(JSON.stringify(window._hiscores));
+      }
+
+      const current = mgr.getForTrack(trackKey);
+      const qualifies = (current.length < this.maxEntries)
+        || totalTime < current[current.length - 1].totalTime
+        || (totalTime === current[current.length - 1].totalTime && best < current[current.length - 1].bestLap);
+
+      if (!qualifies) return false;
+
+      return true;
+    } catch (e) {
+      console.warn('[Hiscore] Failed to process hiscore', e);
+      return false;
+    }
+  }
   tryQualify({ trackIndex, lapsTimer }) {
     try {
       const trackNum = (trackIndex || 0) + 1;

@@ -217,7 +217,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   // Mapowanie typów powierzchni na unikalne kolory (R,G,B)
   const surfaceTypeColors = {
     asphalt: [0, 0, 0],
-    asphalt1: [0, 0, 200],
+    asphalt1: [0, 0, 0],
     cobblestone: [128, 128, 128],
     gravel: [180, 180, 0],
     grass: [0, 255, 0],
@@ -395,7 +395,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   // Domyślne parametry nawierzchni (możesz je potem edytować globalnie)
   const surfaceParams = {
     asphalt: { grip: 1.0 },
-    asphalt1: { grip: 0.95 },
+    asphalt1: { grip: 1.0 },
     cobblestone: { grip: 0.9 }, // przykładowa wartość
     gravel: { grip: 0.8 },
     grass: { grip: 0.6 },

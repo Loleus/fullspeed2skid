@@ -71,7 +71,7 @@ export class MenuUI {
     const btn = this.menuButtons.find(b => b.key === key);
     if (btn && btn.text) {
       key !== "track" ? btn.text.setText("MODE\n" + newText) : btn.text.setText("SELECT\n" + newText);
-      key == "music" ? btn.text.setText("MUSIC\n" + newText) : null;
+      key == "music" ? btn.text.setText("SOUND\n" + newText) : null;
     }
   }
 

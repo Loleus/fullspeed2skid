@@ -26,7 +26,7 @@ export class MenuScene extends window.Phaser.Scene {
 
   async create() {
     this.buttonClick = this.sound.add('menu_button', { volume: 0.2 });
-    this.menuMusic = this.sound.add('menu_music', { volume: 0.4, loop: true });
+    this.menuMusic = this.sound.add('menu_music', { volume: 0.4 , loop: true });
     this.sound.pauseOnBlur = false; // nie pauzuj na zmianie zakładki
     if (this.registry.get('audioEnabled')) {
       this.menuMusic.play();
@@ -74,7 +74,7 @@ export class MenuScene extends window.Phaser.Scene {
       { label: 'START', key: 'start' },
       { label: 'HI\nSCORES', key: 'hiscore' },
       { label: 'FULL\nSCREEN', key: 'fullscreen' },
-      { label: 'MUSIC\n' + musicState, key: 'music' },
+      { label: 'SOUND\n' + musicState, key: 'music' },
     ];
 
     this.ui.createButtons(buttons, this.handleMenuButton);

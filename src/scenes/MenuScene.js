@@ -25,7 +25,7 @@ export class MenuScene extends window.Phaser.Scene {
   }
 
   async create() {
-    this.buttonClick = this.sound.add('menu_button', { volume: 0.2 });
+    this.buttonClick = this.sound.add('menu_button', { volume: 0.1 });
     this.menuMusic = this.sound.add('menu_music', { volume: 0.4 , loop: true });
     this.sound.pauseOnBlur = false; // nie pauzuj na zmianie zakładki
     if (this.registry.get('audioEnabled')) {

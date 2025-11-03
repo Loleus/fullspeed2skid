@@ -57,7 +57,7 @@ export class LoadingScene extends window.Phaser.Scene {
       const worldData = await World.loadWorld(svgPath, WORLD_HEIGHT, TILE_SIZE);
       worldData.svgPath = svgPath;
       worldData.startFix = this.startFix;
-      this.ambience = this.sound.add('ambience', { volume: 1.0, loop: true });
+      this.ambience = this.sound.add('ambience', { volume: 0.6, loop: true });
       this.scene.start('GameScene', {
         worldData: worldData,
         gameMode: this.gameMode,

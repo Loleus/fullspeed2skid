@@ -54,6 +54,7 @@ export class GameScene extends window.Phaser.Scene {
         this.load.audio('slide', 'assets/samples/game_slide.mp3');
         this.load.audio('countdown', 'assets/samples/game_countdown.mp3');
         this.load.audio('game_music', 'assets/samples/game_music.mp3');
+        this.load.audio('game_crash', 'assets/samples/game_crash.mp3');
     }
 
     initAudio() {
@@ -66,7 +67,8 @@ export class GameScene extends window.Phaser.Scene {
             this.race_max = this.sound.add('race_max', { volume: 0.2, rate: 1.5, loop: true });
             this.slide = this.sound.add('slide', { volume: 0.4 });
             this.countdownSound = this.sound.add('countdown', { volume: 0.4 });
-            this.music = this.sound.add('game_music', { volume: 0.6, loop: true });
+            this.music = this.sound.add('game_music', { volume: 0.4, loop: true });
+            this.crash = this.sound.add('game_crash', { volume: 0.6 });
         }
     }
 
@@ -261,15 +263,12 @@ export class GameScene extends window.Phaser.Scene {
         const aiCarPos = this.aiController ? this.aiController.getPosition() : this.p2Controller ? this.p2Controller.getPosition() : null;
 
         if (this.world) this.world.drawTiles(carPos.x, carPos.y);
-        let skidy = this.skidMarksSystem._list.length > 0;
-        let burnout = this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true;
         this.skidMarksSystem.update()
-        console.log("SKID MARKS COUNT:", skidy && burnout ? this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] : 0);
 
         if (this.minimapa && this.world) {
             this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
         }
-
+        let boom = this.carController.collisionCount > 0;
         this.cameraManager?.update(dt);
         if (this.hudCamera) this.hudCamera.setRotation(0);
 
@@ -282,6 +281,14 @@ export class GameScene extends window.Phaser.Scene {
                 }
                 return
             }
+
+            if (boom && !this.crash.isPlaying ) {
+                this.crash.play();
+            } else if (!boom && this.crash.isPlaying) {
+                return;
+            }
+
+``
             if (this.raceFinished) {
                 if (this.race.isPlaying && (!control.up || !control.down)) {
                     this.race && this.race.stop();
@@ -311,11 +318,11 @@ export class GameScene extends window.Phaser.Scene {
                 }
                 // Jeśli gaz trzymany, zwiększ pitch do maxPitch
                 if (this.isThrottle) {
-                    this.pitch += (this.carController.getLocalSpeed() / 2000) * dt;
+                    this.pitch += (Math.abs(this.carController.getLocalSpeed() / 2000)) * dt;
                     if (this.pitch > this.maxPitch) this.pitch = this.maxPitch;
                 } else {
                     // Jeśli puszczony, opadaj do minPitch
-                    this.pitch -= (this.carController.getLocalSpeed() / 2000) * dt;
+                    this.pitch -= (Math.abs(this.carController.getLocalSpeed() / 2000)) * dt;
                     if (this.pitch < this.minPitch) this.pitch = this.minPitch;
                 }
             }

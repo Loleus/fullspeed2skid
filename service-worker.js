@@ -46,6 +46,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/samples/game_on.mp3',
   '/fullspeed2skid/assets/samples/game_race.wav',
   '/fullspeed2skid/assets/samples/game_slide.mp3',
+  '/fullspeed2skid/assets/samples/game_crash.mp3',
   '/fullspeed2skid/assets/samples/menu_button.wav',
   '/fullspeed2skid/assets/samples/menu_music.mp3',
 

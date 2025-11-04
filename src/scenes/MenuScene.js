@@ -1,8 +1,8 @@
-import { HiscoreOverlay } from './hiscoresOverlay.js';
-import { MenuUI } from './menuUI.js';
-import { HiscoreManager } from './hiscoreManager.js';
+import { HiscoreOverlay } from '../menuUI/hiscoresOverlay.js';
+import { MenuUI } from '../menuUI/menuUI.js';
+import { HiscoreManager } from '../game/hiscoreManager.js';
 
-export class MenuScene extends Phaser.Scene {
+export class MenuScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'MenuScene' });
     this.isOverlayOpen = false;
@@ -18,7 +18,22 @@ export class MenuScene extends Phaser.Scene {
     });
   }
 
+  preload() {
+    // Ładuj tekstury
+    this.load.audio('menu_button', 'assets/samples/menu_button.wav');
+    this.load.audio('menu_music', 'assets/samples/menu_music.mp3');
+  }
+
   async create() {
+    this.buttonClick = this.sound.add('menu_button', { volume: 0.1 });
+    this.menuMusic = this.sound.add('menu_music', { volume: 0.4 , loop: true });
+    this.sound.pauseOnBlur = false; // nie pauzuj na zmianie zakładki
+    if (this.registry.get('audioEnabled')) {
+      this.menuMusic.play();
+    } else {
+      this.sound.mute = true;
+      this.menuMusic.stop();
+    }
     try {
       const data = await this.hiscoreManager.init();
       this.hiscores = data;
@@ -48,22 +63,44 @@ export class MenuScene extends Phaser.Scene {
     // upewnij się że nie generuje TileSprite z tym samym kluczem co bgc.
     this.ui.createBackground();
     this.ui.createGradientOverlay();
-
+    const musicState = this.registry.get('audioEnabled') ? "ON" : "OFF";
     if (!this.tracks.length) this.tracks = await this.fetchTracks();
     if (!this.tracks.length) this.tracks = [{ label: 'TRACK 1', file: 'scene_1.svg' }];
     if (this.selectedTrack < 0 || this.selectedTrack >= this.tracks.length) this.selectedTrack = 0;
-
+    this.musicOn = false;
     const buttons = [
       { label: "MODE\n" + this.gameMode, key: 'mode' },
       { label: "SELECT\n" + this.tracks[this.selectedTrack].label, key: 'track' },
       { label: 'START', key: 'start' },
       { label: 'HI\nSCORES', key: 'hiscore' },
-      { label: 'FULL\nSCREEN', key: 'fullscreen' }
+      { label: 'FULL\nSCREEN', key: 'fullscreen' },
+      { label: 'SOUND\n' + musicState, key: 'music' },
     ];
 
     this.ui.createButtons(buttons, this.handleMenuButton);
     this.ui.createLogo();
     window._hiscores = this.hiscores;
+  }
+
+  async toggleAudio(scene) {
+    // Odblokuj Web Audio tylko raz — jeśli jeszcze nieaktywne
+    if (this.sound.context.state === 'suspended') {
+      await this.sound.context.resume();
+    }
+
+    // Przełącz mute
+    const nowMuted = !this.sound.mute;
+    this.sound.mute = nowMuted;
+
+    // Opcjonalnie: zatrzymaj lub uruchom muzykę
+    if (this.menuMusic) {
+      if (nowMuted && this.menuMusic.isPlaying) {
+        this.menuMusic.stop();
+      } else if (!nowMuted && !this.menuMusic.isPlaying) {
+        this.menuMusic.play();
+      }
+    }
+    this.registry.set('audioEnabled', !nowMuted);
   }
 
   async fetchTracks() {
@@ -84,17 +121,17 @@ export class MenuScene extends Phaser.Scene {
   }
 
   handleButton(key) {
+    this.buttonClick.play();
     if (this.isOverlayOpen) return;
     if (key === 'start') {
+      this.menuMusic.stop();
       this.scene.start('LoadingScene', {
         trackFile: this.tracks[this.selectedTrack].file,
         gameMode: this.gameMode,
         startFix: this.tracks[this.selectedTrack].startFix
       });
     } else if (key === 'fullscreen') {
-      document.fullscreenElement
-        ? document.exitFullscreen()
-        : document.body.requestFullscreen();
+      document.fullscreenElement ? document.exitFullscreen() : document.body.requestFullscreen();
     } else if (key === 'track') {
       this.selectedTrack = (this.selectedTrack + 1) % this.tracks.length;
       window._selectedTrack = this.selectedTrack;
@@ -105,6 +142,14 @@ export class MenuScene extends Phaser.Scene {
       this.ui.updateButtonText('mode', this.gameMode);
     } else if (key === 'hiscore') {
       this.showHiscoreOverlay();
+    } else if (key === 'music') {
+      if (window._musicOn !== undefined) {
+        this.musicOn = window._musicOn;
+      }
+      this.toggleAudio(this.scene);
+      this.musicOn = !this.musicOn;
+      window._musicOn = this.musicOn;
+      this.ui.updateButtonText('music', this.musicOn ? 'ON' : 'OFF');
     }
   }
 

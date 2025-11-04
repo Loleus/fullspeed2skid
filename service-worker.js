@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.2.5';
+const CACHE_NAME = 'fullspeed2skid-v2.2.7';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -15,18 +15,19 @@ const ASSETS = [
   '/fullspeed2skid/assets/fonts/Harting.ttf',
 
   // assets/images
-  '/fullspeed2skid/assets/images/car.png',
-  '/fullspeed2skid/assets/images/car_X.png',
   '/fullspeed2skid/assets/images/asphalt.jpg',
   '/fullspeed2skid/assets/images/asphalt1.jpg',
+  '/fullspeed2skid/assets/images/bgc.jpg',
+  '/fullspeed2skid/assets/images/car_X.png',
+  '/fullspeed2skid/assets/images/car.png',
+  '/fullspeed2skid/assets/images/cobblestone.jpg',
+  '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',
+  '/fullspeed2skid/assets/images/hiscoreBG.jpg',
   '/fullspeed2skid/assets/images/stone.jpg',
   '/fullspeed2skid/assets/images/stone2.jpg',
   '/fullspeed2skid/assets/images/stone3.jpg',
   '/fullspeed2skid/assets/images/water.jpg',
-  '/fullspeed2skid/assets/images/cobblestone.jpg',
-  '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
-  '/fullspeed2skid/assets/images/bgc.jpg',
 
   // assets/levels
   '/fullspeed2skid/assets/levels/hiscores.json',
@@ -35,6 +36,20 @@ const ASSETS = [
   '/fullspeed2skid/assets/levels/scene_3.svg',
   '/fullspeed2skid/assets/levels/scene_4.svg',
   '/fullspeed2skid/assets/levels/tracks.json',
+
+  // assets/samples
+  '/fullspeed2skid/assets/samples/game_ambience.mp3',
+  '/fullspeed2skid/assets/samples/game_applause.mp3',
+  '/fullspeed2skid/assets/samples/game_countdown.mp3',
+  '/fullspeed2skid/assets/samples/game_idle.mp3',
+  '/fullspeed2skid/assets/samples/game_music.mp3',
+  '/fullspeed2skid/assets/samples/game_off.mp3',
+  '/fullspeed2skid/assets/samples/game_on.mp3',
+  '/fullspeed2skid/assets/samples/game_race.wav',
+  '/fullspeed2skid/assets/samples/game_slide.mp3',
+  '/fullspeed2skid/assets/samples/game_crash.mp3',
+  '/fullspeed2skid/assets/samples/menu_button.wav',
+  '/fullspeed2skid/assets/samples/menu_music.mp3',
 
   // src/app
   '/fullspeed2skid/src/app/main.js',
@@ -51,28 +66,37 @@ const ASSETS = [
 
   // src/game
   '/fullspeed2skid/src/game/CountdownManager.js',
+  '/fullspeed2skid/src/game/hiscoreManager.js',
+  '/fullspeed2skid/src/game/hudManager.js',
   '/fullspeed2skid/src/game/LapsTimer.js',
+  '/fullspeed2skid/src/game/SkidMarksSystem.js',
 
   // src/input
   '/fullspeed2skid/src/input/controlsManager.js',
   '/fullspeed2skid/src/input/gyro-handler.js',
   '/fullspeed2skid/src/input/keyboardManager.js',
 
+  // src/menuUI
+  '/fullspeed2skid/src/menuUI/hiscoresOverlay.js',
+  '/fullspeed2skid/src/menuUI/menuUI_background.js',
+  '/fullspeed2skid/src/menuUI/menuUI_createButtons_drawUtils.js',
+  '/fullspeed2skid/src/menuUI/menuUI_createButtons.js',
+  '/fullspeed2skid/src/menuUI/menuUI_logo.js',
+  '/fullspeed2skid/src/menuUI/menuUI.js',
+  
   // src/rendering
   '/fullspeed2skid/src/rendering/skidMarks.js',
   '/fullspeed2skid/src/rendering/SkidMarksManager.js',
 
   // src/scenes
   '/fullspeed2skid/src/scenes/GameScene.js',
-  '/fullspeed2skid/src/scenes/hiscoresManager.js',
-  '/fullspeed2skid/src/scenes/hiscoresOverlay.js',
   '/fullspeed2skid/src/scenes/HudScene.js',
   '/fullspeed2skid/src/scenes/LoadingScene.js',
   '/fullspeed2skid/src/scenes/MenuScene.js',
-  '/fullspeed2skid/src/scenes/menuUI.js',
 
-  // src/ui
-  '/fullspeed2skid/src/ui/hudManager.js',
+  // src/services
+  '/fullspeed2skid/src/services/HiscoreService.js',
+  '/fullspeed2skid/src/services/VehicleFactory.js',
 
   // src/vehicles
   '/fullspeed2skid/src/vehicles/Car.js',

@@ -65,10 +65,7 @@ export class PlayerCar extends Car {
     // Model poślizgu: siła boczna (drift) - specyficzny dla gracza
     let steerAbs = Math.abs(this.steerAngle);
     let speedAbs = Math.abs(this.v_x);
-    if (
-      speedAbs > localSlipStartSpeed &&
-      steerAbs > this._slipSteerThreshold
-    ) {
+    if ( speedAbs > localSlipStartSpeed && steerAbs > this._slipSteerThreshold ) {
       let slipSteerRatio = (steerAbs - this._slipSteerThreshold) / (this.maxSteer - this._slipSteerThreshold);
       slipSteerRatio = Phaser.Math.Clamp(slipSteerRatio, 0, 1);
       let slipSign = -Math.sign(this.steerAngle);

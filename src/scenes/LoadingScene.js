@@ -16,6 +16,8 @@ export class LoadingScene extends window.Phaser.Scene {
     // Ładuj tekstury
     this.load.image('grass', 'assets/images/grass.jpg');
     this.load.image('bgc', 'assets/images/bgc.jpg'); // pełnoekranowe tło
+    this.load.audio('ambience', 'assets/samples/game_ambience.mp3');
+    this.load.image('hiscoreBG', 'assets/images/hiscoreBG.jpg');
   }
 
   async create() {
@@ -56,10 +58,12 @@ export class LoadingScene extends window.Phaser.Scene {
       const worldData = await World.loadWorld(svgPath, WORLD_HEIGHT, TILE_SIZE);
       worldData.svgPath = svgPath;
       worldData.startFix = this.startFix;
-      this.scene.start('GameScene', { 
+      this.ambience = this.sound.add('ambience', { volume: 0.6, loop: true });
+      this.scene.start('GameScene', {
         worldData: worldData,
         gameMode: this.gameMode,
-        startFix: this.startFix
+        startFix: this.startFix,
+        ambience: this.ambience
       });
     } else {
       this.time.delayedCall(500, () => {

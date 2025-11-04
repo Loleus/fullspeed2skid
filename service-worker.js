@@ -1,9 +1,10 @@
-const CACHE_NAME = 'fullspeed2skid-v2.2.7';
+const CACHE_NAME = 'fullspeed2skid-v2.3.0';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
   '/fullspeed2skid/index.html',
   '/fullspeed2skid/manifest.json',
+  '/fullspeed2skid/favicon.ico',
 
   // assets/style
   '/fullspeed2skid/assets/style/style.css',
@@ -21,6 +22,9 @@ const ASSETS = [
   '/fullspeed2skid/assets/images/car_X.png',
   '/fullspeed2skid/assets/images/car.png',
   '/fullspeed2skid/assets/images/cobblestone.jpg',
+  '/fullspeed2skid/assets/images/favicon-16x16.png',
+  '/fullspeed2skid/assets/images/favicon-32x32.png',
+  '/fullspeed2skid/assets/images/fullspeed2skid_icon.jpg',
   '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',
   '/fullspeed2skid/assets/images/hiscoreBG.jpg',

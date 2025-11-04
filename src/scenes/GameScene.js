@@ -411,50 +411,55 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     resetGame() {
-        this.hiscoreChecked = false;
-        if (this.musicOn) {
-            this.music.isPlaying ? this.music.stop() : null;
-            this.ambience.isPlaying ? this.ambience.stop() : null;
-            this.idle.isPlaying ? this.idle.stop() : null;
-            this.pith = 0.0;
-            this.race.setRate(1.0);
-            this.race.stop();
-            this.race_max.stop();
-            this.countdownSound.play();
-            this.music.play();
-        }
-        this.lapsTimer.reset();
-        const worldData = this.worldData || window._worldData;
-        const start = worldData.startPos;
-
-        this.raceFinished = false;
-        this.carController.resetState(start.x, start.y);
-        console.log(this.carController.getLocalSpeed());
-        console.log(this.race.rate);
-        if (this.aiController && this.worldData.waypoints?.length > 0) {
-            const aiStart = this.worldData.waypoints[0];
-            this.aiController.resetState(aiStart.x, aiStart.y);
-        }
-
-        if (this.p2Controller) {
-            this.p2Controller.resetState(start.x, start.y);
-        }
-
-        if (this.world) {
-            this.world.trackTiles = [];
-            for (const tileObj of this.world.tilePool.values()) {
-                tileObj.setVisible(false);
+        if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
+            this.hiscoreChecked = false;
+            if (this.musicOn) {
+                this.music.isPlaying ? this.music.stop() : null;
+                this.ambience.isPlaying ? this.ambience.stop() : null;
+                this.idle.isPlaying ? this.idle.stop() : null;
+                this.pith = 0.0;
+                this.race.setRate(1.0);
+                this.race.stop();
+                this.race_max.stop();
+                this.countdownSound.play();
+                this.gameMode === "RACE" ? this.music.play() : null;
             }
+            this.lapsTimer.reset();
+            const worldData = this.worldData || window._worldData;
+            const start = worldData.startPos;
+    
+            this.raceFinished = false;
+            this.carController.resetState(start.x, start.y);
+            console.log(this.carController.getLocalSpeed());
+            console.log(this.race.rate);
+            if (this.aiController && this.worldData.waypoints?.length > 0) {
+                const aiStart = this.worldData.waypoints[0];
+                this.aiController.resetState(aiStart.x, aiStart.y);
+            }
+    
+            if (this.p2Controller) {
+                this.p2Controller.resetState(start.x, start.y);
+            }
+    
+            if (this.world) {
+                this.world.trackTiles = [];
+                for (const tileObj of this.world.tilePool.values()) {
+                    tileObj.setVisible(false);
+                }
+            }
+    
+            this.cameraManager?.reset();
+    
+            this.skidMarksSystem.clear();
+    
+            this.countdown.start();
+        } else {
+            return;
         }
-
-        this.cameraManager?.reset();
-
-        this.skidMarksSystem.clear();
-
-        this.countdown.start();
     }
 
     exitToMenu() {
+        if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
         this.hiscoreChecked = false;
         if (this.musicOn) {
             this.music.isPlaying ? this.music.stop() : null;
@@ -467,5 +472,8 @@ export class GameScene extends window.Phaser.Scene {
             this.countdownSound.stop();
         }
         this.scene.start("MenuScene");
+        } else {
+            return;
+        }
     }
 }

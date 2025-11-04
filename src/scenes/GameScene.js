@@ -387,26 +387,16 @@ export class GameScene extends window.Phaser.Scene {
     handleHiscorePrompt() {
         if (this.hiscoreChecked) return;
         this.hiscoreChecked = true;
-        const checked = this.hiscoreService.checked({
+        const hiscoreParams = {
             trackIndex: window._selectedTrack || 0,
             lapsTimer: this.lapsTimer
-        })
-        console.log(checked)
-        if (checked && this.musicOn && !this.applause.isPlaying) {
+        }
+        if (this.hiscoreService.checked(hiscoreParams) && this.musicOn && !this.applause.isPlaying) {
             this.applause.play();
-            this.time.delayedCall(10000, () => {
-
-                this.hiscoreService.tryQualify({
-                    trackIndex: window._selectedTrack || 0,
-                    lapsTimer: this.lapsTimer
-                });
-            });
+            this.time.delayedCall(10000, () => {this.hiscoreService.tryQualify(hiscoreParams)});
         }
         if (!this.musicOn) {
-                this.hiscoreService.tryQualify({
-                    trackIndex: window._selectedTrack || 0,
-                    lapsTimer: this.lapsTimer
-                });
+            this.hiscoreService.tryQualify(hiscoreParams)
         }
     }
 
@@ -427,7 +417,7 @@ export class GameScene extends window.Phaser.Scene {
             this.lapsTimer.reset();
             const worldData = this.worldData || window._worldData;
             const start = worldData.startPos;
-    
+
             this.raceFinished = false;
             this.carController.resetState(start.x, start.y);
             console.log(this.carController.getLocalSpeed());
@@ -436,22 +426,22 @@ export class GameScene extends window.Phaser.Scene {
                 const aiStart = this.worldData.waypoints[0];
                 this.aiController.resetState(aiStart.x, aiStart.y);
             }
-    
+
             if (this.p2Controller) {
                 this.p2Controller.resetState(start.x, start.y);
             }
-    
+
             if (this.world) {
                 this.world.trackTiles = [];
                 for (const tileObj of this.world.tilePool.values()) {
                     tileObj.setVisible(false);
                 }
             }
-    
+
             this.cameraManager?.reset();
-    
+
             this.skidMarksSystem.clear();
-    
+
             this.countdown.start();
         } else {
             return;
@@ -460,18 +450,18 @@ export class GameScene extends window.Phaser.Scene {
 
     exitToMenu() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
-        this.hiscoreChecked = false;
-        if (this.musicOn) {
-            this.music.isPlaying ? this.music.stop() : null;
-            this.ambience.isPlaying ? this.ambience.stop() : null;
-            this.idle.isPlaying ? this.idle.stop() : null;
-            this.pith = 0.0;
-            this.race.setRate(1.0);
-            this.race.stop();
-            this.race_max.stop();
-            this.countdownSound.stop();
-        }
-        this.scene.start("MenuScene");
+            this.hiscoreChecked = false;
+            if (this.musicOn) {
+                this.music.isPlaying ? this.music.stop() : null;
+                this.ambience.isPlaying ? this.ambience.stop() : null;
+                this.idle.isPlaying ? this.idle.stop() : null;
+                this.pith = 0.0;
+                this.race.setRate(1.0);
+                this.race.stop();
+                this.race_max.stop();
+                this.countdownSound.stop();
+            }
+            this.scene.start("MenuScene");
         } else {
             return;
         }

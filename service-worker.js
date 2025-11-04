@@ -23,6 +23,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/images/cobblestone.jpg',
   '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',
+  '/fullspeed2skid/assets/images/hiscoreBG.jpg',
   '/fullspeed2skid/assets/images/stone.jpg',
   '/fullspeed2skid/assets/images/stone2.jpg',
   '/fullspeed2skid/assets/images/stone3.jpg',

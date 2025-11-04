@@ -17,6 +17,7 @@ export class LoadingScene extends window.Phaser.Scene {
     this.load.image('grass', 'assets/images/grass.jpg');
     this.load.image('bgc', 'assets/images/bgc.jpg'); // pełnoekranowe tło
     this.load.audio('ambience', 'assets/samples/game_ambience.mp3');
+    this.load.image('hiscoreBG', 'assets/images/hiscoreBG.jpg');
   }
 
   async create() {

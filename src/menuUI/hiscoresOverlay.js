@@ -15,52 +15,134 @@ export class HiscoreOverlay {
     return `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${centiseconds.toString().padStart(2, '0')}`;
   }
 
-  async show() {
-    if (this.scene.isOverlayOpen) return;
+  // async show() {
+  //   if (this.scene.isOverlayOpen) return;
 
-    const { width, height } = this.scene.sys.game.canvas;
+  //   const { width, height } = this.scene.sys.game.canvas;
 
-    this.scene.isOverlayOpen = true;
-    this.disableMenuButtons();
+  //   this.scene.isOverlayOpen = true;
+  //   this.disableMenuButtons();
 
-    this.blocker = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.8)
-      .setOrigin(0, 0)
-      .setDepth(998)
-      .setInteractive();
+  //   this.blocker = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.8)
+  //     .setOrigin(0, 0)
+  //     .setDepth(997)
+  //     .setInteractive();
 
-    this.hiscoreContainer = this.scene.add.container(width / 2, height / 2);
-    this.hiscoreContainer.setDepth(999);
+  //   this.hiscoreContainer = this.scene.add.container(width / 2, height / 2);
+  //   this.hiscoreContainer.setDepth(999);
+  //   const bgP = this.scene.add.image(0, 0, 'bgc').setOrigin(0, 0);
+  //   bgP.setDisplaySize(width, height);
+  //   bgP.setScrollFactor(0);
+  //   bgP.setDepth(998);
+  //   const bg = this.scene.add.graphics();
+  //   bg.fillStyle(Phaser.Display.Color.RGBStringToColor("rgba(20, 48, 46, 1)").color, 0.9);
+  //   bg.fillRoundedRect(-300, -200, 600, 400, 20);
+  //   this.hiscoreContainer.add(bg, bgP);
 
-    const bg = this.scene.add.graphics();
-    bg.fillStyle(Phaser.Display.Color.RGBStringToColor("rgba(20, 48, 46, 1)").color, 0.9);
-    bg.fillRoundedRect(-300, -200, 600, 400, 20);
-    this.hiscoreContainer.add(bg);
+  //   let hiscores = this.scene.hiscores;
 
-    let hiscores = this.scene.hiscores;
+  //   const trackKey = `track${this.scene.selectedTrack + 1}`;
+  //   const scores = hiscores.tracks?.[trackKey] || [];
 
-    const trackKey = `track${this.scene.selectedTrack + 1}`;
-    const scores = hiscores.tracks?.[trackKey] || [];
+  //   const title = this.scene.add.text(0, -136, `HISCORES - ${this.scene.tracks[this.scene.selectedTrack].label}`, {
+  //     fontFamily: 'Harting',
+  //     fontSize: '43px',
+  //     color: '#ed4c16ff'
+  //   }).setOrigin(0.5);
+  //   this.hiscoreContainer.add(title);
 
-    const title = this.scene.add.text(0, -136, `HISCORES - ${this.scene.tracks[this.scene.selectedTrack].label}`, {
-      fontFamily: 'Harting',
-      fontSize: '43px',
-      color: '#ed4c16ff'
-    }).setOrigin(0.5);
-    this.hiscoreContainer.add(title);
+  //   scores.forEach((entry, i) => {
+  //     const line = this.scene.add.text(-226, -70 + i * 60,
+  //       `${entry.place}. ${entry.nick}  ${this.msToStandardTime(entry.totalTime)}  [${this.msToStandardTime(entry.bestLap)}]`, {
+  //       fontFamily: 'Harting',
+  //       fontSize: '24px',
+  //       color: '#f0b5a1ff'
+  //     });
+  //     this.hiscoreContainer.add(line);
+  //   });
 
-    scores.forEach((entry, i) => {
-      const line = this.scene.add.text(-226, -70 + i * 60,
-        `${entry.place}. ${entry.nick}  ${this.msToStandardTime(entry.totalTime)}  [${this.msToStandardTime(entry.bestLap)}]`, {
+  //   this.blocker.on('pointerdown', () => this.hide());
+  // }
+async show() {
+  if (this.scene.isOverlayOpen) return;
+
+  const { width, height } = this.scene.sys.game.canvas;
+
+  this.scene.isOverlayOpen = true;
+  this.disableMenuButtons();
+
+  // blocker (pełne tło pod overlay)
+  this.blocker = this.scene.add.rectangle(0, 0, width, height, 0x000000, 0.8)
+    .setOrigin(0, 0)
+    .setDepth(997)
+    .setInteractive();
+
+  // centralny kontener (środek ekranu)
+  const containerX = width / 2;
+  const containerY = height / 2;
+  this.hiscoreContainer = this.scene.add.container(containerX, containerY);
+  this.hiscoreContainer.setDepth(999);
+
+  // parametry ramki (jak w oryginale)
+  const frameW = 600;
+  const frameH = 400;
+  const frameRadius = 5;
+
+  // PANEL (lokalny w kontenerze) - kolorowa ramka pod tekstami
+  const panel = this.scene.add.graphics();
+  panel.fillStyle(Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, 0.5);
+  // rysujemy RELATYWNIE do środka kontenera: origin kontenera jest w jego środku => -300,-200
+  panel.fillRoundedRect(-frameW / 2, -frameH / 2, frameW, frameH, frameRadius);
+  panel.setDepth(999);
+  this.hiscoreContainer.add(panel);
+
+  // MASKA w przestrzeni świata: rysujemy okrągły prostokąt dokładnie tam, gdzie jest kontener
+  const maskGraphics = this.scene.add.graphics();
+  maskGraphics.fillStyle(0xffffff);
+  maskGraphics.fillRoundedRect(containerX - frameW / 2, containerY - frameH / 2, frameW, frameH, frameRadius);
+  maskGraphics.setVisible(false);
+  maskGraphics.setDepth(998);
+  const geomMask = maskGraphics.createGeometryMask();
+
+  // TŁO (nie skalowane) umieszczone wewnątrz kontenera (0,0) — będzie przycięte maską
+  const bgImage = this.scene.add.image(0, 0, 'hiscoreBG').setOrigin(0.5, 0.5);
+  bgImage.setScrollFactor(0);
+  bgImage.setDepth(996);
+  bgImage.setMask(geomMask); // maska działa w world coords i przytnie obraz widoczny w kontenerze
+  this.hiscoreContainer.addAt(bgImage, 0);
+
+  // Zapisujemy referencję do maskGraphics, żeby usunąć go później w hide()
+  this._maskGraphics = maskGraphics;
+
+  // Tytuł i linie wyników (takie same pozycje jak wcześniej)
+  let hiscores = this.scene.hiscores;
+  const trackKey = `track${this.scene.selectedTrack + 1}`;
+  const scores = hiscores.tracks?.[trackKey] || [];
+
+  const title = this.scene.add.text(0, -136, `HISCORES - ${this.scene.tracks[this.scene.selectedTrack].label}`, {
+    fontFamily: 'Harting',
+    fontSize: '45px',
+    color: '#f4f4f4ff'
+  }).setOrigin(0.5).setShadow(2, 2, '#000000ff', 2, false, true);
+  title.setDepth(1000);
+  this.hiscoreContainer.add(title);
+
+  scores.forEach((entry, i) => {
+    const line = this.scene.add.text(0, -55 + i * 60,
+      `${entry.place}. ${entry.nick}  ${this.msToStandardTime(entry.totalTime)}  [${this.msToStandardTime(entry.bestLap)}]`, {
         fontFamily: 'Harting',
-        fontSize: '24px',
-        color: '#f0b5a1ff'
-      });
-      this.hiscoreContainer.add(line);
-    });
+        fontSize: '26px',
+        color: '#f4f4f4ff'
+      }).setOrigin(0.5,0.5).setShadow(2, 2, '#000000ff', 2, false, true);;
+    line.setDepth(1000);
+    this.hiscoreContainer.add(line);
+  });
 
-    this.blocker.on('pointerdown', () => this.hide());
-  }
+  // kliknięcie poza ramką zamyka overlay
+  this.blocker.on('pointerdown', () => this.hide());
+}
 
+  
   hide() {
     if (this.blocker) {
       this.blocker.destroy();
@@ -70,7 +152,7 @@ export class HiscoreOverlay {
       this.hiscoreContainer.destroy();
       this.hiscoreContainer = null;
     }
-
+if (this._maskGraphics) { this._maskGraphics.destroy(); this._maskGraphics = null; }
     this.scene.isOverlayOpen = false;
     this.enableMenuButtons();
   }

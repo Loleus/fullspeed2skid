@@ -318,11 +318,11 @@ export class GameScene extends window.Phaser.Scene {
                 }
                 // Jeśli gaz trzymany, zwiększ pitch do maxPitch
                 if (this.isThrottle) {
-                    this.pitch += (Math.abs(this.carController.getLocalSpeed() / 2000)) * dt;
+                    this.pitch += (Math.abs(this.carController.getLocalSpeed() / 1000)) * dt;
                     if (this.pitch > this.maxPitch) this.pitch = this.maxPitch;
                 } else {
                     // Jeśli puszczony, opadaj do minPitch
-                    this.pitch -= (Math.abs(this.carController.getLocalSpeed() / 2000)) * dt;
+                    this.pitch -= (Math.abs(this.carController.getLocalSpeed() / 1000)) * dt;
                     if (this.pitch < this.minPitch) this.pitch = this.minPitch;
                 }
             }

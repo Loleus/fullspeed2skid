@@ -282,13 +282,13 @@ export class GameScene extends window.Phaser.Scene {
                 return
             }
 
-            if (boom && !this.crash.isPlaying ) {
+            if (boom && !this.crash.isPlaying) {
                 this.crash.play();
             } else if (!boom && this.crash.isPlaying) {
                 return;
             }
 
-``
+            ``
             if (this.raceFinished) {
                 if (this.race.isPlaying && (!control.up || !control.down)) {
                     this.race && this.race.stop();
@@ -449,6 +449,7 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     exitToMenu() {
+        this.hiscoreChecked = false;
         if (this.musicOn) {
             this.music.isPlaying ? this.music.stop() : null;
             this.ambience.isPlaying ? this.ambience.stop() : null;

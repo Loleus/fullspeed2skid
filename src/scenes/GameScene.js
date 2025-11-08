@@ -72,7 +72,7 @@ export class GameScene extends window.Phaser.Scene {
         const { controller, sprite, speed } = factory.createPlayer({ x: start.x, y: start.y });
         this.carController = controller;
         this.car = sprite;
-        console.log("PLAYER SPEED:", this.speed);
+        console.log("PLAYER SPEED:", speed);
         const twoPlayers = !!worldData?.twoPlayers;
 
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
@@ -139,6 +139,7 @@ export class GameScene extends window.Phaser.Scene {
         this.countdown = new CountdownManager(this);
         this.countdown.start();
         console.log(this.carController);
+        console.log(this.aiController)
     }
 
     update(time, dt) {
@@ -235,6 +236,7 @@ export class GameScene extends window.Phaser.Scene {
             countdownWasActive,
             raceFinished: this.raceFinished,
             carController: this.carController,
+            aiController: this.aiController,
             skidMarksSystem: this.skidMarksSystem,
             gameMode: this.gameMode,
         });

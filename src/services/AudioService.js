@@ -53,7 +53,7 @@ export class AudioService {
             return;
         }
         
-        const { control, countdownWasActive, raceFinished, carController, skidMarksSystem, gameMode } = state;
+        const { control, countdownWasActive, raceFinished, carController, aiController, skidMarksSystem, gameMode } = state;
 
         if (countdownWasActive) {
             if (!this.sounds.idle.isPlaying && !this.sounds.countdownSound.isPlaying && !this.sounds.ambience.isPlaying) {
@@ -65,9 +65,10 @@ export class AudioService {
         }
 
         const boom = carController.collisionCount > 0;
-        if (boom && !this.sounds.crash.isPlaying) {
+        const AIboom = aiController.collisionCount > 0;
+        if ((AIboom || boom) && !this.sounds.crash.isPlaying) {
             this.sounds.crash.play();
-        } else if (!boom && this.sounds.crash.isPlaying) {
+        } else if ((!AIboom && !boom) && this.sounds.crash.isPlaying) {
             return;
         }
 

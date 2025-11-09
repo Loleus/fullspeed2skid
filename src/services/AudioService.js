@@ -65,7 +65,7 @@ export class AudioService {
         }
 
         const boom = carController.collisionCount > 0;
-        const AIboom = aiController.collisionCount > 0;
+        const AIboom = aiController?aiController.collisionCount > 0:null;
         if ((AIboom || boom) && !this.sounds.crash.isPlaying) {
             this.sounds.crash.play();
         } else if ((!AIboom && !boom) && this.sounds.crash.isPlaying) {

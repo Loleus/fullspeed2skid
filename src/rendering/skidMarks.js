@@ -106,7 +106,7 @@ export class SkidMarks {
     // --- LOGIKA 'PALENIA GUMY' (TYLKO TYLNE KOŁA: 0 i 2) ---
     if ((i === 0 || i === 2)) {
       // Palenie gumy tylko gdy gaz wciśnięty i prędkość do połowy maxSpeed
-      if (throttle > 0 && localSpeed >= 0 && localSpeed <= 0.5 * maxSpeed) {
+      if ((throttle > 0 || throttle < 0) && Math.abs(localSpeed) >= 0 && Math.abs(localSpeed) <= 0.5 * maxSpeed) {
         if (this.burnoutStartTime[i] === null) {
           this.burnoutStartTime[i] = performance.now();
           this.lastWheelPos[i] = curr; // Ustaw prev na curr, by ślad był rysowany od razu
@@ -133,7 +133,7 @@ export class SkidMarks {
                 // Kolor jak w bocznych śladach:
                 ctx.strokeStyle = '#222';
                 const minAlpha = 0.04, maxAlpha = 0.5;
-                const alpha = maxAlpha - (localSpeed / (0.5 * maxSpeed)) * (maxAlpha - minAlpha);
+                const alpha = maxAlpha - (Math.abs(localSpeed) / (0.5 * maxSpeed)) * (maxAlpha - minAlpha);
                 ctx.globalAlpha = alpha;
                 ctx.lineWidth = Math.max(1, this.wheelWidth - 6);
                 ctx.lineCap = 'round';

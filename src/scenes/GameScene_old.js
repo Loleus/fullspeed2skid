@@ -10,7 +10,6 @@ import { CountdownManager } from "../game/CountdownManager.js";
 import { LapsTimer } from "../game/LapsTimer.js";
 import { HiscoreService } from "../services/HiscoreService.js";
 import { SkidMarksSystem } from "../game/SkidMarksSystem.js";
-import { AudioService } from "../services/AudioService.js";
 
 export class GameScene extends window.Phaser.Scene {
     constructor() {
@@ -20,9 +19,6 @@ export class GameScene extends window.Phaser.Scene {
         this.collisionsEnabled = true;
         this.raceFinished = false;
         this.hiscoreChecked = false;
-        
-        // Utworzenie instancji AudioService
-        this.audioService = new AudioService(this);
     }
 
     isMobile() {
@@ -31,6 +27,10 @@ export class GameScene extends window.Phaser.Scene {
 
     init(data) {
         console.log(window._hiscores.tracks);
+        this.ambience = data.ambience;
+        if (this.ambience && !this.ambience.isPlaying) {
+            this.ambience.play();
+        };
         this.worldData = data.worldData;
         this.worldData.startFix = data.startFix;
         this.gameMode = data.gameMode || "PRACTICE";
@@ -45,17 +45,52 @@ export class GameScene extends window.Phaser.Scene {
         }
         this.load.image("car_p1", "assets/images/car.png");
         this.load.image("car_p2", "assets/images/car_X.png");
-
-        // Delegowanie ładowania audio do serwisu
-        this.audioService.preload();
+        this.load.audio('applause', 'assets/samples/game_applause.mp3');
+        this.load.audio('idle', 'assets/samples/game_idle.mp3');
+        this.load.audio('off', 'assets/samples/game_off.mp3');
+        this.load.audio('on', 'assets/samples/game_on.mp3');
+        this.load.audio('race', 'assets/samples/game_race.wav');
+        this.load.audio('race_max', 'assets/samples/game_race.wav');
+        this.load.audio('slide', 'assets/samples/game_slide.mp3');
+        this.load.audio('countdown', 'assets/samples/game_countdown.mp3');
+        this.load.audio('game_music', 'assets/samples/game_music.mp3');
+        this.load.audio('game_crash', 'assets/samples/game_crash.mp3');
     }
-    
-    // initAudio() - USUNIĘTA
+
+    initAudio() {
+        if (this.musicOn) {
+            this.idle = this.sound.add('idle', { volume: 0.2, loop: true });
+            this.applause = this.sound.add('applause', { volume: 1.0 });
+            this.off = this.sound.add('off', { volume: 0.2 });
+            this.on = this.sound.add('on', { volume: 0.2 });
+            this.race = this.sound.add('race', { volume: 0.2, rate: 1.0, loop: true });
+            this.race_max = this.sound.add('race_max', { volume: 0.2, rate: 1.5, loop: true });
+            this.slide = this.sound.add('slide', { volume: 0.4 });
+            this.countdownSound = this.sound.add('countdown', { volume: 0.4 });
+            this.music = this.sound.add('game_music', { volume: 0.4, loop: true });
+            this.crash = this.sound.add('game_crash', { volume: 0.6 });
+        }
+    }
 
     async create() {
-        // Delegowanie tworzenia audio do serwisu
-        this.audioService.create();
-        
+        this.maxPitch = 0.5;        // maksymalny pitch
+        this.minPitch = 0.0;        // pitch docelowy po puszczeniu
+        this.pitch = 0.0;           // aktualny pitch
+        this.isThrottle = false;    // czy gaz wciśnięty
+
+        console.log(this.registry.get('audioEnabled'));
+
+        if (!this.registry.get('audioEnabled')) {
+            console.log('Muting audio as per registry setting');
+            this.sound.mute = true;
+            console.log("niemagrac");
+        }
+        if (this.sound.mute !== undefined) {
+            this.musicOn = !this.sound.mute;
+            this.initAudio()
+            console.log("magrac")
+        }
+
         const worldData = this.worldData || window._worldData;
         const viewW = this.sys.game.config.width;
         const viewH = this.sys.game.config.height;
@@ -72,7 +107,7 @@ export class GameScene extends window.Phaser.Scene {
         const { controller, sprite, speed } = factory.createPlayer({ x: start.x, y: start.y });
         this.carController = controller;
         this.car = sprite;
-        console.log("PLAYER SPEED:", speed);
+        console.log("PLAYER SPEED:", this.speed);
         const twoPlayers = !!worldData?.twoPlayers;
 
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
@@ -139,16 +174,15 @@ export class GameScene extends window.Phaser.Scene {
         this.countdown = new CountdownManager(this);
         this.countdown.start();
         console.log(this.carController);
-        console.log(this.aiController)
     }
 
     update(time, dt) {
-        const deltaSeconds = dt / 1000;
+        dt /= 1000;
 
         const countdownWasActive = this.countdown?.isActive();
 
         if (this.countdown?.isActive()) {
-            this.countdown.update(deltaSeconds);
+            this.countdown.update(dt);
         }
 
         if (countdownWasActive && !this.countdown?.isActive() && !this.lapsTimer.isTimerStarted()) {
@@ -182,8 +216,8 @@ export class GameScene extends window.Phaser.Scene {
             control.right = false;
         }
 
-        this.carController.update(deltaSeconds, control, this.worldSize, this.worldSize);
-        this.lapsTimer.update(deltaSeconds);
+        this.carController.update(dt, control, this.worldSize, this.worldSize);
+        this.lapsTimer.update(dt);
         const pos = this.carController.getPosition();
         this.lapsTimer.checkpointUpdate(pos);
 
@@ -200,20 +234,28 @@ export class GameScene extends window.Phaser.Scene {
                 control2.left = false;
                 control2.right = false;
             }
-            this.p2Controller.update(deltaSeconds, control2, this.worldSize, this.worldSize);
+            this.p2Controller.update(dt, control2, this.worldSize, this.worldSize);
         }
 
         if (this.aiController) {
+            // 🔸 KLUCZOWA ZMIANA: Tworzymy pusty control dla AI po zakończeniu wyścigu
             if (countdownWasActive) {
                 this.aiController.throttleLock = true;
-                this.aiController.updateAI(deltaSeconds, this.worldSize, this.worldSize);
+                this.aiController.updateAI(dt, this.worldSize, this.worldSize);
             } else if (this.gameMode === "RACE" && this.raceFinished) {
+                // 🔸 Po zakończeniu wyścigu AI używa pustego kontrolu (jak gracz)
                 this.aiController.throttleLock = false;
-                const emptyControl = { up: false, down: false, left: false, right: false };
-                this.aiController.update(deltaSeconds, emptyControl, this.worldSize, this.worldSize);
+                // Zamiast updateAI, używamy update z pustym controlem
+                const emptyControl = {
+                    up: false,
+                    down: false,
+                    left: false,
+                    right: false
+                };
+                this.aiController.update(dt, emptyControl, this.worldSize, this.worldSize);
             } else {
                 this.aiController.throttleLock = false;
-                this.aiController.updateAI(deltaSeconds, this.worldSize, this.worldSize);
+                this.aiController.updateAI(dt, this.worldSize, this.worldSize);
             }
         }
 
@@ -226,27 +268,119 @@ export class GameScene extends window.Phaser.Scene {
         if (this.minimapa && this.world) {
             this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
         }
-        
-        this.cameraManager?.update(deltaSeconds);
+        let boom = this.carController.collisionCount > 0;
+        this.cameraManager?.update(dt);
         if (this.hudCamera) this.hudCamera.setRotation(0);
 
-        // Delegowanie aktualizacji audio do serwisu
-        this.audioService.update(deltaSeconds, {
-            control,
-            countdownWasActive,
-            raceFinished: this.raceFinished,
-            carController: this.carController,
-            aiController: this.aiController,
-            skidMarksSystem: this.skidMarksSystem,
-            gameMode: this.gameMode,
-        });
+        if (!this.sound.mute) {
+
+            if (countdownWasActive) {
+                if (!this.idle.isPlaying && !this.countdownSound.isPlaying) {
+                    this.countdownSound.play();
+                    this.gameMode === "RACE" ? this.music.play() : this.music.stop();
+                }
+                return
+            }
+
+            if (boom && !this.crash.isPlaying) {
+                this.crash.play();
+            } else if (!boom && this.crash.isPlaying) {
+                return;
+            }
+
+            ``
+            if (this.raceFinished) {
+                if (this.race.isPlaying && (!control.up || !control.down)) {
+                    this.race && this.race.stop();
+                    this.music.stop();
+                    if (!this.idle.isPlaying) {
+                        this.off && this.off.play();
+                        this.time.delayedCall(700, () => {
+                            this.idle && this.idle.play();
+                        })
+                    };
+                }
+            }
+
+
+            if (this.slide.isPlaying && (this.carController.getWheelSlip([0, 2]) >= 0.3 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
+                return
+            } else if (!this.slide.isPlaying && (this.carController.getWheelSlip([0, 2]) >= 0.3 || this.skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] == true)) {
+                this.slide.play()
+            } else {
+                this.slide.stop();
+            }
+            if (this.race.isPlaying) {
+                if ((control.up || control.down) && !this.isThrottle) {
+                    this.isThrottle = true;
+                } else if ((!control.up && !control.down) && this.isThrottle) {
+                    this.isThrottle = false;
+                }
+                // Jeśli gaz trzymany, zwiększ pitch do maxPitch
+                if (this.isThrottle) {
+                    this.pitch += (Math.abs(this.carController.getLocalSpeed() / 1000)) * dt;
+                    if (this.pitch > this.maxPitch) this.pitch = this.maxPitch;
+                } else {
+                    // Jeśli puszczony, opadaj do minPitch
+                    this.pitch -= (Math.abs(this.carController.getLocalSpeed() / 1000)) * dt;
+                    if (this.pitch < this.minPitch) this.pitch = this.minPitch;
+                }
+            }
+
+            // Zaktualizuj rate (pitch) dźwięku. W Phaser rate odpowiada prędkości odtwarzania.
+            // Jeśli używasz WebAudio API bezpośrednio, to manipuluj playbackRate albo detune zależnie od potrzeb.
+            // Opcjonalnie: zmiana głośności zależnie od pitch dla efektu
+            // this.loopSound.setVolume(0.5 + 0.5 * Math.min(this.pitch / this.maxPitch, 1));
+            this.race.setRate(1.0 + this.pitch);
+
+            if ((control.up || control.down) && !this.on.isPlaying && !this.race.isPlaying && !this.race_max.isPlaying && this.carController.throttleLock == false) {
+                this.on && this.on.play();
+                this.time.delayedCall(672, () => {
+                    this.race && this.race.play();
+                    this.idle && this.idle.stop();
+                    this.on.stop()
+                });
+            } else if ((control.up || control.down) && this.race.isPlaying && this.carController.throttleLock == false) {
+                if (this.race.rate >= 1.49) {
+                    this.race.pause();
+                    this.race_max && this.race_max.play();
+                }
+            } else if (!control.up && !control.down && this.race.isPlaying && this.carController.throttleLock == false) {
+                if (this.race.rate >= 1.001) {
+                    return
+                } else if (this.race.rate < 1.001) {
+                    this.race && this.race.stop();
+                    if (!this.idle.isPlaying && !this.race.isPlaying) {
+                        this.off && this.off.play();
+                        this.time.delayedCall(800, () => {
+                            this.idle && this.idle.play();
+                        })
+                    };
+                }
+            } else if (this.race_max.isPlaying && !control.up && !control.down && this.carController.throttleLock == false) {
+                this.race_max && this.race_max.stop();
+                this.race && this.race.resume();
+            } else if (this.carController.throttleLock == true) {
+                control.up = false;
+                control.down = false;
+                this.race && this.race.stop();
+                this.race_max && this.race_max.stop();
+                this.pitch = 0.0;
+                if (!this.idle.isPlaying && !this.off.isPlaying) {
+                    this.off && this.off.play();
+                    this.time.delayedCall(800, () => {
+                        this.idle && this.idle.play();
+                    })
+                };
+            }
+        }
     }
 
     showRaceFinish() {
         if (this.gameMode === "RACE" && this.raceFinishText) {
             this.raceFinished = true;
             this.raceFinishText.setVisible(true);
-            this.handleHiscorePrompt();
+            this.handleHiscorePrompt(); // NEW
         }
     }
 
@@ -257,12 +391,11 @@ export class GameScene extends window.Phaser.Scene {
             trackIndex: window._selectedTrack || 0,
             lapsTimer: this.lapsTimer
         }
-        if (this.hiscoreService.checked(hiscoreParams)) {
-            // Wywołanie metody z serwisu audio
-            this.audioService.playApplause();
+        if (this.hiscoreService.checked(hiscoreParams) && this.musicOn && !this.applause.isPlaying) {
+            this.applause.play();
             this.time.delayedCall(10000, () => {this.hiscoreService.tryQualify(hiscoreParams)});
         }
-        if (this.sound.mute) {
+        if (!this.musicOn) {
             this.hiscoreService.tryQualify(hiscoreParams)
         }
     }
@@ -270,17 +403,25 @@ export class GameScene extends window.Phaser.Scene {
     resetGame() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
-            
-            // Delegowanie resetu audio
-            this.audioService.reset();
-
+            if (this.musicOn) {
+                this.music.isPlaying ? this.music.stop() : null;
+                this.ambience.isPlaying ? this.ambience.stop() : null;
+                this.idle.isPlaying ? this.idle.stop() : null;
+                this.pith = 0.0;
+                this.race.setRate(1.0);
+                this.race.stop();
+                this.race_max.stop();
+                this.countdownSound.play();
+                this.gameMode === "RACE" ? this.music.play() : null;
+            }
             this.lapsTimer.reset();
             const worldData = this.worldData || window._worldData;
             const start = worldData.startPos;
 
             this.raceFinished = false;
             this.carController.resetState(start.x, start.y);
-
+            console.log(this.carController.getLocalSpeed());
+            console.log(this.race.rate);
             if (this.aiController && this.worldData.waypoints?.length > 0) {
                 const aiStart = this.worldData.waypoints[0];
                 this.aiController.resetState(aiStart.x, aiStart.y);
@@ -298,19 +439,31 @@ export class GameScene extends window.Phaser.Scene {
             }
 
             this.cameraManager?.reset();
+
             this.skidMarksSystem.clear();
+
             this.countdown.start();
+        } else {
+            return;
         }
     }
 
     exitToMenu() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
-            
-            // Delegowanie zatrzymania audio przy wyjściu
-            this.audioService.exitToMenu();
-            
+            if (this.musicOn) {
+                this.music.isPlaying ? this.music.stop() : null;
+                this.ambience.isPlaying ? this.ambience.stop() : null;
+                this.idle.isPlaying ? this.idle.stop() : null;
+                this.pith = 0.0;
+                this.race.setRate(1.0);
+                this.race.stop();
+                this.race_max.stop();
+                this.countdownSound.stop();
+            }
             this.scene.start("MenuScene");
+        } else {
+            return;
         }
     }
 }

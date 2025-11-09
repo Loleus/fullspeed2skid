@@ -6,7 +6,7 @@ export class PlayerCar extends Car {
     this.isAI = false;
     this.isPlayer = true;
     this.playerIndex = playerIndex; // 1 lub 2
-    
+
     // Dodatkowe właściwości specyficzne dla gracza
     this.playerControls = null;
     this.gyroEnabled = false;
@@ -22,7 +22,7 @@ export class PlayerCar extends Car {
     let localMaxRevSpeed = this.maxRevSpeed * grip;
     let localSlipStartSpeed = this.SLIP_START_SPEED_RATIO * localMaxSpeed;
     let localSlipBase = this.slipBase;
-    
+
     // Dynamiczne tłumienie boczne: na bardzo śliskich nawierzchniach (grip < 0.5) auto praktycznie nie trzyma się drogi
     this.sideFrictionMultiplier = grip < 0.5 ? 0.2 : 3;
 
@@ -54,7 +54,7 @@ export class PlayerCar extends Car {
       force = throttle * this.revAccel;
     }
     this.v_x += force * dt;
-    
+
     // Ograniczanie prędkości zależnie od kierunku
     if (this.v_x >= 0) {
       this.v_x = Phaser.Math.Clamp(this.v_x, 0, localMaxSpeed);
@@ -65,7 +65,7 @@ export class PlayerCar extends Car {
     // Model poślizgu: siła boczna (drift) - specyficzny dla gracza
     let steerAbs = Math.abs(this.steerAngle);
     let speedAbs = Math.abs(this.v_x);
-    if ( speedAbs > localSlipStartSpeed && steerAbs > this._slipSteerThreshold ) {
+    if (speedAbs > localSlipStartSpeed && steerAbs > this._slipSteerThreshold) {
       let slipSteerRatio = (steerAbs - this._slipSteerThreshold) / (this.maxSteer - this._slipSteerThreshold);
       slipSteerRatio = Phaser.Math.Clamp(slipSteerRatio, 0, 1);
       let slipSign = -Math.sign(this.steerAngle);
@@ -73,6 +73,9 @@ export class PlayerCar extends Car {
       this.v_y += slipStrength * dt;
       const maxVy = localMaxSpeed * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
+      // przy poślizgu dodatkowo zdejmij część v_x (proporcjonalnie do slipSteerRatio)
+      // const slipEnergyDrain = 0.08; // tunowalny (0.02..0.2)
+      // this.v_x *= 1 - slipEnergyDrain * slipSteerRatio;
     }
 
     // Tłumienie boczne
@@ -93,6 +96,29 @@ export class PlayerCar extends Car {
     let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
     let F_total = F_drag + F_roll;
     this.v_x -= (F_total / this.carMass) * dt;
+    // Na końcu updatePhysics, po wszystkich zmianach this.v_x i this.v_y
+    // Ogranicz prędkość wektorową do localMaxSpeed (dla przodu) oraz do localMaxRevSpeed (dla tyłu)
+    let forwardSign = Math.sign(this.v_x) || 1; // jeśli v_x == 0, traktuj jako przód
+    let allowedMax = forwardSign >= 0 ? localMaxSpeed : localMaxRevSpeed;
+
+    // let speed = Math.hypot(this.v_x, this.v_y);
+    // if (speed > allowedMax) {
+    //   let scale = allowedMax / speed;
+    //   this.v_x *= scale;
+    //   this.v_y *= scale;
+    // }
+
+    let speed = Math.hypot(this.v_x, this.v_y);
+    if (speed > allowedMax) {
+      // obróć skalowanie żeby preferować zachowanie v_x: zmniejsz v_y bardziej niż v_x
+      let excess = speed - allowedMax;
+      // proporcja redukcji dla v_y większa niż dla v_x
+      let reduceVy = Math.min(Math.abs(this.v_y), excess * 0.04);
+      let reduceVx = Math.min(Math.abs(this.v_x), excess * 0.96);
+      this.v_y -= Math.sign(this.v_y) * reduceVy;
+      this.v_x -= Math.sign(this.v_x) * reduceVx;
+    }
+
 
     // Aktualizuj sprite
     this.carSprite.x = this.carX;
@@ -105,7 +131,7 @@ export class PlayerCar extends Car {
   updateInput(control) {
     // Reset licznika kolizji
     this.collisionCount = 0;
-    
+
     // Gas - specyficzna logika dla gracza
     let throttle = 0;
     if (!this.throttleLock) {
@@ -116,13 +142,13 @@ export class PlayerCar extends Car {
         this.throttleLock = false;
       }
     }
-    
+
     // Skręt - specyficzny dla gracza
     const steerRaw = control.left ? -1 : control.right ? 1 : 0;
 
     // Wygładzanie sterowania
     this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
-    
+
     return { throttle, steerInput: this.steerInput };
   }
 

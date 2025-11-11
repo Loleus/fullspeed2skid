@@ -1,36 +1,52 @@
 import { Car } from "./Car.js";
 
+// Klasa gracza (1 lub 2)
 export class PlayerCar extends Car {
   constructor(scene, carSprite, worldData, playerIndex = 1) {
     super(scene, carSprite, worldData);
+
+    // Główne flagi identyfikacji
     this.isAI = false;
     this.isPlayer = true;
+
+    // Numer gracza
     this.playerIndex = playerIndex; // 1 lub 2
 
-    // Dodatkowe właściwości specyficzne dla gracza
+    // Dodatkowe właściwości gracza
     this.playerControls = null;
     this.gyroEnabled = false;
     this.touchControls = false;
   }
 
-  // Implementacja fizyki specyficzna dla gracza
+  // Implementacja fizyki gracza
   updatePhysics(dt, steerInput, throttle, surface) {
-    // Pobierz parametry nawierzchni
+
     this.throttle = throttle;
+
+    // Pobierz parametry nawierzchni
     let grip = this.worldData.surfaceParams?.[surface]?.grip ?? 1.0;
     let localMaxSpeed = this.maxSpeed * grip;
     let localMaxRevSpeed = this.maxRevSpeed * grip;
-    let localSlipStartSpeed = this.SLIP_START_SPEED_RATIO * localMaxSpeed;
+
+    // Uwzglednij cofanie przy rysowaniu poślizgu
+    const slipRatioRev = this.SLIP_START_SPEED_RATIO_REV ?? this.SLIP_START_SPEED_RATIO;
+    const dirMax = this.v_x >= 0 ? localMaxSpeed : localMaxRevSpeed;
+    const localSlipStartSpeedDir = (this.v_x >= 0 ? this.SLIP_START_SPEED_RATIO : slipRatioRev) * dirMax;
+
+    // Próg poślizgu
     let localSlipBase = this.slipBase;
 
     // Dynamiczne tłumienie boczne: na bardzo śliskich nawierzchniach (grip < 0.5) auto praktycznie nie trzyma się drogi
     this.sideFrictionMultiplier = grip < 0.5 ? 0.2 : 3;
 
-    // Sterowanie skrętem - specyficzne dla gracza z obsługą żyroskopu
+    // Sterowanie skrętem - z obsługą żyroskopu
     if (Math.abs(steerInput) > this.steerInputThreshold) {
-      // Dla gracza używaj odpowiedniego sterowania (żyroskop/standardowe) - identycznie jak przed modularyzacją
+
+      // Dla gracza używaj odpowiedniego sterowania (żyroskop/standardowe)
       window._gyroTilt ? this.steerAngle = steerInput * Math.abs(window._gyroTilt.toFixed(1)) * dt : this.steerAngle += steerInput * this.steerSpeed * dt;
       this.steerAngle = Phaser.Math.Clamp(this.steerAngle, -this.maxSteer, this.maxSteer);
+
+      // Skręcanie - logika
     } else if (this.steerAngle !== 0) {
       let speedAbs = Math.abs(this.v_x);
       if (speedAbs > this.speedThresholdForSteerReturn) {
@@ -65,16 +81,16 @@ export class PlayerCar extends Car {
     // Model poślizgu: siła boczna (drift) - specyficzny dla gracza
     let steerAbs = Math.abs(this.steerAngle);
     let speedAbs = Math.abs(this.v_x);
-    if (speedAbs > localSlipStartSpeed && steerAbs > this._slipSteerThreshold) {
+    if (speedAbs > localSlipStartSpeedDir && steerAbs > this._slipSteerThreshold) {
       let slipSteerRatio = (steerAbs - this._slipSteerThreshold) / (this.maxSteer - this._slipSteerThreshold);
       slipSteerRatio = Phaser.Math.Clamp(slipSteerRatio, 0, 1);
       let slipSign = -Math.sign(this.steerAngle);
       let slipStrength = localSlipBase * (speedAbs / localMaxSpeed) * slipSteerRatio * slipSign;
       this.v_y += slipStrength * dt;
-      const maxVy = localMaxSpeed * this.maxVyRatio;
+      const maxVy = dirMax * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
-      // przy poślizgu dodatkowo zdejmij część v_x (proporcjonalnie do slipSteerRatio)
-      // const slipEnergyDrain = 0.08; // tunowalny (0.02..0.2)
+      // przy poślizgu można dodatkowo zdjąć część v_x (proporcjonalnie do slipSteerRatio)
+      // const slipEnergyDrain = 0.08; // strojenie (0.02..0.2)
       // this.v_x *= 1 - slipEnergyDrain * slipSteerRatio;
     }
 
@@ -96,29 +112,22 @@ export class PlayerCar extends Car {
     let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
     let F_total = F_drag + F_roll;
     this.v_x -= (F_total / this.carMass) * dt;
-    // Na końcu updatePhysics, po wszystkich zmianach this.v_x i this.v_y
+
     // Ogranicz prędkość wektorową do localMaxSpeed (dla przodu) oraz do localMaxRevSpeed (dla tyłu)
     let forwardSign = Math.sign(this.v_x) || 1; // jeśli v_x == 0, traktuj jako przód
     let allowedMax = forwardSign >= 0 ? localMaxSpeed : localMaxRevSpeed;
-
-    // let speed = Math.hypot(this.v_x, this.v_y);
-    // if (speed > allowedMax) {
-    //   let scale = allowedMax / speed;
-    //   this.v_x *= scale;
-    //   this.v_y *= scale;
-    // }
-
     let speed = Math.hypot(this.v_x, this.v_y);
     if (speed > allowedMax) {
+
       // obróć skalowanie żeby preferować zachowanie v_x: zmniejsz v_y bardziej niż v_x
       let excess = speed - allowedMax;
+
       // proporcja redukcji dla v_y większa niż dla v_x
       let reduceVy = Math.min(Math.abs(this.v_y), excess * 0.04);
       let reduceVx = Math.min(Math.abs(this.v_x), excess * 0.96);
       this.v_y -= Math.sign(this.v_y) * reduceVy;
       this.v_x -= Math.sign(this.v_x) * reduceVx;
     }
-
 
     // Aktualizuj sprite
     this.carSprite.x = this.carX;
@@ -127,45 +136,45 @@ export class PlayerCar extends Car {
     this.carSprite.steerAngle = this.steerAngle;
   }
 
-  // Implementacja sterowania specyficzna dla gracza
+  // Implementacja sterowania gracza
   updateInput(control) {
+
     // Reset licznika kolizji
     this.collisionCount = 0;
 
-    // Gas - specyficzna logika dla gracza
+    // Gaz
     let throttle = 0;
     if (!this.throttleLock) {
       throttle = control.up ? 1 : control.down ? -1 : 0;
     } else {
-      // Dla gracza wymagaj puszczenia gazu
+      // Wymagaj puszczenia gazu po kolizji
       if (!control.up && !control.down) {
         this.throttleLock = false;
       }
     }
 
-    // Skręt - specyficzny dla gracza
+    // Skręt
     const steerRaw = control.left ? -1 : control.right ? 1 : 0;
 
     // Wygładzanie sterowania
     this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
-
     return { throttle, steerInput: this.steerInput };
   }
 
-  // Metody specyficzne dla gracza
+  // Ustawienie sterowania (keys/gyro/touch)
   setPlayerControls(controls) {
     this.playerControls = controls;
   }
-
+  // Aktywuj żyroskop
   enableGyro(enabled = true) {
     this.gyroEnabled = enabled;
   }
-
+  // Aktywuj dotyk
   enableTouchControls(enabled = true) {
     this.touchControls = enabled;
   }
 
-  // Dodatkowe metody specyficzne dla gracza
+  // Getter stanu
   getPlayerStats() {
     return {
       playerIndex: this.playerIndex,
@@ -175,12 +184,10 @@ export class PlayerCar extends Car {
     };
   }
 
-  // Metoda do resetowania stanu gracza
+  // Reset stanu gracza
   resetPlayerState(startX, startY, startAngle = -Math.PI / 2) {
     this.resetState(startX, startY, startAngle);
     this.throttleLock = false;
     this.collisionImmunity = 0;
   }
 }
-
-

@@ -17,6 +17,7 @@ export const carConfig = {
   maxRevSpeedRatio: 0.8,
   slipBase: 700,
   SLIP_START_SPEED_RATIO: 0.8,
+  SLIP_START_SPEED_RATIO_REV: 0.8,
   SLIP_STEER_THRESHOLD_RATIO: 0.4,
   obstacleBounce: 0.3,
   COLLISION_WIDTH_RATIO: 0.6,

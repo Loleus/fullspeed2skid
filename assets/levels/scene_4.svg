@@ -6,7 +6,7 @@
 	.st0{fill:#FFFFFF;}
 	.st1{fill:#64566D;}
 	.st2{display:none;}
-	.st3 {fill: rgba(254,255,244,0.5);}
+	.st3 {fill: rgba(255,255,255,0.8);}
 </style>
 <rect id="BACKGROUND_grass" y="0" width="1024" height="1024"/>
 <g id="OBSTACLES">

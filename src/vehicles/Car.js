@@ -1,4 +1,6 @@
 import { carConfig } from './CarConfig.js';
+
+// Główna klasa GRACZA (Player i AI)
 export class Car {
   constructor(scene, carSprite, worldData) {
     this.scene = scene;
@@ -7,7 +9,7 @@ export class Car {
     this.body = carSprite.body;
     this.isAI = false; // Flaga określająca czy to samochód AI
     this.isPlayer = false; // Flaga określająca czy to samochód gracza
-    
+
     // Importuj parametry z configa
     Object.assign(this, carConfig);
 
@@ -50,17 +52,19 @@ export class Car {
       return { cos: Math.cos(angle), sin: Math.sin(angle) };
     });
   }
-resetState(startX, startY, startAngle = -Math.PI / 2) {
+
+  resetState(startX, startY, startAngle = -Math.PI / 2) {
     this.carX = startX;
     this.carY = startY;
-    
+
     // Pobierz korektę rotacji z tracks.json przez worldData
-    const startFix = this.worldData?.startFix ? 
-        Phaser.Math.DegToRad(parseFloat(this.worldData.startFix)) : 0;
+    const startFix = this.worldData?.startFix ?
+      Phaser.Math.DegToRad(parseFloat(this.worldData.startFix)) : 0;
     console.log('Start fix (radians):', startFix);
+
     // Zastosuj podstawową rotację + korektę
     this.carAngle = startAngle + startFix;
-    
+
     this.v_x = 0;
     this.v_y = 0;
     this.steerAngle = 0;
@@ -71,7 +75,7 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
-}
+  }
 
   // Pobierz rogi auta dla kolizji
   getCarCorners(x, y, rot, width, height) {
@@ -123,12 +127,11 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
       const { cos, sin } = this.collisionCircle[i];
       const px = this.carX + a * cos * Math.cos(this.carAngle) - b * sin * Math.sin(this.carAngle);
       const py = this.carY + a * cos * Math.sin(this.carAngle) + b * sin * Math.cos(this.carAngle);
-
+      // Kolizja z przeszkodą
       if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
         return true;
       }
     }
-
     return false;
   }
 
@@ -169,6 +172,7 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
       bounceVecY = Math.sin(angle) * minBounce;
     }
 
+    // Akrualizacja współrzędnych auta po odbiciu
     this.v_x = bounceVecX * cosA + bounceVecY * sinA;
     this.v_y = -bounceVecX * sinA + bounceVecY * cosA;
 
@@ -200,8 +204,8 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
 
   // Sprawdź kolizje między autami
   checkCarCollision() {
-        if (!this.scene.collisionsEnabled || !this.opponentController) {
-        return false;
+    if (!this.scene.collisionsEnabled || !this.opponentController) {
+      return false;
     }
     const opponent = this.opponentController || (this.isAI ? this.scene.carController : this.scene.aiController);
     if (!opponent) return false;
@@ -215,7 +219,7 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
   update(dt, control, worldW, worldH) {
     // Pobierz sterowanie
     const { throttle, steerInput } = this.updateInput(control);
-    
+
     // Cache nawierzchni
     let dx = Math.abs((this.carX - (this.lastSurfaceCheckX ?? this.carX)));
     let dy = Math.abs((this.carY - (this.lastSurfaceCheckY ?? this.carY)));
@@ -224,11 +228,11 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
       this.lastSurfaceCheckX = this.carX;
       this.lastSurfaceCheckY = this.carY;
     }
-    
+
     // Zapamiętaj pozycję przed ruchem
     let prevCarX = this.carX;
     let prevCarY = this.carY;
-    
+
     // Aktualizuj fizykę
     this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
 
@@ -237,7 +241,7 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
       this.collisionImmunity -= dt;
       if (this.collisionImmunity < 0) this.collisionImmunity = 0;
     }
-    
+
     // Kolizje między autami sprawdzaj zawsze
     if (this.collisionImmunity <= 0) {
       if (this.checkEllipseCollision()) {
@@ -285,18 +289,18 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
     const halfH = this.CAR_HEIGHT / 2;
     const xOff = halfH - 8;
     const yOff = halfW - 8;
-    
+
     const offsets = [
       { x: -xOff, y: -yOff }, // FL (lewy przód)
       { x: xOff, y: -yOff }, // FR (prawy przód)
       { x: -xOff, y: yOff }, // RL (lewy tył)
       { x: xOff, y: yOff }, // RR (prawy tył)
     ];
-    
+
     const off = offsets[i];
     const cosA = Math.cos(this.carAngle);
     const sinA = Math.sin(this.carAngle);
-    
+
     return {
       x: this.carX + off.x * cosA - off.y * sinA,
       y: this.carY + off.x * sinA + off.y * cosA
@@ -316,6 +320,7 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
     return this.throttle;
   }
 
+  // Getter pełnego stanu
   getFullState() {
     return {
       steerAngle: this.steerAngle,
@@ -328,4 +333,4 @@ resetState(startX, startY, startAngle = -Math.PI / 2) {
       speed: Math.hypot(this.v_x, this.v_y)
     };
   }
-} 
+}

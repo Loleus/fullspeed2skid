@@ -1,6 +1,6 @@
 import { Car } from "./Car.js";
 
-// Klasa gracza (1 lub 2)
+// Klasa Playera (1 lub 2)
 export class PlayerCar extends Car {
   constructor(scene, carSprite, worldData, playerIndex = 1) {
     super(scene, carSprite, worldData);

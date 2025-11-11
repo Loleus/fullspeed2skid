@@ -34,17 +34,17 @@ export class AudioService {
         this.musicOn = !this.scene.sound.mute;
 
         if (this.musicOn) {
-            this.sounds.idle = this.scene.sound.add('idle', { volume: 0.2, loop: true });
+            this.sounds.idle = this.scene.sound.add('idle', { volume: 0.6, loop: true });
             this.sounds.applause = this.scene.sound.add('applause', { volume: 1.0 });
-            this.sounds.off = this.scene.sound.add('off', { volume: 0.2 });
-            this.sounds.on = this.scene.sound.add('on', { volume: 0.2 });
-            this.sounds.race = this.scene.sound.add('race', { volume: 0.2, rate: 1.0, loop: true });
-            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.2, rate: 1.5, loop: true });
-            this.sounds.slide = this.scene.sound.add('slide', { volume: 0.4 });
-            this.sounds.countdownSound = this.scene.sound.add('countdown', { volume: 0.4 });
-            this.sounds.music = this.scene.sound.add('game_music', { volume: 0.4, loop: true });
-            this.sounds.crash = this.scene.sound.add('game_crash', { volume: 0.6 });
-            this.sounds.ambience = this.scene.sound.add('ambience', { volume: 0.6, loop: true });
+            this.sounds.off = this.scene.sound.add('off', { volume: 0.6 });
+            this.sounds.on = this.scene.sound.add('on', { volume: 0.6 });
+            this.sounds.race = this.scene.sound.add('race', { volume: 0.6, rate: 1.0, loop: true });
+            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.6, rate: 1.5, loop: true });
+            this.sounds.slide = this.scene.sound.add('slide', { volume: 1 });
+            this.sounds.countdownSound = this.scene.sound.add('countdown', { volume: 0.8 });
+            this.sounds.music = this.scene.sound.add('game_music', { volume: 0.8, loop: true });
+            this.sounds.crash = this.scene.sound.add('game_crash', { volume: 1 });
+            this.sounds.ambience = this.scene.sound.add('ambience', { volume: 1, loop: true });
         }
     }
 

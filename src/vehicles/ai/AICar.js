@@ -3,12 +3,12 @@ import { aiConfig } from "./aiConfig.js";
 import { AIDriving } from "./aiDriving.js";
 import { CollisionManager } from "./CollisionManager.js";
 
+// Klasa przeciwnika AI
 export class AICar extends Car {
   constructor(scene, carSprite, worldData, waypoints) {
     super(scene, carSprite, worldData);
     this.isAI = true; // Ustawiamy flagę AI
     this.config = aiConfig;
-
     this.waypoints = waypoints;
     this.currentWaypointIndex = 0;
 
@@ -22,7 +22,7 @@ export class AICar extends Car {
     this.steerCommand = 0;
     this.debugTimer = 0;
     this.debugInterval = this.config.debugInterval;
-    
+
     // Stan wykrywania utknięcia
     this.stuckDetector = {
       lastPosition: { x: 0, y: 0 },
@@ -45,7 +45,7 @@ export class AICar extends Car {
       reverseStartTime: 0,
       reverseDuration: 0
     };
-    
+
     // Inicjalizacja menedżera kolizji
     this.collisionManager = new CollisionManager();
 
@@ -62,7 +62,7 @@ export class AICar extends Car {
     let localMaxRevSpeed = this.maxRevSpeed * grip;
     let localSlipStartSpeed = this.SLIP_START_SPEED_RATIO * localMaxSpeed;
     let localSlipBase = this.slipBase;
-    
+
     // Dynamiczne tłumienie boczne
     this.sideFrictionMultiplier = grip < 0.5 ? 0.2 : 3;
 
@@ -93,7 +93,7 @@ export class AICar extends Car {
       force = throttle * this.revAccel;
     }
     this.v_x += force * dt;
-    
+
     // Ograniczanie prędkości
     if (this.v_x >= 0) {
       this.v_x = Phaser.Math.Clamp(this.v_x, 0, localMaxSpeed);
@@ -147,7 +147,7 @@ export class AICar extends Car {
   updateInput(control) {
     // Reset licznika kolizji
     this.collisionCount = 0;
-    
+
     // AI automatycznie odblokowuje gaz po czasie
     let throttle = 0;
     if (!this.throttleLock) {
@@ -156,13 +156,13 @@ export class AICar extends Car {
       this.throttleLock = false;
       throttle = control.up ? 1 : control.down ? -1 : 0;
     }
-    
+
     // Skręt
     const steerRaw = control.left ? -1 : control.right ? 1 : 0;
 
     // Wygładzanie sterowania
     this.steerInput = this.steerInput * this.steerSmoothFactor + steerRaw * (1 - this.steerSmoothFactor);
-    
+
     return { throttle, steerInput: this.steerInput };
   }
 
@@ -229,12 +229,12 @@ export class AICar extends Car {
       throttle = this.config.speed.baseThrottle;
     } else {
       steer = angleDiff * this.config.steering.baseSensitivity;
-      
+
       // Zmniejsz czułość skrętu przy dużej prędkości
       if (state.speed > this.config.speed.speedThresholds.high) {
         steer *= this.config.steering.speedReductionFactor;
       }
-      
+
       // Dostosuj throttle na podstawie kąta
       const angleThresholds = this.config.waypointControl.angleThresholds;
       const throttleMultipliers = this.config.waypointControl.throttleMultipliers;
@@ -276,7 +276,7 @@ export class AICar extends Car {
     if (this.collisionWithPlayer.isReversing) {
       const now = Date.now();
       const reverseElapsed = now - this.collisionWithPlayer.reverseStartTime;
-      
+
       if (reverseElapsed >= this.collisionWithPlayer.reverseDuration) {
         // Zakończ manewr unikania
         this.collisionWithPlayer.isReversing = false;
@@ -288,15 +288,16 @@ export class AICar extends Car {
           prevWaypoint.y - this.carY,
           prevWaypoint.x - this.carX
         );
-        const angleDiff = this._normalizeAngle(angleToWaypoint - state.carAngle);
         
+        const angleDiff = this._normalizeAngle(angleToWaypoint - state.carAngle);
+
         control = {
           left: angleDiff < -0.1,
           right: angleDiff > 0.1,
           up: false,
           down: true
         };
-        
+
         super.update(dt, control, worldW, worldH);
         return;
       }
@@ -313,58 +314,79 @@ export class AICar extends Car {
     super.update(dt, control, worldW, worldH);
   }
 
-  // --- Wrappery delegujące do modułów (metody mają te same nazwy jak oryginalnie) ---
+  // --- Wrappery delegujące do modułów  ---
   _getSafeTarget() { return this.aiDriving._getSafeTarget(); }
   _checkWaypointCompletion() { return this.aiDriving._checkWaypointCompletion(); }
   _detectStuck(dt) { return this.aiDriving._detectStuck(dt); }
 
+  // Normalizuj kąt (w radianach) do przedziału (-Math.PI, Math.PI)
   _normalizeAngle(angle) {
     while (angle > Math.PI) angle -= 2 * Math.PI;
     while (angle < -Math.PI) angle += 2 * Math.PI;
     return angle;
   }
 
+  // Pełny debug
   _updateDebug(dt, state) {
+
+    // dodaj upływ czasu do wewnętrznego licznika debugowego
     this.debugTimer += dt;
 
+    // jeśli minął interwał debugowania, wykonaj logowanie
     if (this.debugTimer >= this.debugInterval) {
+      // pobierz aktualny waypoint z listy (uwaga: może być undefined jeśli indeks poza zakresem)
       let targetWP = this.waypoints[this.currentWaypointIndex];
+
+      // oblicz odległość do celu; zakłada się, że targetWP, carX i carY są zainicjowane
       let distToTarget = Math.hypot(targetWP.x - this.carX, targetWP.y - this.carY);
 
+      // zbiór sformatowanych informacji debugowych
       let debugInfo = {
+        // indeks docelowego waypointa
         wp: this.currentWaypointIndex,
+        // dystans zaokrąglony do najbliższej jedności (string z toFixed)
         dist: distToTarget.toFixed(0),
+        // kąt debugowy sformatowany z jedną cyfrą i symbolem stopnia
         angle: this.debugAngle.toFixed(1) + '°',
+        // prędkość i prędkość poprzeczna zaokrąglone do całek
         speed: state.speed.toFixed(0),
         v_y: state.v_y.toFixed(0),
+        // komenda kierownicy z dwoma miejscami po przecinku
         steer: this.steerCommand.toFixed(2),
+        // czas "utkwienia" z detektora utkwienia (jedna cyfra po przecinku)
         stuck: this.stuckDetector.stuckTime.toFixed(1)
       };
 
+      // wypisz JSON do konsoli; przy dużej częstotliwości warto kontrolować poziom logów
       console.log('[AI]', JSON.stringify(debugInfo));
+
+      // zresetuj licznik aby zacząć odliczanie od nowa
       this.debugTimer = 0;
     }
   }
+
 
   handleCollision(prevX, prevY, worldW, worldH, collidedObject) {
     super.handleCollision(prevX, prevY, worldW, worldH);
 
     // Sprawdzamy czy kolizja była z graczem
     if (collidedObject?.isPlayer) {
+
       // Użyj menedżera kolizji do sprawdzenia czy powinniśmy rozpocząć unikanie
       if (!this.collisionManager) {
         this.collisionManager = new CollisionManager();
       }
 
       if (this.collisionManager.handlePlayerCollision(this, collidedObject)) {
+
         // Rozpocznij manewr unikania
         this.collisionWithPlayer.isReversing = true;
         this.collisionWithPlayer.reverseStartTime = Date.now();
         this.collisionWithPlayer.reverseDuration = this.collisionManager.getAvoidanceDuration();
-                
+
         // Zmniejszamy index waypointa o 1, aby cofnąć się do poprzedniego punktu
         this.currentWaypointIndex = Math.max(0, this.currentWaypointIndex - 1);
-        
+
         console.log('[AI] Rozpoczynam manewr unikania gracza');
         return;
       }
@@ -382,7 +404,7 @@ export class AICar extends Car {
       this.postCollision.totalTimer = 0.8;
     }
   }
-
+  // Prosty debug
   getDebugInfo() {
     const state = this.getFullState();
     return {
@@ -393,10 +415,8 @@ export class AICar extends Car {
 
   resetState(initialX, initialY) {
     super.resetState(initialX, initialY);
-    
     this.currentWaypointIndex = 0;
     this.steerCommand = 0;
-    
     this.body.setVelocity(0, 0);
     this.body.setAngularVelocity(0);
   }

@@ -399,6 +399,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
     cobblestone: { grip: 0.9 }, // przykładowa wartość
     gravel: { grip: 0.8 },
     grass: { grip: 0.6 },
+    grass1: { grip: 0.6 },
     water: { grip: 0.3 },
   };
 

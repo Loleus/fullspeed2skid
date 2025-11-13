@@ -1,6 +1,6 @@
-import { createLogo, destroyLogo } from './menuUI_logo.js';
-import { createButtons, destroyMenuButtons } from './menuUI_createButtons.js';
-import { createBackground, createGradientOverlay, destroyBackgroundAssets } from './menuUI_background.js';
+import { createLogo, destroyLogo } from './menu_logo.js';
+import { createButtons, destroyMenuButtons } from './menu_buttons.js';
+import { createBackground, createGradientOverlay, destroyBackgroundAssets } from './menu_background.js';
 export class MenuUI {
   constructor(scene) {
     this.scene = scene;

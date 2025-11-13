@@ -1,6 +1,6 @@
 // systems/SkidMarksSystem.js
-import { SkidMarks } from "../rendering/skidMarks.js";
-import { updateSkidMarks } from "../rendering/SkidMarksManager.js";
+import { SkidMarks } from "./rendering/skidMarks.js";
+import { updateSkidMarks } from "./rendering/SkidMarksManager.js";
 
 export class SkidMarksSystem {
   constructor(scene, { enabled = true, wheelWidth = 12, tileSize }) {

@@ -1,15 +1,15 @@
 import { VehicleFactory } from "../services/VehicleFactory.js";
 import { CameraManager } from "../cameras/CameraManager.js";
-import { World } from "../world/World.js";
+import { World } from "../domain/world/World.js";
 import { TILE_SIZE } from "../core/constants.js";
-import { preloadWorldTextures } from "../world/TextureManager.js";
+import { preloadWorldTextures } from "../domain/world/TextureManager.js";
 import { getControlState } from "../input/controlsManager.js";
 import { createKeyboardBindings } from "../input/keyboardManager.js";
-import { createHUD } from "../game/hudManager.js";
-import { CountdownManager } from "../game/CountdownManager.js";
-import { LapsTimer } from "../game/LapsTimer.js";
+import { createHUD } from "../systems/hudManager.js";
+import { CountdownManager } from "../systems/CountdownManager.js";
+import { LapsTimer } from "../systems/LapsTimer.js";
 import { HiscoreService } from "../services/HiscoreService.js";
-import { SkidMarksSystem } from "../game/SkidMarksSystem.js";
+import { SkidMarksSystem } from "../systems/SkidMarksSystem.js";
 import { AudioService } from "../services/AudioService.js";
 
 export class GameScene extends window.Phaser.Scene {

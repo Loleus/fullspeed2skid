@@ -1,4 +1,4 @@
-import { World } from '../world/World.js';
+import { World } from '../domain/world/World.js';
 import { TILE_SIZE, WORLD_HEIGHT } from '../core/constants.js';
 
 export class LoadingScene extends window.Phaser.Scene {

@@ -12,17 +12,17 @@ export class AudioService {
     }
 
     preload() {
-        this.scene.load.audio('applause', 'assets/samples/game_applause.mp3');
-        this.scene.load.audio('idle', 'assets/samples/game_idle.mp3');
-        this.scene.load.audio('off', 'assets/samples/game_off.mp3');
-        this.scene.load.audio('on', 'assets/samples/game_on.mp3');
-        this.scene.load.audio('race', 'assets/samples/game_race.wav');
-        this.scene.load.audio('race_max', 'assets/samples/game_race.wav');
-        this.scene.load.audio('slide', 'assets/samples/game_slide.mp3');
-        this.scene.load.audio('countdown', 'assets/samples/game_countdown.mp3');
-        this.scene.load.audio('game_music', 'assets/samples/game_music.mp3');
-        this.scene.load.audio('game_crash', 'assets/samples/game_crash.mp3');
-        this.scene.load.audio('ambience', 'assets/samples/game_ambience.mp3');
+        this.scene.load.audio('applause', 'assets/audio/game_applause.mp3');
+        this.scene.load.audio('idle', 'assets/audio/game_idle.mp3');
+        this.scene.load.audio('off', 'assets/audio/game_off.mp3');
+        this.scene.load.audio('on', 'assets/audio/game_on.mp3');
+        this.scene.load.audio('race', 'assets/audio/game_race.wav');
+        this.scene.load.audio('race_max', 'assets/audio/game_race.wav');
+        this.scene.load.audio('slide', 'assets/audio/game_slide.mp3');
+        this.scene.load.audio('countdown', 'assets/audio/game_countdown.mp3');
+        this.scene.load.audio('game_music', 'assets/audio/game_music.mp3');
+        this.scene.load.audio('game_crash', 'assets/audio/game_crash.mp3');
+        this.scene.load.audio('ambience', 'assets/audio/game_ambience.mp3');
     }
 
     create() {

@@ -1,6 +1,6 @@
-import { HiscoreOverlay } from '../menuUI/hiscoresOverlay.js';
-import { MenuUI } from '../menuUI/menuUI.js';
-import { HiscoreManager } from '../game/hiscoreManager.js';
+import { HiscoreOverlay } from '../ui/hiscoresOverlay.js';
+import { MenuUI } from '../ui/menuView.js';
+import { HiscoreManager } from '../systems/hiscoreManager.js';
 
 export class MenuScene extends window.Phaser.Scene {
   constructor() {
@@ -20,8 +20,8 @@ export class MenuScene extends window.Phaser.Scene {
 
   preload() {
     // Ładuj tekstury
-    this.load.audio('menu_button', 'assets/samples/menu_button.wav');
-    this.load.audio('menu_music', 'assets/samples/menu_music.mp3');
+    this.load.audio('menu_button', 'assets/audio/menu_button.wav');
+    this.load.audio('menu_music', 'assets/audio/menu_music.mp3');
   }
 
   async create() {

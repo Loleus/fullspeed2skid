@@ -1,5 +1,5 @@
 // race/HiscoreService.js
-import { HiscoreManager } from "../game/hiscoreManager.js";
+import { HiscoreManager } from "../systems/hiscoreManager.js";
 
 export class HiscoreService {
   constructor({ storageKey = 'mygame_hiscores', templatePath = 'assets/levels/hiscores.json', maxEntries = 4 }) {

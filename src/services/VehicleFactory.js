@@ -1,6 +1,6 @@
 // factories/VehicleFactory.js
-import { PlayerCar } from "../vehicles/PlayerCar.js";
-import { AICar } from "../vehicles/ai/AICar.js";
+import { PlayerCar } from "../domain/vehicles/PlayerCar.js";
+import { AICar } from "../domain/vehicles/ai/AICar.js";
 
 export class VehicleFactory {
   constructor(scene, worldData) {

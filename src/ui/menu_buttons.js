@@ -8,7 +8,7 @@ export function destroyMenuButtons(menuButtons) {
   });
 }
 
-import { drawButton, drawShadow } from './menuUI_createButtons_drawUtils.js';
+import { drawButton, drawShadow } from './menu_drawUtils.js';
 
 export function createButtons(scene, menuStyle, buttons, onButtonClick) {
   const { width, height } = scene.sys.game.canvas;

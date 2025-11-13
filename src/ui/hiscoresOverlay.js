@@ -1,4 +1,4 @@
-import { drawButton, drawShadow } from './menuUI_createButtons_drawUtils.js';
+import { drawButton, drawShadow } from './menu_drawUtils.js';
 export class HiscoreOverlay {
   constructor(scene) {
     this.scene = scene;

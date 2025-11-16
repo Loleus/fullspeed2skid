@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pl">
-
 <head>
   <title>Full Speed 2 Skid</title>
+  <!-- Meta Tags -->
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,9 +11,8 @@
   <meta name="theme-color" content="#222222" />
   <meta name="author" content="Lolo" />
   <meta name="email" content="loleus@gmail.com" />
+  <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
-  <!-- <link rel="manifest" href="/fullspeed2skid/manifest.json"> -->
-
   <!-- Icons -->
   <link rel="icon" type="image/png" sizes="192x192" href="https://loleus.github.io/fullspeed2skid/assets/images/icon-192x192-maskable.png">
   <link rel="icon" type="image/png" sizes="192x192" href="https://loleus.github.io/fullspeed2skid/assets/images/icon-192x192.png">
@@ -33,14 +32,10 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Full Speed 2 Skid" />
   <!-- Assets -->
-  <link rel="preload" href="assets/fonts/skid.ttf" as="font" type="font/ttf" crossorigin />
-  <link rel="preload" href="assets/fonts/Harting.ttf" as="font" type="font/ttf" crossorigin />
-  <link rel="preload" href="assets/fonts/punk_kid.ttf" as="font" type="font/ttf" crossorigin />
-  <link rel="preload" href="assets/fonts/Stormfaze.otf" as="font" type="font/otf" crossorigin />
   <link rel="stylesheet" href="assets/styles/style.css" />
   <!-- Engine -->
   <script src="src/core/phaser.js"></script>
-  <!-- Preload assets -->
+  <!-- Styles -->
   <style>
     @font-face { font-family: "Harting"; src: url("assets/fonts/Harting.ttf") format("truetype"); font-weight: normal; font-style: normal;}
     @font-face { font-family: "skid"; src: url("assets/fonts/skid.ttf") format("truetype"); font-weight: normal; font-style: normal;}
@@ -48,33 +43,21 @@
     @font-face { font-family: "Stormfaze"; src: url("assets/fonts/Stormfaze.otf") format("opentype"); font-weight: normal; font-style: normal;}
     #font-preload { position: absolute; left: -9999px; visibility: hidden; font-family: "Harting", "skid", "punk kid", "Stormfaze", Arial, sans-serif;}
     #rotate-warning { display: none; position: fixed; z-index: 10000 !important; left: 0; top: 0; right: 0; bottom: 0; background: #222; color: #fff; font-size: 2.5em; text-align: center; align-items: center; justify-content: center; padding-top: 30vh;}
-
-    @media (orientation: portrait) {
-      #rotate-warning { display: flex; }
-      #phaser-canvas, canvas { display: none !important; }
-    }
-    @media (orientation: landscape) {
-      #rotate-warning { display: none; }
-      #phaser-canvas, canvas { display: block; }
-    }
+    @media (orientation: portrait) { #rotate-warning { display: flex; } #phaser-canvas, canvas { display: none !important; }}
+    @media (orientation: landscape) { #rotate-warning { display: none; } #phaser-canvas, canvas { display: block; }}
   </style>
 </head>
-
 <body>
   <span id="font-preload">Font preload</span>
   <div id="install-pwa-container" style=" display: none; position: fixed; bottom: 30px; left: 0; right: 0; z-index: 9997; text-align: center; ">
-    <button id="install-pwa-btn" style=" font-size: 1.2em; padding: 16px 32px; border-radius: 32px; border: none; background: #222; color: #fff; box-shadow: 0 2px 8px #000a; ">
-      Zainstaluj grę na ekranie głównym
-    </button>
+    <button id="install-pwa-btn" style=" font-size: 1.2em; padding: 16px 32px; border-radius: 32px; border: none; background: #222; color: #fff; box-shadow: 0 2px 8px #000a; ">Zainstaluj grę na ekranie głównym</button>
   </div>
   <div id="ios-pwa-instruction" style=" display: none; position: fixed; left: 0; right: 0; bottom: 0; top: 0; background: #222d; color: #fff; z-index: 9998; text-align: center; padding-top: 10vh; font-size: 1em; overflow: auto; ">
     <div class="ios-pwa-box" style=" max-width: 95vw; margin: 0 auto; background: #222; border-radius: 12px; padding: 12px 8px 16px 8px; box-shadow: 0 2px 16px #000a; font-size: 0.95em; display: flex; flex-direction: column; align-items: center; ">
       <b style="font-size: 1.05em">Dodaj grę do ekranu początkowego:</b><br />
       <span class="ios-pwa-desc" style="font-size: 0.95em; line-height: 1.3; margin: 8px 0 0 0">Kliknij <b>ikonkę udostępniania</b>
         <span style="font-size: 1.2em">⬆️</span> na dole ekranu,<br />następnie wybierz <b>„Dodaj do ekranu początkowego”</b>.</span>
-      <button class="ios-pwa-close" onclick="document.getElementById('ios-pwa-instruction').style.display='none'" style=" margin-top: 12px; font-size: 0.95em; padding: 6px 18px; border-radius: 12px; border: none; background: #444; color: #fff; min-width: 80px; cursor: pointer; ">
-        Zamknij
-      </button>
+      <button class="ios-pwa-close" onclick="document.getElementById('ios-pwa-instruction').style.display='none'" style=" margin-top: 12px; font-size: 0.95em; padding: 6px 18px; border-radius: 12px; border: none; background: #444; color: #fff; min-width: 80px; cursor: pointer; ">Zamknij</button>
     </div>
   </div>
   <div id="gyro-permission-popup" style=" display: none; position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: #222d; color: #fff; z-index: 9998; text-align: center; padding-top: 10vh; font-size: 1em; ">
@@ -82,12 +65,8 @@
       <b style="font-size: 2em; margin-bottom: 16px">Czy zezwalasz na żyroskop?</b>
       <span style="font-size: 1.1em; line-height: 1.3; margin: 8px 0 16px 0">Aby zagrać, musisz zezwolić na dostęp do żyroskopu.</span>
       <div style="display: flex; gap: 32px; margin-top: 16px">
-        <button id="gyro-allow-btn" style=" font-size: 1.2em; padding: 12px 32px; border-radius: 16px; border: none; background: #0f0; color: #222; min-width: 100px; cursor: pointer; ">
-          Zezwól
-        </button>
-        <button id="gyro-deny-btn" style=" font-size: 1.2em; padding: 12px 32px; border-radius: 16px; border: none; background: #f33; color: #fff; min-width: 100px; cursor: pointer; ">
-          Odmów
-        </button>
+        <button id="gyro-allow-btn" style=" font-size: 1.2em; padding: 12px 32px; border-radius: 16px; border: none; background: #0f0; color: #222; min-width: 100px; cursor: pointer; ">Zezwól</button>
+        <button id="gyro-deny-btn" style=" font-size: 1.2em; padding: 12px 32px; border-radius: 16px; border: none; background: #f33; color: #fff; min-width: 100px; cursor: pointer; ">Odmów</button>
       </div>
     </div>
   </div>
@@ -97,5 +76,4 @@
   <div id="rotate-warning">Obróć telefon</div>
   <script type="module" src="src/app/startup.js"></script>
 </body>
-
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.4.6';
+const CACHE_NAME = 'fullspeed2skid-v2.4.8';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -123,44 +123,44 @@ const ASSETS = [
 ];
 
 // Instalacja service workera
-// self.addEventListener('install', event => {
-//   console.log('[SW] Installing service worker...');
-//   event.waitUntil(
-//     caches.open(CACHE_NAME)
-//       .then(cache => {
-//         console.log('[SW] Caching app shell');
-//         return cache.addAll(ASSETS);
-//       })
-//       .catch(error => {
-//         console.error('[SW] Cache addAll failed:', error);
-//       })
-//   );
-//   self.skipWaiting();
-//   self.clients.claim();
-// });
+self.addEventListener('install', event => {
+  console.log('[SW] Installing service worker...');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('[SW] Caching app shell');
+        return cache.addAll(ASSETS);
+      })
+      .catch(error => {
+        console.error('[SW] Cache addAll failed:', error);
+      })
+  );
+  self.skipWaiting();
+  // self.clients.claim();
+});
 
 // Aktywacja service workera
-self.addEventListener('activate', event => {
-  console.log('[SW] Activating service worker...');
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
-  self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
-    });
-  });
-});
+// self.addEventListener('activate', event => {
+//   console.log('[SW] Activating service worker...');
+//   event.waitUntil(
+//     caches.keys().then(cacheNames => {
+//       return Promise.all(
+//         cacheNames.map(cacheName => {
+//           if (cacheName !== CACHE_NAME) {
+//             console.log('[SW] Deleting old cache:', cacheName);
+//             return caches.delete(cacheName);
+//           }
+//         })
+//       );
+//     })
+//   );
+//   self.clients.claim();
+//   self.clients.matchAll().then(clients => {
+//     clients.forEach(client => {
+//       client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
+//     });
+//   });
+// });
 
 self.addEventListener('activate', event => {
   console.log('[SW] Activating service worker...');
@@ -194,7 +194,6 @@ self.addEventListener('activate', event => {
   );
   self.clients.claim();
 });
-
 
 // Interceptowanie żądań sieciowych
 self.addEventListener('fetch', event => {

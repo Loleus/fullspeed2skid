@@ -1,6 +1,7 @@
 {
   "name": "Full Speed 2 Skid",
   "short_name": "FS2Skid",
+  "id": "/fullspeed2skid/",
   "start_url": "/fullspeed2skid/index.html",
   "scope": "/fullspeed2skid/",
   "display": "standalone",

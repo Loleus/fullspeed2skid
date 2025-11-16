@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.4.5';
+const CACHE_NAME = 'fullspeed2skid-v2.4.6';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -136,13 +136,39 @@ self.addEventListener('install', event => {
       })
   );
   self.skipWaiting();
-  self.clients.claim();
+  // self.clients.claim();
 });
 // Aktywacja service workera
+// self.addEventListener('activate', event => {
+//   console.log('[SW] Activating service worker...');
+//   event.waitUntil(
+//     caches.keys().then(cacheNames => {
+//       return Promise.all(
+//         cacheNames.map(cacheName => {
+//           if (cacheName !== CACHE_NAME) {
+//             console.log('[SW] Deleting old cache:', cacheName);
+//             return caches.delete(cacheName);
+//           }
+//         })
+//       );
+//     })
+//   );
+//   self.clients.claim();
+//   self.clients.matchAll().then(clients => {
+//     clients.forEach(client => {
+//       client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
+//     });
+//   });
+// });
+
 self.addEventListener('activate', event => {
   console.log('[SW] Activating service worker...');
   event.waitUntil(
     caches.keys().then(cacheNames => {
+      // Sprawdź czy są stare cache do usunięcia
+      const oldCaches = cacheNames.filter(cacheName => cacheName !== CACHE_NAME);
+      const isUpdate = oldCaches.length > 0;
+      
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
@@ -150,16 +176,25 @@ self.addEventListener('activate', event => {
             return caches.delete(cacheName);
           }
         })
-      );
+      ).then(() => {
+        // Powiadom klientów TYLKO jeśli to aktualizacja (były stare cache)
+        if (isUpdate) {
+          console.log('[SW] Update detected, notifying clients');
+          return self.clients.matchAll().then(clients => {
+            clients.forEach(client => {
+              client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
+            });
+          });
+        } else {
+          console.log('[SW] First installation, skipping update notification');
+        }
+      });
     })
   );
   self.clients.claim();
-  self.clients.matchAll().then(clients => {
-    clients.forEach(client => {
-      client.postMessage({ type: 'NEW_VERSION_AVAILABLE' });
-    });
-  });
 });
+
+
 // Interceptowanie żądań sieciowych
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') {

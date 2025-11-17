@@ -97,7 +97,7 @@ if ('serviceWorker' in navigator) {
   });
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js',{ scope: '/fullspeed2skid/' })
+    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js')
       .then(registration => {
         registration.update(); // Wymuś sprawdzenie nowej wersji
       });

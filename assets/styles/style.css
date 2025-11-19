@@ -43,6 +43,7 @@ body {
   display: none;
   position: fixed;
   z-index: 9999;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   left: 0; top: 0; right: 0; bottom: 0;
   background: #222;
   color: #fff;

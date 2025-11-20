@@ -20,11 +20,39 @@ export class MenuScene extends window.Phaser.Scene {
 
   preload() {
     // Ładuj tekstury
+    this.load.atlas('flares', 'assets/images/flares.png', 'assets/images/smoke.json');
     this.load.audio('menu_button', 'assets/audio/menu_button.wav');
     this.load.audio('menu_music', 'assets/audio/menu_music.mp3');
   }
 
   async create() {
+
+    // const flame = this.add.particles(150, 550, 'flares',
+    //   {
+    //     frame: 'white',
+    //     color: [0xfacc22, 0xf89800, 0xf83600, 0x9f0404],
+    //     colorEase: 'quad.out',
+    //     lifespan: 2400,
+    //     angle: { min: -100, max: -80 },
+    //     scale: { start: 0.70, end: 0, ease: 'sine.out' },
+    //     speed: 100,
+    //     advance: 2000,
+    //     blendMode: 'ADD'
+    //   });
+
+    // const wisp = this.add.particles(400, 550, 'flares',
+    //   {
+    //     frame: 'white',
+    //     color: [0x96e0da, 0x937ef3],
+    //     colorEase: 'quart.out',
+    //     lifespan: 1500,
+    //     angle: { min: -100, max: -80 },
+    //     scale: { start: 1, end: 0, ease: 'sine.in' },
+    //     speed: { min: 250, max: 350 },
+    //     advance: 2000,
+    //     blendMode: 'ADD'
+    //   });
+
     this.buttonClick = this.sound.add('menu_button', { volume: 0.5 });
     this.menuMusic = this.sound.add('menu_music', { volume: 0.8, loop: true });
     this.sound.pauseOnBlur = false; // nie pauzuj na zmianie zakładki
@@ -43,9 +71,23 @@ export class MenuScene extends window.Phaser.Scene {
       this.hiscores = { tracks: {} };
       window._hiscores = this.hiscores;
     }
-
-    // Dodaj tło jeśli tekstura jest załadowana
+    // Dodaj resztę efektów tła i UI
     const { width, height } = this.sys.game.canvas;
+    const flameX = width / 1.4;
+    // Efeky dymu
+    const smokey = this.add.particles(flameX, 100, 'flares',
+      {
+        frame: 'black',
+        // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
+        color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
+        lifespan: 700,
+        angle: { min: -80, max: -100 },
+        scale: 0.08,
+        speed: { min: 100, max: 130 },
+        advance: 100,
+        blendMode: 'screen'
+      });
+    // Tło, jeśli tekstura jest załadowana
     if (this.textures.exists('bgc')) {
       const bg = this.add.image(0, 0, 'bgc').setOrigin(0, 0);
       bg.setDisplaySize(width, height);
@@ -55,10 +97,8 @@ export class MenuScene extends window.Phaser.Scene {
       // jeśli tekstura nie istnieje, unikamy wywołania add.image (zapobiega zielonym placeholderom)
       console.warn('[MenuScene] Tekstura bgc nie jest dostępna w Texture Manager - tło nie zostanie dodane');
     }
-
     this.ui = new MenuUI(this);
     this.hiscoreOverlay = new HiscoreOverlay(this);
-
     // UI może mieć własne tło; jeśli MenuUI.createBackground tworzy placeholdery,
     // upewnij się że nie generuje TileSprite z tym samym kluczem co bgc.
     this.ui.createBackground();

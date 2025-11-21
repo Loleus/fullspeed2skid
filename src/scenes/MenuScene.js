@@ -20,7 +20,6 @@ export class MenuScene extends window.Phaser.Scene {
 
   preload() {
     // Ładuj tekstury
-    this.load.atlas('flares', 'assets/images/flares.png', 'assets/images/smoke.json');
     this.load.audio('menu_button', 'assets/audio/menu_button.wav');
     this.load.audio('menu_music', 'assets/audio/menu_music.mp3');
   }
@@ -73,20 +72,7 @@ export class MenuScene extends window.Phaser.Scene {
     }
     // Dodaj resztę efektów tła i UI
     const { width, height } = this.sys.game.canvas;
-    const flameX = width / 1.4;
-    // Efeky dymu
-    const smokey = this.add.particles(flameX, 100, 'flares',
-      {
-        frame: 'black',
-        // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
-        color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
-        lifespan: 700,
-        angle: { min: -80, max: -100 },
-        scale: 0.08,
-        speed: { min: 100, max: 130 },
-        advance: 100,
-        blendMode: 'screen'
-      });
+
     // Tło, jeśli tekstura jest załadowana
     if (this.textures.exists('bgc')) {
       const bg = this.add.image(0, 0, 'bgc').setOrigin(0, 0);

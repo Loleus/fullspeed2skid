@@ -78,21 +78,62 @@ export class GameScene extends window.Phaser.Scene {
 
 
 
-        this.exhaustSmokeSystem = this.createExhaustSmokeSystem();
 
-        // upewnij się, że emitter jest aktywny
 
-        //   this.smokey.setDepth(1000);
-        //         this.smokey = this.add.particles(this.carController.carX, this.carController.carY, 'flares', {
-        //             frame: 'black',
-        //             // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
-        //             color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
-        //             lifespan: 350,
-        //             angle: { min: (this.carController.carSprite.angle - 3) + 90, max: (this.carController.carSprite.angle + 3) + 90 },
-        //             scale: 0.04, speed: { min: 100, max: 130 },
-        //             advance: 10000,
-        //             blendMode: 'NORMAL'
-        //         }).setDepth(1);
+
+
+
+
+
+
+
+
+        // Inicjalizacja emitera dymu
+        this.smokey = this.add.particles(this.carController.carX, this.carController.carY, 'flares', {
+            frame: 'black',
+            // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
+            color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
+            lifespan: 400,
+            angle: { min: (this.carController.carSprite.angle - 3) + 90, max: (this.carController.carSprite.angle + 3) + 90 },
+            scale: { start: 0.01, end: 0.1 },
+            alpha: { start: 1, end: 0 }, 
+            speed: { min: 80, max: 150 },
+            advance: 0,
+            blendMode: 'NORMAL',
+            frequency: 50,
+        }).setDepth(1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         const twoPlayers = !!worldData?.twoPlayers;
 
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
@@ -161,47 +202,6 @@ export class GameScene extends window.Phaser.Scene {
         console.log(this.carController);
         console.log(this.aiController)
     }
-    createExhaustSmokeSystem() {
-        const system = {
-            emitter: null,
-            enabled: true
-        };
-
-        if (this.carController && this.carController.carSprite) {
-            // W Phaser 3.60 add.particles() z konfiguracją zwraca bezpośrednio emitter
-            system.emitter = this.add.particles(this.carController.carX, this.carController.carY, 'flares', {
-                frame: 'black',
-                lifespan: 3000,
-                angle: { min: (this.carController.carSprite.angle - 3) + 90, max: (this.carController.carSprite.angle + 3) + 90 },
-                scale: 0.1,
-                speed: { min: 100, max: 430 },
-                advance: 10,
-                blendMode: 'NORMAL',
-                frequency: 50,  // DODAJ TO - bez tego frequency jest 0!
-                alpha: { start: 1, end: 0.5 }  // DODAJ ALPHA - upewnij się że są widoczne
-            }).setDepth(3);
-            
-            // Upewnij się, że frame jest 'black' (może być problem z konfiguracją)
-            if (this.textures.exists('flares') && this.textures.get('flares').has('black')) {
-                system.emitter.setFrame('black');
-            }
-            
-            // Upewnij się, że frequency jest ustawione
-            if (system.emitter.frequency === 0) {
-                system.emitter.setFrequency(50);
-            }
-            
-            console.log('Smoke system created:', {
-                type: system.emitter.type,
-                frequency: system.emitter.frequency,
-                frame: system.emitter.frame.name,
-                emitting: system.emitter.emitting
-            });
-        }
-
-        return system;
-    }
-
 
     update(time, dt) {
         const deltaSeconds = dt / 1000;
@@ -303,79 +303,50 @@ export class GameScene extends window.Phaser.Scene {
         });
 
 
-        // Aktualizacja pozycji dymu
-        // Aktualizacja pozycji dymu
-        // Aktualizacja pozycji dymu
-        if (this.exhaustSmokeSystem && this.exhaustSmokeSystem.emitter && this.carController) {
-            // Aktualizuj pozycję
-            this.exhaustSmokeSystem.emitter.setPosition(this.carController.carX, this.carController.carY);
-            if (this.exhaustSmokeSystem.emitter.depth < 3) {
-                this.exhaustSmokeSystem.emitter.setDepth(3);
-            }
-            // Upewnij się, że kamera widzi emitter
-            this.cameras.main.ignore(this.exhaustSmokeSystem.emitter, false);
-            
-            // Upewnij się, że emitter jest widoczny
-            this.exhaustSmokeSystem.emitter.setVisible(true);
-            this.exhaustSmokeSystem.emitter.setActive(true);
-            
-            // Aktualizuj kąt zgodnie z rotacją auta
-            const car = this.carController.carSprite;
-            if (car) {
-                const carAngleDeg = Phaser.Math.RadToDeg(car.rotation);
-                this.exhaustSmokeSystem.emitter.setAngle({ 
-                    min: (carAngleDeg - 3) + 90, 
-                    max: (carAngleDeg + 3) + 90 
-                });
-            }
-            
-            // Agresywne debugowanie - sprawdź wszystko
-            if (!this._smokeDebugLogged) {
-                this._smokeDebugLogged = true;
-                const emitter = this.exhaustSmokeSystem.emitter;
-                const alive = emitter.alive || [];
-                const firstParticle = alive.length > 0 ? alive[0] : null;
-                const camera = this.cameras.main;
-                
-                // Oblicz rzeczywistą pozycję cząsteczki w świecie
-                let worldParticleX = 0;
-                let worldParticleY = 0;
-                if (firstParticle) {
-                    // Spróbuj różnych sposobów - może pozycje są już w świecie?
-                    worldParticleX = firstParticle.x; // Może już w świecie?
-                    worldParticleY = firstParticle.y;
-                    
-                    // Albo względne do emitera?
-                    const relativeX = emitter.x + firstParticle.x;
-                    const relativeY = emitter.y + firstParticle.y;
-                    
-                    console.log('PARTICLE POSITION DEBUG:', {
-                        particleX: firstParticle.x,
-                        particleY: firstParticle.y,
-                        emitterX: emitter.x,
-                        emitterY: emitter.y,
-                        calculatedWorldX: relativeX,
-                        calculatedWorldY: relativeY,
-                        cameraViewX: camera.worldView.x,
-                        cameraViewY: camera.worldView.y,
-                        cameraViewWidth: camera.worldView.width,
-                        cameraViewHeight: camera.worldView.height,
-                        isRelativeInView: (
-                            relativeX >= camera.worldView.x && 
-                            relativeX <= camera.worldView.x + camera.worldView.width &&
-                            relativeY >= camera.worldView.y && 
-                            relativeY <= camera.worldView.y + camera.worldView.height
-                        ),
-                        isDirectInView: (
-                            firstParticle.x >= camera.worldView.x && 
-                            firstParticle.x <= camera.worldView.x + camera.worldView.width &&
-                            firstParticle.y >= camera.worldView.y && 
-                            firstParticle.y <= camera.worldView.y + camera.worldView.height
-                        )
-                    });
-                }
-            }
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Aktualizacja pozycji i kąta emitera dymu
+        this.smokey.setPosition(this.carController.carX, this.carController.carY);
+        const backAngle = this.car.angle + 27;
+        this.smokey.setAngle(backAngle - 3, backAngle + 3);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
     showRaceFinish() {
@@ -435,9 +406,7 @@ export class GameScene extends window.Phaser.Scene {
 
             this.cameraManager?.reset();
             this.skidMarksSystem.clear();
-            if (this.exhaustSmokeSystem && this.exhaustSmokeSystem.emitter) {
-                this.exhaustSmokeSystem.emitter.setFrequency(0);
-            }
+
             this.countdown.start();
         }
     }

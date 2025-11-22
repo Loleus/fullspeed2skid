@@ -76,19 +76,64 @@ export class GameScene extends window.Phaser.Scene {
         this.car = sprite;
         console.log("PLAYER SPEED:", speed);
         // Efeky dymu
-        this.smokey = this.add.particles(this.carController.carX , this.carController.carY, 'flares',
-            {
-                frame: 'black',
-                // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
-                color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
-                lifespan: 350,
-                angle: { min: 87 - 15, max: 93 - 15 },
-                scale: 0.04,
-                speed: { min: 100, max: 130 },
-                advance: 10000,
-                blendMode: 'screen'
-            }).setDepth(1);
+        // --- replace old particle/emitter creation with this (Phaser 3.60 compatible) ---
+        if (this.smokey) { try { this.smokey.destroy(); } catch (e) { } this.smokey = null; }
+        this.smokeEmitter = null;
 
+        // fallback texture
+        if (!this.textures.exists('__smoke_circle')) {
+            const g = this.add.graphics();
+            g.fillStyle(0xcccccc, 1);
+            g.fillCircle(16, 16, 16);
+            g.generateTexture('__smoke_circle', 32, 32);
+            g.destroy();
+        }
+
+        const particleKey = this.textures.exists('flares') ? 'flares' : '__smoke_circle';
+        const particleFrame = (particleKey === 'flares' && this.textures.get('flares').getFrameNames().includes('black')) ? 'black' : null;
+
+        // create manager + emitter in one call (new API)
+        this.smokey = this.add.particles(particleKey, {
+            frame: particleFrame,
+            lifespan: { min: 900, max: 1400 },
+            speed: { min: 8, max: 36 },
+            angle: { min: -100, max: -80 },
+            scale: { start: 0.6, end: 2.2 },
+            alpha: { start: 0.9, end: 0 },
+            frequency: 60,
+            quantity: 1,
+            blendMode: 'NORMAL',
+            follow: this.carController?.carSprite ?? undefined,
+            followOffset: { x: 0, y: 22 }
+        });
+
+        // resolve emitter reference safely
+        try {
+            if (this.smokey && this.smokey.emitters && Array.isArray(this.smokey.emitters.list) && this.smokey.emitters.list[0]) {
+                this.smokeEmitter = this.smokey.emitters.list[0];
+            } else {
+                this.smokeEmitter = this.smokey;
+            }
+        } catch (e) {
+            this.smokeEmitter = this.smokey;
+        }
+        if (this.smokeEmitter && typeof this.smokeEmitter.on !== 'undefined') {
+            this.smokeEmitter.on = true;
+        }
+
+        // upewnij się, że emitter jest aktywny
+
+        //   this.smokey.setDepth(1000);
+        //         this.smokey = this.add.particles(this.carController.carX, this.carController.carY, 'flares', {
+        //             frame: 'black',
+        //             // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
+        //             color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
+        //             lifespan: 350,
+        //             angle: { min: (this.carController.carSprite.angle - 3) + 90, max: (this.carController.carSprite.angle + 3) + 90 },
+        //             scale: 0.04, speed: { min: 100, max: 130 },
+        //             advance: 10000,
+        //             blendMode: 'NORMAL'
+        //         }).setDepth(1);
         const twoPlayers = !!worldData?.twoPlayers;
 
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
@@ -257,7 +302,26 @@ export class GameScene extends window.Phaser.Scene {
             skidMarksSystem: this.skidMarksSystem,
             gameMode: this.gameMode,
         });
-        this.smokey.setPosition(this.carController.carX, this.carController.carY);
+        // this.smokey.setPosition(this.carController.carX, this.carController.carY);
+        // update: synchronizacja pozycji emitera z carSprite (bez createEmitter)
+        const s = this.carController?.carSprite;
+        if (s && this.smokey) {
+            const localOffsetX = 0, localOffsetY = 22;
+            const r = Phaser.Math.DegToRad(s.angle || 0);
+            const cos = Math.cos(r), sin = Math.sin(r);
+            const worldX = s.x + (localOffsetX * cos - localOffsetY * sin);
+            const worldY = s.y + (localOffsetX * sin + localOffsetY * cos);
+
+            if (typeof this.smokey.setPosition === 'function') {
+                this.smokey.setPosition(worldX, worldY);
+            } else if (this.smokeEmitter && typeof this.smokeEmitter.setPosition === 'function') {
+                this.smokeEmitter.setPosition(worldX, worldY);
+            }
+        }
+
+
+
+
     }
 
     showRaceFinish() {

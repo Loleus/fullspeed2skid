@@ -86,21 +86,22 @@ export class GameScene extends window.Phaser.Scene {
 
 
 
-
+console.log(Number(this.worldData.startFix))
 
         // Inicjalizacja emitera dymu
         this.smokey = this.add.particles(this.carController.carX, this.carController.carY, 'flares', {
             frame: 'black',
             // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
             color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
-            lifespan: 400,
-            angle: { min: (this.carController.carSprite.angle - 3) + 90, max: (this.carController.carSprite.angle + 3) + 90 },
-            scale: { start: 0.01, end: 0.1 },
+            lifespan: 260,
+            angle: { min: (this.carController.carSprite.angle - 5) + 90, max: (this.carController.carSprite.angle + 5) + 90 },
+            scale: { start: 0.001, end: 0.08 },
             alpha: { start: 1, end: 0 }, 
-            speed: { min: 80, max: 150 },
-            advance: 0,
+            speed: { min: 50, max: 150 },
+            // advance: 0,
             blendMode: 'NORMAL',
-            frequency: 50,
+            frequency: 30,
+            // quantity: 1,
         }).setDepth(1);
 
 
@@ -202,6 +203,15 @@ export class GameScene extends window.Phaser.Scene {
         console.log(this.carController);
         console.log(this.aiController)
     }
+
+localToWorld(carX, carY, carAngleDeg, offsetX, offsetY) {
+    const rad = Phaser.Math.DegToRad(carAngleDeg);
+    const cos = Math.cos(rad);
+    const sin = Math.sin(rad);
+    const worldX = carX + offsetX * cos - offsetY * sin;
+    const worldY = carY + offsetX * sin + offsetY * cos;
+    return { x: worldX, y: worldY };
+}
 
     update(time, dt) {
         const deltaSeconds = dt / 1000;
@@ -323,11 +333,33 @@ export class GameScene extends window.Phaser.Scene {
 
 
         // Aktualizacja pozycji i kąta emitera dymu
-        this.smokey.setPosition(this.carController.carX, this.carController.carY);
-        const backAngle = this.car.angle + 27;
-        this.smokey.setAngle(backAngle - 3, backAngle + 3);
+    //     this.smokey.setPosition(this.carController.carX, this.carController.carY);
+    //     const backAngle = this.car.angle + 29;
+    //   this.smokey.setAngle(backAngle - 2, backAngle + 2);
 
+const CAR_HEIGHT = 66;
+    // pozycja środka auta
+    const carX = this.carController.carX;
+    const carY = this.carController.carY;
+    // kąt auta w stopniach (użyj tego pola, które masz: carSprite.angle lub car.angle)
+    const carAngle = this.carController.carSprite.angle;
 
+    // lokalne przesunięcie emitera względem środka auta:
+    // offsetX = przesunięcie wzdłuż lokalnej osi X auta (dodatnie = w prawo względem auta)
+    // offsetY = przesunięcie wzdłuż lokalnej osi Y auta (dodatnie = w dół/naprzód względem auta, zależnie od twojego układu)
+    // Aby przesunąć emitter na tył auta: odejmujemy połowę długości auta wzdłuż osi Y
+    const offsetX = -8;
+    const offsetY = +(CAR_HEIGHT / 2) - 3; // minus -> w tył auta (przykład)
+
+    const worldPos = this.localToWorld(carX, carY, carAngle, offsetX, offsetY);
+
+    // ustaw pozycję emitera
+    this.smokey.setPosition(worldPos.x, worldPos.y);
+
+    // ustaw kąt emitera (jeśli chcesz, żeby dym leciał "w tył" auta)
+    // przykład: bazujemy na kącie auta i ewentualnym przesunięciu (dostosuj +29 jeśli potrzebne)
+    const backAngle = carAngle  - (Number(this.worldData.startFix));
+    this.smokey.setAngle(backAngle - 5, backAngle + 5);
 
 
 

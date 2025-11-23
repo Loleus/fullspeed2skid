@@ -20,7 +20,7 @@ export class GameScene extends window.Phaser.Scene {
         this.collisionsEnabled = true;
         this.raceFinished = false;
         this.hiscoreChecked = false;
-        
+
         // Utworzenie instancji AudioService
         this.audioService = new AudioService(this);
     }
@@ -43,19 +43,21 @@ export class GameScene extends window.Phaser.Scene {
         if (window._worldData?.tiles) {
             preloadWorldTextures(this, window._worldData.tiles, TILE_SIZE);
         }
+        this.load.atlas('flares', 'assets/images/flares.png', 'assets/images/smoke.json');
         this.load.image("car_p1", "assets/images/car.png");
         this.load.image("car_p2", "assets/images/car_X.png");
 
         // Delegowanie ładowania audio do serwisu
         this.audioService.preload();
     }
-    
+
     // initAudio() - USUNIĘTA
 
     async create() {
+
         // Delegowanie tworzenia audio do serwisu
         this.audioService.create();
-        
+
         const worldData = this.worldData || window._worldData;
         const viewW = this.sys.game.config.width;
         const viewH = this.sys.game.config.height;
@@ -73,6 +75,66 @@ export class GameScene extends window.Phaser.Scene {
         this.carController = controller;
         this.car = sprite;
         console.log("PLAYER SPEED:", speed);
+
+
+
+
+
+
+
+
+
+
+
+        console.log(Number(this.worldData.startFix))
+
+        // Inicjalizacja emitera dymu
+        this.smokey = this.add.particles(this.carController.carX, this.carController.carY, 'flares', {
+            frame: 'black',
+            // color: [0x040d61, 0xfacc22, 0xf89800, 0xf83600, 0x9f0404, 0x4b4a4f, 0x353438, 0x040404],
+            color: [Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color, Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color],
+            lifespan: 260,
+            angle: { min: (this.carController.carSprite.angle - 5) + 90, max: (this.carController.carSprite.angle + 5) + 90 },
+            scale: { start: 0.001, end: 0.08 },
+            alpha: { start: 1, end: 0 },
+            speed: { min: 50, max: 150 },
+            advance: 0,
+            blendMode: 'NORMAL',
+            frequency: 70,
+
+        }).setDepth(1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         const twoPlayers = !!worldData?.twoPlayers;
 
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
@@ -140,6 +202,15 @@ export class GameScene extends window.Phaser.Scene {
         this.countdown.start();
         console.log(this.carController);
         console.log(this.aiController)
+    }
+
+    localToWorld(carX, carY, carAngleDeg, offsetX, offsetY) {
+        const rad = Phaser.Math.DegToRad(carAngleDeg);
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        const worldX = carX + offsetX * cos - offsetY * sin;
+        const worldY = carY + offsetX * sin + offsetY * cos;
+        return { x: worldX, y: worldY };
     }
 
     update(time, dt) {
@@ -226,7 +297,7 @@ export class GameScene extends window.Phaser.Scene {
         if (this.minimapa && this.world) {
             this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
         }
-        
+
         this.cameraManager?.update(deltaSeconds);
         if (this.hudCamera) this.hudCamera.setRotation(0);
 
@@ -240,6 +311,73 @@ export class GameScene extends window.Phaser.Scene {
             skidMarksSystem: this.skidMarksSystem,
             gameMode: this.gameMode,
         });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        // Aktualizacja pozycji i kąta emitera dymu
+
+        const CAR_HEIGHT = 66;
+        // pozycja środka auta
+        const carX = this.carController.carX;
+        const carY = this.carController.carY;
+        // kąt auta w stopniach (użyj tego pola, które masz: carSprite.angle lub car.angle)
+        const carAngle = this.carController.carSprite.angle;
+
+        // lokalne przesunięcie emitera względem środka auta:
+        const offsetX = -8;
+        const offsetY = +(CAR_HEIGHT / 2) - 3; // minus -> w tył auta (przykład)
+        const worldPos = this.localToWorld(carX, carY, carAngle, offsetX, offsetY);
+
+        // ustaw pozycję emitera
+        this.smokey.setPosition(worldPos.x, worldPos.y);
+        const backAngle = carAngle - (Number(this.worldData.startFix));
+        this.smokey.setAngle(backAngle - 5, backAngle + 5);
+
+        if (control.down || control.up) {
+            this.smokey.lifespan = 260;
+            this.smokey.frequency = 20;
+        } else {
+            this.smokey.lifespan = 160;
+            this.smokey.frequency = 50;
+        };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 
     showRaceFinish() {
@@ -260,7 +398,7 @@ export class GameScene extends window.Phaser.Scene {
         if (this.hiscoreService.checked(hiscoreParams)) {
             // Wywołanie metody z serwisu audio
             this.audioService.playApplause();
-            this.time.delayedCall(10000, () => {this.hiscoreService.tryQualify(hiscoreParams)});
+            this.time.delayedCall(10000, () => { this.hiscoreService.tryQualify(hiscoreParams) });
         }
         if (this.sound.mute) {
             this.hiscoreService.tryQualify(hiscoreParams)
@@ -270,7 +408,7 @@ export class GameScene extends window.Phaser.Scene {
     resetGame() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
-            
+
             // Delegowanie resetu audio
             this.audioService.reset();
 
@@ -299,6 +437,7 @@ export class GameScene extends window.Phaser.Scene {
 
             this.cameraManager?.reset();
             this.skidMarksSystem.clear();
+
             this.countdown.start();
         }
     }
@@ -306,10 +445,10 @@ export class GameScene extends window.Phaser.Scene {
     exitToMenu() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
-            
+
             // Delegowanie zatrzymania audio przy wyjściu
             this.audioService.exitToMenu();
-            
+
             this.scene.start("MenuScene");
         }
     }

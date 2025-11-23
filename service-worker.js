@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.5.1';
+const CACHE_NAME = 'fullspeed2skid-v2.5.2';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -87,6 +87,7 @@ const ASSETS = [
   '/fullspeed2skid/src/scenes/LoadingScene.js',
   '/fullspeed2skid/src/scenes/MenuScene.js',
   // src/services
+  '/fullspeed2skid/src/services/AudioService.js',
   '/fullspeed2skid/src/services/HiscoreService.js',
   '/fullspeed2skid/src/services/VehicleFactory.js',
   // src/systems
@@ -100,6 +101,7 @@ const ASSETS = [
   '/fullspeed2skid/src/systems/rendering/SkidMarksManager.js',
   // src/ui
   '/fullspeed2skid/src/ui/hiscoresOverlay.js',
+  '/fullspeed2skid/src/ui/hudView.js',
   '/fullspeed2skid/src/ui/menu_background.js',
   '/fullspeed2skid/src/ui/menu_buttons.js',
   '/fullspeed2skid/src/ui/menu_drawUtils.js',

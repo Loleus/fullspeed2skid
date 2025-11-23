@@ -87,7 +87,7 @@ function setupGyroEvents() {
     }
     const tilt = event.beta - window._gyroCalib;
     window._gyroTilt = tilt;
-    const _gyroDeadzone = 0.5;
+    const _gyroDeadzone = 0.2;
     window._gyroControl.left = tilt > _gyroDeadzone;
     window._gyroControl.right = tilt < -_gyroDeadzone;
   });

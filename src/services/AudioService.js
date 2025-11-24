@@ -40,7 +40,7 @@ export class AudioService {
             this.sounds.on = this.scene.sound.add('on', { volume: 0.7 });
             this.sounds.race = this.scene.sound.add('race', { volume: 0.7, rate: 1.0, loop: true });
             this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.6, rate: 1.5, loop: true });
-            this.sounds.slide = this.scene.sound.add('slide', { volume: 1 });
+            this.sounds.slide = this.scene.sound.add('slide', { volume: 0.7 });
             this.sounds.countdownSound = this.scene.sound.add('countdown', { volume: 0.8 });
             this.sounds.music = this.scene.sound.add('game_music', { volume: 0.8, loop: true });
             this.sounds.crash = this.scene.sound.add('game_crash', { volume: 1.1 });

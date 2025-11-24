@@ -254,7 +254,7 @@ export class GameScene extends window.Phaser.Scene {
                 const s0 = this._scale[i];
                 const s = s0 + t * (s0 * 1.6); // rośnie do ~2.6*s0
                 const a = 1.0 - t;             // liniowe zanikanie
-
+                
                 // aktualizacja sprite (bez wywołań setPosition/setScale/setAlpha dla wydajności)
                 const sp = this._sprites[i];
                 sp.x = px;
@@ -266,7 +266,7 @@ export class GameScene extends window.Phaser.Scene {
         };
         // koniec efektu dymu
         // ----------------------------------------
-        
+
         // Drugie auto / AI
         const twoPlayers = !!worldData?.twoPlayers;
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
@@ -444,40 +444,16 @@ export class GameScene extends window.Phaser.Scene {
             gameMode: this.gameMode,
         });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         // Aktualizacja pozycji i kąta emitera dymu
-
         const CAR_HEIGHT = 66;
         // // pozycja środka auta
         const carX = this.carController.carX;
         const carY = this.carController.carY;
         // // kąt auta w stopniach (użyj tego pola, które masz: carSprite.angle lub car.angle)
         const carAngle = this.carController.carSprite.angle;
-
         // // lokalne przesunięcie emitera względem środka auta:
         const offsetX = -8;
         const offsetY = +(CAR_HEIGHT / 2) - 3; // minus -> w tył auta (przykład)
-
-        // --- w update ---
         const worldPos = this.localToWorld(carX, carY, carAngle, offsetX, offsetY);
         const backAngle = carAngle;
         const emitAngle = backAngle + 90;
@@ -490,17 +466,6 @@ export class GameScene extends window.Phaser.Scene {
             this._smokeTimer = 0;
         }
         this.updateParticles(dt);
-
-
-
-
-
-
-
-
-
-
-
     }
 
     showRaceFinish() {

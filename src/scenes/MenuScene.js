@@ -25,33 +25,7 @@ export class MenuScene extends window.Phaser.Scene {
   }
 
   async create() {
-
-    // const flame = this.add.particles(150, 550, 'flares',
-    //   {
-    //     frame: 'white',
-    //     color: [0xfacc22, 0xf89800, 0xf83600, 0x9f0404],
-    //     colorEase: 'quad.out',
-    //     lifespan: 2400,
-    //     angle: { min: -100, max: -80 },
-    //     scale: { start: 0.70, end: 0, ease: 'sine.out' },
-    //     speed: 100,
-    //     advance: 2000,
-    //     blendMode: 'ADD'
-    //   });
-
-    // const wisp = this.add.particles(400, 550, 'flares',
-    //   {
-    //     frame: 'white',
-    //     color: [0x96e0da, 0x937ef3],
-    //     colorEase: 'quart.out',
-    //     lifespan: 1500,
-    //     angle: { min: -100, max: -80 },
-    //     scale: { start: 1, end: 0, ease: 'sine.in' },
-    //     speed: { min: 250, max: 350 },
-    //     advance: 2000,
-    //     blendMode: 'ADD'
-    //   });
-
+    console.log(this.sound)
     this.buttonClick = this.sound.add('menu_button', { volume: 0.5 });
     this.menuMusic = this.sound.add('menu_music', { volume: 0.8, loop: true });
     this.sound.pauseOnBlur = false; // nie pauzuj na zmianie zakładki

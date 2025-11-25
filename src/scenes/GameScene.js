@@ -533,13 +533,22 @@ export class GameScene extends window.Phaser.Scene {
         }
     }
 
-    exitToMenu() {
+    async exitToMenu() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
 
-            // Delegowanie zatrzymania audio przy wyjściu
-            this.audioService.exitToMenu();
+            const audioSvc = this.audioService || this.game?.audioService;
+            setTimeout(() => {
+                // anuluj timery jeśli je rejestrujesz
+                audioSvc?.timers?.forEach(t => t.remove && t.remove());
+                audioSvc?.timers?.clear?.();
 
+                // zatrzymaj wszystkie znane soundy
+                Object.values(audioSvc?.sounds || {}).forEach(s => s?.stop && s.stop());
+
+                // opcjonalnie ustaw flagę po zatrzymaniu
+                // audioSvc.suspended = true;
+            }, 60); // 0 też działa, 60 ms daje WebAudio więcej czasu
             this.scene.start("MenuScene");
         }
     }

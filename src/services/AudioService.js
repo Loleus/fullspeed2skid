@@ -179,19 +179,5 @@ export class AudioService {
             this.scene.gameMode === "RACE" && this.sounds.music?.play();
         }
     }
-    
-    exitToMenu() {
-        if (this.musicOn) {
-            this.sounds.music?.isPlaying && this.sounds.music.stop();
-            this.sounds.ambience?.isPlaying && this.sounds.ambience.stop();
-            this.sounds.idle?.isPlaying && this.sounds.idle.stop();
-            this.pitch = 0.0;
-            if (this.sounds.race) {
-                this.sounds.race.setRate(1.0);
-                this.sounds.race.stop();
-            }
-            this.sounds.race_max?.stop();
-            this.sounds.countdownSound?.stop();
-        }
-    }
+
 }

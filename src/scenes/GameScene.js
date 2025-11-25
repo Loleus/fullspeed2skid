@@ -156,7 +156,7 @@ export class GameScene extends window.Phaser.Scene {
                 sp.scaleX = sp.scaleY = this._scale[idx];
                 sp.alpha = 1.0;
                 sp.setTint(this._tint[idx]); // tint ustawiamy raz przy emisji
-
+                sp.setBlendMode(Phaser.BlendModes.MULTIPLY);
                 this._alive++; // zwiększ licznik aktywnych cząstek
             }
 
@@ -184,6 +184,7 @@ export class GameScene extends window.Phaser.Scene {
                 sp.scaleX = sp.scaleY = this._scale[idx];
                 sp.alpha = 1.0;
                 sp.setTint(this._tint[idx]);
+                sp.setBlendMode(Phaser.BlendModes.MULTIPLY);
                 this._alive++;
             }
 
@@ -208,6 +209,8 @@ export class GameScene extends window.Phaser.Scene {
                 sp.scaleX = sp.scaleY = this._scale[idx];
                 sp.alpha = 1.0;
                 sp.setTint(this._tint[idx]);
+                // tutaj ustawiasz blendMode
+                sp.setBlendMode(Phaser.BlendModes.MULTIPLY);
                 this._alive++;
             }
         };
@@ -254,7 +257,7 @@ export class GameScene extends window.Phaser.Scene {
                 const s0 = this._scale[i];
                 const s = s0 + t * (s0 * 1.6); // rośnie do ~2.6*s0
                 const a = 1.0 - t;             // liniowe zanikanie
-                
+
                 // aktualizacja sprite (bez wywołań setPosition/setScale/setAlpha dla wydajności)
                 const sp = this._sprites[i];
                 sp.x = px;
@@ -460,7 +463,7 @@ export class GameScene extends window.Phaser.Scene {
         // oblicz worldPos i emitAngle jak wcześniej
         if (!this._smokeTimer) this._smokeTimer = 0;
         this._smokeTimer += dt;
-        const emitFreq = (control.down || control.up) ? 20 : 50;
+        const emitFreq = (control.down || control.up) ? 5 : 300;
         if (this._smokeTimer >= emitFreq) {
             this.emitSmoke(worldPos.x, worldPos.y, emitAngle);
             this._smokeTimer = 0;

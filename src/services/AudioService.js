@@ -36,8 +36,8 @@ export class AudioService {
         if (this.musicOn) {
             this.sounds.idle = this.scene.sound.add('idle', { volume: 0.5, loop: true });
             this.sounds.applause = this.scene.sound.add('applause', { volume: 1.0 });
-            this.sounds.off = this.scene.sound.add('off', { volume: 0.7 });
-            this.sounds.on = this.scene.sound.add('on', { volume: 0.7 });
+            this.sounds.off = this.scene.sound.add('off', { volume: 0.6 });
+            this.sounds.on = this.scene.sound.add('on', { volume: 0.6 });
             this.sounds.race = this.scene.sound.add('race', { volume: 0.5, rate: 1.0, loop: true });
             this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.5, rate: 1.5, loop: true });
             this.sounds.slide = this.scene.sound.add('slide', { volume: 0.7 });
@@ -61,48 +61,6 @@ export class AudioService {
                 this.sounds.ambience.play();
                 this.sounds.idle.play();
                 gameMode === "RACE" ? this.sounds.music.play() : this.sounds.music.stop();
-                if ((control.up || control.down) && !this.sounds.on.isPlaying && !this.sounds.race.isPlaying && !this.sounds.race_max.isPlaying && carController.throttleLock === true) {
-                    this.sounds.on.play();
-                    this.scene.time.delayedCall(672, () => {
-                        this.sounds.race.play();
-                        this.sounds.ambience.pause();
-                        this.sounds.idle.stop();
-                        this.sounds.on.stop();
-                    });
-                } else if ((control.up || control.down) && this.sounds.race.isPlaying && carController.throttleLock === true) {
-                    if (this.sounds.race.rate >= 1.49) {
-                        this.sounds.race.pause();
-                        this.sounds.race_max.play();
-                    }
-                } else if (!control.up && !control.down && this.sounds.race.isPlaying && carController.throttleLock === true) {
-                    if (this.sounds.race.rate >= 1.001) {
-                        return;
-                    } else if (this.sounds.race.rate < 1.001) {
-                        this.sounds.race.stop();
-                        if (!this.sounds.idle.isPlaying && !this.sounds.race.isPlaying) {
-                            this.sounds.off.play();
-                            this.scene.time.delayedCall(800, () => {
-                                this.sounds.idle.play();
-                                this.sounds.ambience.resume();
-                            });
-                        }
-                    }
-                } else if (this.sounds.race_max.isPlaying && !control.up && !control.down && carController.throttleLock === true) {
-                    this.sounds.race_max.stop();
-                    this.sounds.race.resume();
-                } else if (this.isThrottle === true) {
-                    this.sounds.race.stop();
-                    this.sounds.race_max.stop();
-                    this.pitch = 0.0;
-                    if (!this.sounds.idle.isPlaying && !this.sounds.off.isPlaying) {
-                        this.sounds.off.play();
-                        this.scene.time.delayedCall(800, () => {
-                            this.sounds.idle.play();
-                            this.sounds.ambience.resume();
-                        });
-                    }
-                }
-
             }
             return;
         }
@@ -210,7 +168,7 @@ export class AudioService {
         if (this.musicOn) {
             this.sounds.music?.isPlaying && this.sounds.music.stop();
             // this.sounds.ambience?.isPlaying && this.sounds.ambience.stop();
-            this.sounds.idle?.isPlaying && this.sounds.idle.stop();
+            // this.sounds.idle?.isPlaying && this.sounds.idle.stop();
             this.pitch = 0.0;
             if (this.sounds.race) {
                 this.sounds.race.setRate(1.0);

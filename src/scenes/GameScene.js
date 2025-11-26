@@ -386,6 +386,7 @@ export class GameScene extends window.Phaser.Scene {
             control.down = false;
             control.left = false;
             control.right = false;
+            // this.carController.setThrottleLock(true);
         }
 
         this.carController.update(deltaSeconds, control, this.worldSize, this.worldSize);

@@ -36,10 +36,10 @@ export class AudioService {
         if (this.musicOn) {
             this.sounds.idle = this.scene.sound.add('idle', { volume: 0.5, loop: true });
             this.sounds.applause = this.scene.sound.add('applause', { volume: 1.0 });
-            this.sounds.off = this.scene.sound.add('off', { volume: 0.7 });
-            this.sounds.on = this.scene.sound.add('on', { volume: 0.7 });
-            this.sounds.race = this.scene.sound.add('race', { volume: 0.7, rate: 1.0, loop: true });
-            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.6, rate: 1.5, loop: true });
+            this.sounds.off = this.scene.sound.add('off', { volume: 0.6 });
+            this.sounds.on = this.scene.sound.add('on', { volume: 0.6 });
+            this.sounds.race = this.scene.sound.add('race', { volume: 0.5, rate: 1.0, loop: true });
+            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.5, rate: 1.5, loop: true });
             this.sounds.slide = this.scene.sound.add('slide', { volume: 0.7 });
             this.sounds.countdownSound = this.scene.sound.add('countdown', { volume: 0.8 });
             this.sounds.music = this.scene.sound.add('game_music', { volume: 0.8, loop: true });
@@ -52,7 +52,7 @@ export class AudioService {
         if (this.scene.sound.mute) {
             return;
         }
-        
+
         const { control, countdownWasActive, raceFinished, carController, aiController, skidMarksSystem, gameMode } = state;
 
         if (countdownWasActive) {
@@ -66,7 +66,7 @@ export class AudioService {
         }
 
         const boom = carController.collisionCount > 0;
-        const AIboom = aiController?aiController.collisionCount > 0:null;
+        const AIboom = aiController ? aiController.collisionCount > 0 : null;
         if ((AIboom || boom) && !this.sounds.crash.isPlaying) {
             this.sounds.crash.play();
         } else if ((!AIboom && !boom) && this.sounds.crash.isPlaying) {
@@ -163,12 +163,12 @@ export class AudioService {
             this.sounds.applause.play();
         }
     }
-    
+
     reset() {
         if (this.musicOn) {
             this.sounds.music?.isPlaying && this.sounds.music.stop();
-            this.sounds.ambience?.isPlaying && this.sounds.ambience.stop();
-            this.sounds.idle?.isPlaying && this.sounds.idle.stop();
+            // this.sounds.ambience?.isPlaying && this.sounds.ambience.stop();
+            // this.sounds.idle?.isPlaying && this.sounds.idle.stop();
             this.pitch = 0.0;
             if (this.sounds.race) {
                 this.sounds.race.setRate(1.0);

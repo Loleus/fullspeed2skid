@@ -319,6 +319,10 @@ export class Car {
   getThrottle() {
     return this.throttle;
   }
+  
+  setThrottleLock(lock) {
+    this.throttleLock = lock;
+  }
 
   // Getter pełnego stanu
   getFullState() {

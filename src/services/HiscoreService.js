@@ -67,7 +67,7 @@ export class HiscoreService {
 
       const defaultNick = 'PLAYER';
       const nick = (window.prompt('NEW HISCORE! ENTER YOUR NAME:', defaultNick) || defaultNick)
-        .trim().slice(0, 10);
+        .trim().slice(0, 8);
       if (!nick) return false;
 
       const updated = mgr.addScore(trackKey, { nick, totalTime, bestLap: best });

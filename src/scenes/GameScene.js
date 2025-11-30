@@ -8,7 +8,7 @@ import { createKeyboardBindings } from "../input/keyboardManager.js";
 import { createHUD } from "../systems/hudManager.js";
 import { CountdownManager } from "../systems/CountdownManager.js";
 import { LapsTimer } from "../systems/LapsTimer.js";
-import { HiscoreService } from "../services/HiscoreService.js";
+import { HiscoreService } from "../services/HiscoreService.js?v=2.5.6";
 import { SkidMarksSystem } from "../systems/SkidMarksSystem.js";
 import { AudioService } from "../services/AudioService.js";
 

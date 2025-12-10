@@ -143,7 +143,7 @@ export class LapsTimer {
         if (!this.speedText) return;
     
         const state = this.scene.carController.getFullState();
-        const speed = state.speed * (220 / 450) || 0;
+        const speed = state.speed * (169 / 450) || 0;
     
         // format 000 km/h
         const formatted = speed.toFixed(0).padStart(3, "0");

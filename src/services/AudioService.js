@@ -14,8 +14,8 @@ export class AudioService {
         this.MAX_SPEED = 450;        // na sztywno, potem podmienisz
         this.RPM_SWITCH_UP = 0.95;   // próg przełączenia na race_max (95% prędkości)
         this.RPM_SWITCH_DOWN = 0.90; // próg powrotu na race (90% prędkości)
-        this.MAX_RATE = 1.8;         // limit dla race_max
-        this.RATE_BASE = 1.0;        // bazowe RPM
+        this.MAX_RATE = 1.6;         // limit dla race_max
+        this.RATE_BASE = 0.8;        // bazowe RPM
     }
 
     preload() {
@@ -45,8 +45,8 @@ export class AudioService {
             this.sounds.applause = this.scene.sound.add('applause', { volume: 1.0 });
             this.sounds.off = this.scene.sound.add('off', { volume: 0.6 });
             this.sounds.on = this.scene.sound.add('on', { volume: 0.6 });
-            this.sounds.race = this.scene.sound.add('race', { volume: 0.5, rate: 1.0, loop: true });
-            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.5, rate: 1.5, loop: true });
+            this.sounds.race = this.scene.sound.add('race', { volume: 0.5, rate: 0.7, loop: true });
+            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.5, rate: 1.3, loop: true });
             this.sounds.slide = this.scene.sound.add('slide', { volume: 0.7 });
             this.sounds.countdownSound = this.scene.sound.add('countdown', { volume: 0.8 });
             this.sounds.music = this.scene.sound.add('game_music', { volume: 0.8, loop: true });

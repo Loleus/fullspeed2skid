@@ -115,6 +115,8 @@ export class AICar extends Car {
       this.v_y += slipStrength * dt;
       const maxVy = localMaxSpeed * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
+      const slipEnergyDrain = 0.011; // strojenie (0.02..0.2)
+      this.v_x *= 1 - slipEnergyDrain * slipSteerRatio;
     }
 
     // Tłumienie boczne
@@ -131,10 +133,23 @@ export class AICar extends Car {
     this.carY += (this.v_x * sinA + this.v_y * cosA) * dt;
 
     // Opory toczenia i aerodynamiczne
+    // let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
+    // let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
+    // let F_total = F_drag + F_roll;
+    // this.v_x -= (F_total / this.carMass) * dt;
+
+    // Przyspieszenie i opory
+    let engineForce = throttle >= 0 ? throttle * this.accel : throttle * this.revAccel;
+
+    // Opory aerodynamiczne i toczenia
     let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
     let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
-    let F_total = F_drag + F_roll;
-    this.v_x -= (F_total / this.carMass) * dt;
+
+    // Siła netto
+    let F_net = engineForce - F_drag - F_roll;
+
+    // Aktualizacja prędkości w osi X
+    this.v_x += (F_net / this.carMass) * dt;
 
     // Aktualizuj sprite
     this.carSprite.x = this.carX;
@@ -288,7 +303,7 @@ export class AICar extends Car {
           prevWaypoint.y - this.carY,
           prevWaypoint.x - this.carX
         );
-        
+
         const angleDiff = this._normalizeAngle(angleToWaypoint - state.carAngle);
 
         control = {

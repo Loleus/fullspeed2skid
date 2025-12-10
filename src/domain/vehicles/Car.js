@@ -334,7 +334,7 @@ export class Car {
       maxSteerDeg: this.MAX_STEER_DEG,
       v_x: this.v_x,
       v_y: this.v_y,
-      speed: Math.hypot(this.v_x, this.v_y)
+      speed: Math.abs(this.v_x)
     };
   }
 }

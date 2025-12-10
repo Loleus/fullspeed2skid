@@ -30,8 +30,8 @@ export const aiConfig = {
 
   // Parametry kontroli poślizgu
   lateralControl: {
-    severeSlipThreshold: 60,  // Próg poważnego poślizgu bocznego
-    moderateSlipThreshold: 40, // Próg umiarkowanego poślizgu
+    severeSlipThreshold: 50,  // Próg poważnego poślizgu bocznego
+    moderateSlipThreshold: 20, // Próg umiarkowanego poślizgu
     severeSlipThrottleMultiplier: 0.2,
     moderateSlipThrottleMultiplier: 0.5,
     severeSlipSteerMultiplier: 0.3,

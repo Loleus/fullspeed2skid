@@ -4,7 +4,7 @@ export const carConfig = {
   CAR_HEIGHT: 66,
   wheelBase: 50,
   carMass: 1200,
-  carDragCoefficient: 1.6,
+  carDragCoefficient: 3.2,
   carFrontalArea: 2.2,
   airDensity: 1.225,
   rollingResistance: 5,

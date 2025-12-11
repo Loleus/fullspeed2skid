@@ -463,7 +463,7 @@ export class GameScene extends window.Phaser.Scene {
         // oblicz worldPos i emitAngle jak wcześniej
         if (!this._smokeTimer) this._smokeTimer = 0;
         this._smokeTimer += dt;
-        const emitFreq = (control.down || control.up) ? 10 : 300;
+        const emitFreq = (control.down || control.up) ? 60 : 300;
         if (this._smokeTimer >= emitFreq) {
             this.emitSmoke(worldPos.x, worldPos.y, emitAngle);
             this._smokeTimer = 0;

@@ -115,7 +115,7 @@ export class AICar extends Car {
       this.v_y += slipStrength * dt;
       const maxVy = localMaxSpeed * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
-      const slipEnergyDrain = 0.011; // strojenie (0.02..0.2)
+      const slipEnergyDrain = 0.012; // strojenie (0.02..0.2)
       this.v_x *= 1 - slipEnergyDrain * slipSteerRatio;
     }
 
@@ -131,12 +131,6 @@ export class AICar extends Car {
     // Aktualizacja pozycji
     this.carX += (this.v_x * cosA - this.v_y * sinA) * dt;
     this.carY += (this.v_x * sinA + this.v_y * cosA) * dt;
-
-    // Opory toczenia i aerodynamiczne
-    // let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
-    // let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
-    // let F_total = F_drag + F_roll;
-    // this.v_x -= (F_total / this.carMass) * dt;
 
     // Przyspieszenie i opory
     let engineForce = throttle >= 0 ? throttle * this.accel : throttle * this.revAccel;

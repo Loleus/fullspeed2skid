@@ -90,8 +90,8 @@ export class PlayerCar extends Car {
       const maxVy = dirMax * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
       // przy poślizgu można dodatkowo zdjąć część v_x (proporcjonalnie do slipSteerRatio)
-      // const slipEnergyDrain = 0.08; // strojenie (0.02..0.2)
-      // this.v_x *= 1 - slipEnergyDrain * slipSteerRatio;
+      const slipEnergyDrain = 0.011; // strojenie (0.02..0.2)
+      this.v_x *= 1 - slipEnergyDrain * slipSteerRatio;
     }
 
     // Tłumienie boczne
@@ -107,11 +107,18 @@ export class PlayerCar extends Car {
     this.carX += (this.v_x * cosA - this.v_y * sinA) * dt;
     this.carY += (this.v_x * sinA + this.v_y * cosA) * dt;
 
-    // Opory toczenia i aerodynamiczne
+    // Przyspieszenie i opory
+    let engineForce = throttle >= 0 ? throttle * this.accel : throttle * this.revAccel;
+
+    // Opory aerodynamiczne i toczenia
     let F_drag = this._dragConst * this.v_x * Math.abs(this.v_x);
     let F_roll = this.rollingResistance * this.carMass * this.gravity * Math.sign(this.v_x);
-    let F_total = F_drag + F_roll;
-    this.v_x -= (F_total / this.carMass) * dt;
+
+    // Siła netto
+    let F_net = engineForce - F_drag - F_roll;
+
+    // Aktualizacja prędkości w osi X
+    this.v_x += (F_net / this.carMass) * dt;
 
     // Ogranicz prędkość wektorową do localMaxSpeed (dla przodu) oraz do localMaxRevSpeed (dla tyłu)
     let forwardSign = Math.sign(this.v_x) || 1; // jeśli v_x == 0, traktuj jako przód

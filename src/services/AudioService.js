@@ -9,6 +9,13 @@ export class AudioService {
         this.minPitch = 0.0;
         this.pitch = 0.0;
         this.isThrottle = false;
+
+        // konfiguracja progu i ograniczeń
+        this.MAX_SPEED = 450;        // na sztywno, potem podmienisz
+        this.RPM_SWITCH_UP = 0.95;   // próg przełączenia na race_max (95% prędkości)
+        this.RPM_SWITCH_DOWN = 0.90; // próg powrotu na race (90% prędkości)
+        this.MAX_RATE = 1.6;         // limit dla race_max
+        this.RATE_BASE = 0.8;        // bazowe RPM
     }
 
     preload() {
@@ -38,8 +45,8 @@ export class AudioService {
             this.sounds.applause = this.scene.sound.add('applause', { volume: 1.0 });
             this.sounds.off = this.scene.sound.add('off', { volume: 0.6 });
             this.sounds.on = this.scene.sound.add('on', { volume: 0.6 });
-            this.sounds.race = this.scene.sound.add('race', { volume: 0.5, rate: 1.0, loop: true });
-            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.5, rate: 1.5, loop: true });
+            this.sounds.race = this.scene.sound.add('race', { volume: 0.5, rate: 0.7, loop: true });
+            this.sounds.race_max = this.scene.sound.add('race_max', { volume: 0.5, rate: 1.3, loop: true });
             this.sounds.slide = this.scene.sound.add('slide', { volume: 0.7 });
             this.sounds.countdownSound = this.scene.sound.add('countdown', { volume: 0.8 });
             this.sounds.music = this.scene.sound.add('game_music', { volume: 0.8, loop: true });
@@ -49,9 +56,7 @@ export class AudioService {
     }
 
     update(dt, state) {
-        if (this.scene.sound.mute) {
-            return;
-        }
+        if (this.scene.sound.mute) return;
 
         const { control, countdownWasActive, raceFinished, carController, aiController, skidMarksSystem, gameMode } = state;
 
@@ -69,8 +74,6 @@ export class AudioService {
         const AIboom = aiController ? aiController.collisionCount > 0 : null;
         if ((AIboom || boom) && !this.sounds.crash.isPlaying) {
             this.sounds.crash.play();
-        } else if ((!AIboom && !boom) && this.sounds.crash.isPlaying) {
-            return;
         }
 
         if (raceFinished) {
@@ -90,50 +93,61 @@ export class AudioService {
         const wheelSlip = carController.getWheelSlip([0, 2]);
         const isBurnout = skidMarksSystem._list[0].skidMarks.burnoutDrawing[0] === true;
 
-        if (this.sounds.slide.isPlaying && (wheelSlip >= 0.3 || isBurnout)) {
-            // Already playing, do nothing
-        } else if (!this.sounds.slide.isPlaying && (wheelSlip >= 0.3 || isBurnout)) {
+        if (!this.sounds.slide.isPlaying && (wheelSlip >= 0.3 || isBurnout)) {
             this.sounds.slide.play();
-        } else {
+        } else if (this.sounds.slide.isPlaying && !(wheelSlip >= 0.3 || isBurnout)) {
             this.sounds.slide.stop();
         }
 
-        if (this.sounds.race.isPlaying) {
-            if ((control.up || control.down) && !this.isThrottle) {
-                this.isThrottle = true;
-            } else if ((!control.up && !control.down) && this.isThrottle) {
-                this.isThrottle = false;
-            }
+        // --- SILNIK: pitch zależny od prędkości ---
+        if (this.sounds.race.isPlaying || this.sounds.race_max.isPlaying) {
+            const throttleActive = (control.up || control.down || carController.throttle !== 0);
+            const currentSpeed = Math.abs(carController.getLocalSpeed());
+            const speedRatio = currentSpeed / this.MAX_SPEED;
 
-            if (this.isThrottle) {
-                this.pitch += (Math.abs(carController.getLocalSpeed() / 1000)) * dt;
-                if (this.pitch > this.maxPitch) this.pitch = this.maxPitch;
+            // pitch = funkcja prędkości
+            this.pitch = Phaser.Math.Clamp(speedRatio * this.maxPitch, this.minPitch, this.maxPitch);
+            const targetRate = this.RATE_BASE + this.pitch;
+
+            // przełączanie między race i race_max
+            if (this.sounds.race.isPlaying && throttleActive && speedRatio >= this.RPM_SWITCH_UP) {
+                this.sounds.race.pause();
+                this.sounds.race_max.play();
+                this.sounds.race_max.setRate(Math.min(targetRate, this.MAX_RATE));
+            } else if (this.sounds.race_max.isPlaying && (!throttleActive || speedRatio < this.RPM_SWITCH_DOWN)) {
+                this.sounds.race_max.stop();
+                this.sounds.race.play();
+                this.sounds.race.setRate(targetRate);
             } else {
-                this.pitch -= (Math.abs(carController.getLocalSpeed() / 1000)) * dt;
-                if (this.pitch < this.minPitch) this.pitch = this.minPitch;
+                if (this.sounds.race_max.isPlaying) {
+                    this.sounds.race_max.setRate(Math.min(targetRate, this.MAX_RATE));
+                } else if (this.sounds.race.isPlaying) {
+                    this.sounds.race.setRate(targetRate);
+                }
             }
-            this.sounds.race.setRate(1.0 + this.pitch);
         }
 
+        // start silnika
         if ((control.up || control.down) && !this.sounds.on.isPlaying && !this.sounds.race.isPlaying && !this.sounds.race_max.isPlaying && carController.throttleLock === false) {
             this.sounds.on.play();
             this.scene.time.delayedCall(672, () => {
                 this.sounds.race.play();
+                this.sounds.race.setRate(this.RATE_BASE + this.minPitch);
                 this.sounds.ambience.pause();
                 this.sounds.idle.stop();
                 this.sounds.on.stop();
             });
-        } else if ((control.up || control.down) && this.sounds.race.isPlaying && carController.throttleLock === false) {
-            if (this.sounds.race.rate >= 1.49) {
-                this.sounds.race.pause();
-                this.sounds.race_max.play();
+        }
+
+        // wygaszanie przy puszczeniu gazu
+        if (!control.up && !control.down && carController.throttleLock === false) {
+            if (this.sounds.race_max.isPlaying) {
+                this.sounds.race_max.stop();
+                this.sounds.race.resume();
             }
-        } else if (!control.up && !control.down && this.sounds.race.isPlaying && carController.throttleLock === false) {
-            if (this.sounds.race.rate >= 1.001) {
-                return;
-            } else if (this.sounds.race.rate < 1.001) {
+            if (this.sounds.race.isPlaying && this.sounds.race.rate < (this.RATE_BASE + 0.001)) {
                 this.sounds.race.stop();
-                if (!this.sounds.idle.isPlaying && !this.sounds.race.isPlaying) {
+                if (!this.sounds.idle.isPlaying) {
                     this.sounds.off.play();
                     this.scene.time.delayedCall(800, () => {
                         this.sounds.idle.play();
@@ -141,10 +155,9 @@ export class AudioService {
                     });
                 }
             }
-        } else if (this.sounds.race_max.isPlaying && !control.up && !control.down && carController.throttleLock === false) {
-            this.sounds.race_max.stop();
-            this.sounds.race.resume();
-        } else if (carController.throttleLock === true) {
+        }
+
+        if (carController.throttleLock === true) {
             this.sounds.race.stop();
             this.sounds.race_max.stop();
             this.pitch = 0.0;

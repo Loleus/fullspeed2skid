@@ -90,7 +90,7 @@ export class PlayerCar extends Car {
       const maxVy = dirMax * this.maxVyRatio;
       if (Math.abs(this.v_y) > maxVy) this.v_y = maxVy * Math.sign(this.v_y);
       // przy poślizgu można dodatkowo zdjąć część v_x (proporcjonalnie do slipSteerRatio)
-      const slipEnergyDrain = 0.01; // strojenie (0.02..0.2)
+      const slipEnergyDrain = 0.011; // strojenie (0.02..0.2)
       this.v_x *= 1 - slipEnergyDrain * slipSteerRatio;
     }
 

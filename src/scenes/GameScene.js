@@ -12,7 +12,6 @@ export class GameScene extends window.Phaser.Scene {
         this.collisionsEnabled = true;
         this.raceFinished = false;
         this.hiscoreChecked = false;
-        // Utworzenie instancji AudioService
         this.audioService = new AudioService(this);
     }
 
@@ -38,13 +37,10 @@ export class GameScene extends window.Phaser.Scene {
         this.load.atlas('flares', 'assets/images/flares.png', 'assets/images/smoke.json');
         this.load.image("car_p1", "assets/images/car.png");
         this.load.image("car_p2", "assets/images/car_X.png");
-
-        // Delegowanie ładowania audio do serwisu
         this.audioService.preload();
     }
 
     async create() {
-        // Delegowanie tworzenia audio do serwisu
         this.audioService.create();
 
         const worldData = this.worldData || window._worldData;
@@ -63,16 +59,12 @@ export class GameScene extends window.Phaser.Scene {
         this.vKey = keys.vKey;
         this.rKey = keys.rKey;
         this.xKey = keys.xKey;
-
-        // ----------------------------------------
         // Efekt dymu z rury wydechowej
-        // ----------------------------------------
         this.smokeEmitter = new SmokeParticleEmitter(this, {
             maxParticles: 1000,
             textureKey: 'flares',
             frameKey: 'black'
         });
-
         // Drugie auto / AI
         const twoPlayers = !!worldData?.twoPlayers;
         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
@@ -239,7 +231,6 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager?.update(deltaSeconds);
         if (this.hudCamera) this.hudCamera.setRotation(0);
 
-        // Delegowanie aktualizacji audio do serwisu
         this.audioService.update(deltaSeconds, {
             control,
             countdownWasActive,
@@ -290,7 +281,6 @@ export class GameScene extends window.Phaser.Scene {
             lapsTimer: this.lapsTimer
         }
         if (this.hiscoreService.checked(hiscoreParams)) {
-            // Wywołanie metody z serwisu audio
             this.audioService.playApplause();
             this.time.delayedCall(10000, () => { this.hiscoreService.tryQualify(hiscoreParams) });
         }
@@ -302,14 +292,11 @@ export class GameScene extends window.Phaser.Scene {
     resetGame() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
-
-            // Delegowanie resetu audio
             this.audioService.reset();
-
             this.lapsTimer.reset();
+            
             const worldData = this.worldData || window._worldData;
             const start = worldData.startPos;
-
             this.raceFinished = false;
             this.carController.resetState(start.x, start.y);
 
@@ -339,18 +326,15 @@ export class GameScene extends window.Phaser.Scene {
     async exitToMenu() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
-
             const audioSvc = this.audioService || this.game?.audioService;
+            
             setTimeout(() => {
                 // anuluj timery jeśli je rejestrujesz
                 audioSvc?.timers?.forEach(t => t.remove && t.remove());
                 audioSvc?.timers?.clear?.();
-
                 // zatrzymaj wszystkie znane soundy
                 Object.values(audioSvc?.sounds || {}).forEach(s => s?.stop && s.stop());
-
-                // opcjonalnie ustaw flagę po zatrzymaniu
-                // audioSvc.suspended = true;
+                // opcjonalnie ustaw flagę po zatrzymaniu, audioSvc.suspended = true;
             }, 60); // 0 też działa, 60 ms daje WebAudio więcej czasu
             this.scene.start("MenuScene");
         }

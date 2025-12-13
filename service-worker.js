@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.5.7';
+const CACHE_NAME = 'fullspeed2skid-v2.5.8';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -64,6 +64,8 @@ const ASSETS = [
   // src/core
   '/fullspeed2skid/src/core/constants.js',
   '/fullspeed2skid/src/core/phaser.js',
+  // src/domain
+  '/fullspeed2skid/src/domain/index.js',
   // src/domain/vehicles
   '/fullspeed2skid/src/domain/vehicles/Car.js',
   '/fullspeed2skid/src/domain/vehicles/CarConfig.js',
@@ -80,6 +82,7 @@ const ASSETS = [
   // src/input
   '/fullspeed2skid/src/input/controlsManager.js',
   '/fullspeed2skid/src/input/gyro-handler.js',
+  '/fullspeed2skid/src/input/index.js',
   '/fullspeed2skid/src/input/keyboardManager.js',
   // src/scenes
   '/fullspeed2skid/src/scenes/GameScene.js',
@@ -89,16 +92,19 @@ const ASSETS = [
   // src/services
   '/fullspeed2skid/src/services/AudioService.js',
   '/fullspeed2skid/src/services/HiscoreService.js',
+  '/fullspeed2skid/src/services/index.js',
   '/fullspeed2skid/src/services/VehicleFactory.js',
   // src/systems
   '/fullspeed2skid/src/systems/CountdownManager.js',
   '/fullspeed2skid/src/systems/hiscoreManager.js',
   '/fullspeed2skid/src/systems/hudManager.js',
+  '/fullspeed2skid/src/systems/index.js',
   '/fullspeed2skid/src/systems/LapsTimer.js',
   '/fullspeed2skid/src/systems/SkidMarksSystem.js',
   // src/systems/rendering
   '/fullspeed2skid/src/systems/rendering/skidMarks.js',
   '/fullspeed2skid/src/systems/rendering/SkidMarksManager.js',
+  '/fullspeed2skid/src/systems/rendering/SmokeParticleEmitter.js',
   // src/ui
   '/fullspeed2skid/src/ui/hiscoresOverlay.js',
   '/fullspeed2skid/src/ui/hudView.js',
@@ -133,7 +139,7 @@ self.addEventListener('activate', event => {
       // Sprawdź czy są stare cache do usunięcia
       const oldCaches = cacheNames.filter(cacheName => cacheName !== CACHE_NAME);
       const isUpdate = oldCaches.length > 0;
-      
+
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {

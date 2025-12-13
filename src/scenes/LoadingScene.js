@@ -1,4 +1,4 @@
-import { World } from '../domain/world/World.js';
+import { World } from '../domain/index.js';
 import { TILE_SIZE, WORLD_HEIGHT } from '../core/constants.js';
 
 export class LoadingScene extends window.Phaser.Scene {
@@ -58,6 +58,7 @@ export class LoadingScene extends window.Phaser.Scene {
       worldData.svgPath = svgPath;
       worldData.startFix = this.startFix;
       this.scene.start('GameScene', {
+        TILE_SIZE: TILE_SIZE,
         worldData: worldData,
         gameMode: this.gameMode,
         startFix: this.startFix,

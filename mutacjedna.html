@@ -186,6 +186,14 @@
     const cv = document.getElementById('cv');
     const ctx = cv.getContext('2d');
 
+    // Offscreen canvas for incremental trails drawing (redukuje koszt rysowania wielu tras co klatkę)
+    const trailsBuf = document.createElement('canvas');
+    trailsBuf.width = W; trailsBuf.height = H;
+    const tctx = trailsBuf.getContext('2d');
+    tctx.lineCap = 'round';
+    tctx.lineJoin = 'round';
+    tctx.globalCompositeOperation = 'source-over';
+
     // UI
     const genEl = document.getElementById('gen');
     const popEl = document.getElementById('pop');
@@ -268,83 +276,90 @@
     // =========================
     // --- AGENT (z DNA i śladem)
     // =========================
+    // Agent wykorzystuje typowane tablice dla DNA i zapisu trajektorii
     class Agent {
       constructor(dna = null) {
-        // pozycja startowa
-        this.x = start.x;
-        this.y = start.y;
+        this.x = start.x; this.y = start.y;
+        this.dead = false; this.reached = false;
+        this.step = 0; this.r = 3;
 
-        // statusy
-        this.dead = false;      // zginął (kolizja lub brak kroków)
-        this.reached = false;   // dotarł do celu
-        this.step = 0;          // aktualny indeks genu
-        this.r = 3;             // promień do kolizji
+        // DNA jako Float32Array [dx,dy, dx,dy, ...]
+        this.dna = dna ? new Float32Array(dna) : Agent.randomDNA();
 
-        // DNA: tablica wektorów ruchu
-        this.dna = dna || Agent.randomDNA();
+        // Trail: prealokowana tablica (DNA_LEN+1) par XY
+        this.trail = new Float32Array((DNA_LEN + 1) * 2);
+        this.trailLen = 1;
+        this.trail[0] = this.x; this.trail[1] = this.y;
 
-        // fitness i ślad (trajektoria)
         this.fitness = 0;
-        this.trail = [{x: this.x, y: this.y}]; // przechowujemy pozycje, aby narysować trajektorię
       }
 
-      // Tworzy losowe DNA: każdy gen to mały wektor (dx,dy)
       static randomDNA() {
-        const dna = new Array(DNA_LEN);
+        const out = new Float32Array(DNA_LEN * 2);
         for (let i = 0; i < DNA_LEN; i++) {
           const angle = Math.random() * Math.PI * 2;
           const speed = 1.6;
-          dna[i] = { dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed };
+          out[i*2] = Math.cos(angle) * speed;
+          out[i*2+1] = Math.sin(angle) * speed;
         }
-        return dna;
+        return out;
       }
 
-      // Wykonaj kolejny krok DNA
       update() {
-        // jeśli już martwy lub dotarł do celu, nic nie robimy
         if (this.dead || this.reached) return;
+        if (this.step >= DNA_LEN) { this.dead = true; return; }
 
-        // jeśli skończyły się geny -> umiera (brak energii)
-        if (this.step >= this.dna.length) { this.dead = true; return; }
+        const idx = this.step * 2;
+        const dx = this.dna[idx];
+        const dy = this.dna[idx + 1];
+        this.step++;
+        const nx = this.x + dx;
+        const ny = this.y + dy;
 
-        // pobierz ruch i spróbuj go wykonać
-        const move = this.dna[this.step++];
-        const nx = this.x + move.dx;
-        const ny = this.y + move.dy;
-
-        // kolizja = śmierć
         if (collides(nx, ny, this.r)) {
           this.dead = true;
-          // zapisujemy pozycję kolizji do śladu (opcjonalnie)
-          this.trail.push({x: nx, y: ny});
+          if (this.trailLen * 2 + 1 < this.trail.length) {
+            this.trail[this.trailLen*2] = nx; this.trail[this.trailLen*2 + 1] = ny; this.trailLen++;
+          }
           return;
         }
 
-        // aktualizujemy pozycję i zapisujemy do śladu
-        this.x = nx; this.y = ny;
-        this.trail.push({x: this.x, y: this.y});
-
-        // sprawdź, czy dotarł do celu
-        const dx = this.x - goal.x;
-        const dy = this.y - goal.y;
-        if (dx*dx + dy*dy <= goal.r*goal.r) {
-          this.reached = true;
+        // Rysujemy segment do bufora z lekkim wygładzeniem (quadratic)
+        if (showTrailsEl.checked) {
+          const px = this.x, py = this.y;
+          tctx.save();
+          tctx.globalAlpha = 0.06;
+          tctx.strokeStyle = '#ddd';
+          tctx.lineWidth = 1;
+          tctx.beginPath();
+          tctx.moveTo(px, py);
+          // proste wygładzenie: quadratic do środka
+          const mx = (px + nx) * 0.5, my = (py + ny) * 0.5;
+          tctx.quadraticCurveTo(px, py, mx, my);
+          tctx.lineTo(nx, ny);
+          tctx.stroke();
+          tctx.restore();
         }
+
+        this.x = nx; this.y = ny;
+        if (this.trailLen * 2 + 1 < this.trail.length) {
+          this.trail[this.trailLen*2] = this.x; this.trail[this.trailLen*2 + 1] = this.y; this.trailLen++;
+        }
+
+        const ddx = this.x - goal.x, ddy = this.y - goal.y;
+        if (ddx*ddx + ddy*ddy <= goal.r*goal.r) this.reached = true;
       }
 
-      // Oblicz fitness: im mniejszy dystans, tym większy wynik; bonus za dotarcie
       computeFitness() {
-        const dx = this.x - goal.x;
-        const dy = this.y - goal.y;
+        const dx = this.x - goal.x; const dy = this.y - goal.y;
         const dist = Math.sqrt(dx*dx + dy*dy);
-        const base = 1 / (dist + 1e-6); // odwrotność dystansu
-        const bonus = this.reached ? 5 : 0; // silny bonus za dotarcie
-        const survivalPenalty = this.dead ? 0.9 : 1.0; // lekka kara za śmierć
+        const base = 1 / (dist + 1e-6);
+        const bonus = this.reached ? 5 : 0;
+        const survivalPenalty = this.dead ? 0.9 : 1.0;
         this.fitness = base * survivalPenalty + bonus;
         return this.fitness;
       }
 
-      // Rysowanie agenta (kropki)
       draw() {
         ctx.beginPath();
         ctx.fillStyle = this.reached ? '#2ecc71' : (this.dead ? '#aa4444' : '#e0e0e0');
@@ -352,18 +367,12 @@
         ctx.fill();
       }
 
-      // Rysowanie trajektorii (ścieżki) agenta
-      drawTrail(alpha = 0.12, color = '#ddd', width = 1) {
-        if (this.trail.length < 2) return;
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = color;
-        ctx.lineWidth = width;
-        ctx.beginPath();
-        ctx.moveTo(this.trail[0].x, this.trail[0].y);
-        for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
-        ctx.stroke();
-        ctx.restore();
+      drawStoredTrail(alpha = 0.9, color = '#ffd166', width = 2.5) {
+        if (this.trailLen < 2) return;
+        ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = color; ctx.lineWidth = width; ctx.beginPath();
+        ctx.moveTo(this.trail[0], this.trail[1]);
+        for (let i = 1; i < this.trailLen; i++) ctx.lineTo(this.trail[i*2], this.trail[i*2 + 1]);
+        ctx.stroke(); ctx.restore();
       }
     }
 
@@ -380,26 +389,35 @@
       population = new Array(POP_SIZE).fill(0).map(() => new Agent());
       bestFitness = 0;
       bestAgentEver = null;
+      // clear trails buffer
+      tctx.clearRect(0,0,W,H);
       genEl.textContent = generation;
       bestEl.textContent = bestFitness.toFixed(3);
     }
     resetPopulation();
 
-    // --- Krzyżowanie (jednopunktowe) ---
+    // --- Krzyżowanie (jednopunktowe) dla typowanych tablic [dx,dy, dx,dy, ...] ---
     function crossover(dna1, dna2) {
-      const cut = Math.floor(Math.random() * dna1.length);
-      const child = new Array(dna1.length);
-      for (let i = 0; i < dna1.length; i++) child[i] = i < cut ? dna1[i] : dna2[i];
+      const len = dna1.length; // 2 * DNA_LEN
+      // wybieramy punkt cięcia na granicy genu (pary dx/dy)
+      const geneCount = len >> 1;
+      const cutGene = Math.floor(Math.random() * (geneCount + 1));
+      const cut = cutGene * 2;
+      const child = new Float32Array(len);
+      for (let i = 0; i < len; i++) child[i] = i < cut ? dna1[i] : dna2[i];
       return child;
     }
 
-    // --- Mutacja: drobna zmiana kierunku i prędkości ---
+    // --- Mutacja dla Float32Array DNA ---
     function mutate(dna) {
-      for (let i = 0; i < dna.length; i++) {
+      // dna długość = DNA_LEN * 2
+      for (let g = 0; g < DNA_LEN; g++) {
         if (Math.random() < MUT_RATE) {
-          const angle = Math.atan2(dna[i].dy, dna[i].dx) + (Math.random() * 0.8 - 0.4);
+          const idx = g * 2;
+          const angle = Math.atan2(dna[idx+1], dna[idx]) + (Math.random() * 0.8 - 0.4);
           const speed = 1.6 * (1 + (Math.random() * 0.2 - 0.1));
-          dna[i] = { dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed };
+          dna[idx] = Math.cos(angle) * speed;
+          dna[idx+1] = Math.sin(angle) * speed;
         }
       }
     }
@@ -468,11 +486,11 @@
       bestFitness = best.fitness;
       bestEl.textContent = bestFitness.toFixed(3);
       if (!bestAgentEver || bestFitness > bestAgentEver.fitness) {
-        // kopiujemy najlepszego jako "najlepszy w historii"
-        bestAgentEver = new Agent(JSON.parse(JSON.stringify(best.dna)));
-        // ustawiamy jego pozycję i trail na aktualne (opcjonalne)
-        bestAgentEver.trail = best.trail.slice();
-        bestAgentEver.x = best.x; bestAgentEver.y = best.y; bestAgentEver.fitness = best.fitness;
+          // kopiujemy najlepszego jako "najlepszy w historii" (kopiujemy Float32Array)
+          bestAgentEver = new Agent(new Float32Array(best.dna));
+          bestAgentEver.trail = best.trail.slice();
+          bestAgentEver.trailLen = best.trailLen || 0;
+          bestAgentEver.x = best.x; bestAgentEver.y = best.y; bestAgentEver.fitness = best.fitness;
       }
 
       // sortujemy populację wg fitness malejąco (przydatne dla elity i rank)
@@ -483,8 +501,8 @@
 
       // elita: kopiujemy najlepszych bez zmian (chronimy dobre rozwiązania)
       for (let i = 0; i < ELITE_COUNT; i++) {
-        // głębokie kopiowanie DNA, aby potomkowie nie dzielili referencji
-        const dnaCopy = JSON.parse(JSON.stringify(sorted[i].dna));
+        // kopiujemy Float32Array DNA
+        const dnaCopy = new Float32Array(sorted[i].dna);
         next.push(new Agent(dnaCopy));
       }
 
@@ -514,14 +532,8 @@
         // symulujemy kolejne kroki DNA (t od 0 do DNA_LEN-1)
         if (t < DNA_LEN) {
           drawMaze();
-
-          // opcjonalnie rysujemy trajektorie wszystkich agentów (słabe, półprzezroczyste)
-          if (showTrailsEl.checked) {
-            for (const a of population) {
-              // rysujemy cienkie, półprzezroczyste ślady
-              a.drawTrail(0.06, '#ddd', 1);
-            }
-          }
+          // namaluj skumulowane trails z bufora
+          if (showTrailsEl.checked) ctx.drawImage(trailsBuf, 0, 0);
 
           // aktualizujemy i rysujemy agentów
           for (const a of population) {
@@ -530,17 +542,8 @@
           }
 
           // dodatkowo rysujemy najlepszą trajektorię z poprzedniej generacji grubszą linią
-          if (bestAgentEver && bestAgentEver.trail && bestAgentEver.trail.length > 1) {
-            // wyróżniona trajektoria najlepszego w historii
-            ctx.save();
-            ctx.globalAlpha = 0.9;
-            ctx.strokeStyle = '#ffd166';
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(bestAgentEver.trail[0].x, bestAgentEver.trail[0].y);
-            for (let i = 1; i < bestAgentEver.trail.length; i++) ctx.lineTo(bestAgentEver.trail[i].x, bestAgentEver.trail[i].y);
-            ctx.stroke();
-            ctx.restore();
+          if (bestAgentEver && bestAgentEver.trailLen > 1) {
+            bestAgentEver.drawStoredTrail(0.9, '#ffd166', 2.5);
           }
 
           t++;
@@ -548,14 +551,13 @@
           // koniec epoki -> ewolucja
           evolve();
 
-          // resetujemy krok i czyścimy ślady nowych agentów (nowe agenty mają pusty trail z pozycją startową)
+          // resetujemy krok i czyścimy ślady bufora (nowe potomstwo rysuje swoje trails od zera)
           t = 0;
+          tctx.clearRect(0,0,W,H);
 
           // rysujemy stan po ewolucji (można zobaczyć nowe potomstwo)
           drawMaze();
-          if (showTrailsEl.checked) {
-            for (const a of population) a.drawTrail(0.06, '#ddd', 1);
-          }
+          if (showTrailsEl.checked) ctx.drawImage(trailsBuf, 0, 0);
           for (const a of population) a.draw();
         }
       }

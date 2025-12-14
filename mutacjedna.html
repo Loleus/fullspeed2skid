@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Algorytm genetyczny: 100 kropek w labiryncie</title>
+  <style>
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      height: 100vh;
+      overflow: hidden;
+      gap: 32px;
+      padding: 24px;
+    }
+
+    #ui {
+      width: 320px;
+      flex-shrink: 0;
+      background: #1a1a1a;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.6);
+    }
+
+    canvas {
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 8px;
+      box-shadow: 0 0 16px rgba(0,0,0,0.5);
+    }
+
+#desc {
+  width: 340px;
+  max-height: calc(100vh - 48px); /* odejmujemy padding body */
+  font-size: 14px;
+  line-height: 1.5;
+  color: #bbb;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+    h2 { margin-bottom: 16px; font-weight: 600; }
+
+    .stat { margin: 8px 0; }
+    .pill {
+      background: #333;
+      padding: 6px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-right: 8px;
+      font-size: 13px;
+    }
+
+    label { display:block; margin:12px 0 6px; font-size:14px; color:#ccc; }
+    input[type=range] { width:100%; }
+    button {
+      padding:8px 14px;
+      background:#444;
+      color:#eee;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      margin-right:8px;
+      transition: background 0.2s;
+    }
+    button:hover { background:#666; }
+    select {
+      width:100%;
+      padding:6px;
+      border-radius:6px;
+      border:none;
+      background:#333;
+      color:#eee;
+    }
+    #desc h3 { margin-top:18px; margin-bottom:8px; color:#eee; font-size:15px; }
+    #desc ul { margin-left:18px; color:#aaa; }
+  </style>
+</head>
+
+<body>
+  <div id="ui">
+    <h2>Genetyczny labirynt</h2>
+
+    <div class="stat">
+      <span class="pill">Populacja: <b id="pop">100</b></span>
+      <span class="pill">Generacja: <b id="gen">0</b></span>
+    </div>
+    <div class="stat"><span class="pill">Najlepszy fitness: <b id="best">0</b></span></div>
+
+    <label>Długość DNA (kroki)</label>
+    <input id="dnaLen" type="range" min="50" max="800" value="300">
+    <div>Wartość: <b id="dnaLenVal">300</b></div>
+
+    <label>Mutacja (%)</label>
+    <input id="mutRate" type="range" min="0" max="20" value="5">
+    <div>Wartość: <b id="mutRateVal">5%</b></div>
+
+    <label>Elitaryzm (ile najlepszych)</label>
+    <input id="elite" type="range" min="1" max="20" value="5">
+    <div>Wartość: <b id="eliteVal">5</b></div>
+
+    <label>Metoda selekcji</label>
+    <select id="selMethod">
+      <option value="roulette">Ruletka (roulette)</option>
+      <option value="tournament">Turniej (tournament)</option>
+      <option value="rank">Ranga (rank)</option>
+    </select>
+    <div style="font-size:13px; color:#bbb; margin-top:6px;">
+      <b>Wyjaśnienie metod:</b>
+      <ul style="margin:6px 0 0 18px; color:#aaa;">
+        <li><b>Ruletka</b> – prawdopodobieństwo proporcjonalne do fitnessu.</li>
+        <li><b>Turniej</b> – losujemy kilku osobników, wybieramy najlepszego (mniej wrażliwe na skrajne wartości).</li>
+        <li><b>Ranga</b> – sortujemy po fitness i wybieramy według rangi (redukuje wpływ wartości odstających).</li>
+      </ul>
+    </div>
+
+    <label style="margin-top:12px;">
+      <input type="checkbox" id="showTrails" checked> Pokaż trajektorie (ścieżki)
+    </label>
+
+    <div style="margin-top:16px;">
+      <button id="restart">Restart</button>
+      <button id="pause">Pauza</button>
+    </div>
+  </div>
+
+  <canvas id="cv" width="720" height="520"></canvas>
+
+  <div id="desc">
+    <h3>Podstawy algorytmów genetycznych</h3>
+    <p>
+      Twórcą algorytmów genetycznych był <b>John Henry Holland</b> (1929–2015), profesor Uniwersytetu Michigan. 
+      Zainspirował się procesami biologicznej ewolucji – selekcją naturalną, dziedziczeniem cech i mutacjami – 
+      oraz matematyką: teorią systemów złożonych, kombinatoryką i teorią informacji. 
+      Chciał pokazać, że komputer może „uczyć się” poprzez symulację ewolucji, 
+      bez konieczności pełnej wiedzy o strukturze problemu.
+    </p>
+    <p>
+      W praktyce oznacza to, że rozwiązania problemu traktujemy jak osobniki z DNA. 
+      DNA to zapis parametrów lub instrukcji. Osobniki podlegają ocenie – mierzymy ich „fitness”, 
+      czyli jak dobrze radzą sobie z zadaniem - matematyczna miara „przystosowania” rozwiązania do zadania. Najlepsi mają większą szansę na reprodukcję. 
+      Tworzymy nowe pokolenia poprzez krzyżowanie DNA i mutacje, co pozwala populacji 
+      eksplorować przestrzeń rozwiązań. 
+    </p>
+    <p>
+      Holland pokazał, że nawet proste reguły – ocena, selekcja, krzyżowanie, mutacja – 
+      mogą prowadzić do złożonych i skutecznych rozwiązań. To przykład, jak matematyczne 
+      modele inspirowane naturą mogą rozwiązywać problemy, których nie umiemy ugryźć 
+      klasycznymi metodami analitycznymi.
+    </p>
+
+    <h3>Jak to działa?</h3>
+    <p>
+      Mamy populację kropek. Każda kropka ma DNA — listę małych wektorów ruchu.
+      Symulujemy je jednocześnie; jeśli kropka uderzy w ścianę, umiera. Po wykonaniu wszystkich kroków
+      oceniamy, które były najbliżej celu (fitness). Najlepsze kopiujemy, mieszamy i losowo zmieniamy.
+      To proste odzwierciedlenie selekcji naturalnej: różnorodność + selekcja = lepsze rozwiązania.
+    </p>
+    <h3>Opis działania suwaków:</h3>
+    <ul>
+      <li><b>Długość DNA (kroki)</b> – liczba ruchów zapisanych w DNA każdej kropki. Większa wartość daje dłuższe trajektorie, ale spowalnia uczenie.</li>
+      <li><b>Mutacja (%)</b> – procent losowych zmian w DNA potomków. Wyższa wartość zwiększa różnorodność, niższa stabilizuje dobre rozwiązania.</li>
+      <li><b>Elitaryzm</b> – liczba najlepszych osobników, którzy przechodzą do kolejnej generacji bez zmian. Zwiększa stabilność i zachowanie dobrych rozwiązań, ale zbyt duża wartość może ograniczyć różnorodność.</li>
+    </ul>
+  </div>
+
+  <script>
+    // =========================
+    // --- USTAWIENIA GLOBALNE
+    // =========================
+    const W = 720, H = 520;
+    const POP_SIZE = 100;
+    let DNA_LEN = 300;
+    let MUT_RATE = 0.05;
+    let ELITE_COUNT = 5;
+
+    const start = { x: 50, y: H - 50 };
+    const goal  = { x: W - 70, y: 60, r: 18 };
+
+    // Canvas
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+
+    // UI
+    const genEl = document.getElementById('gen');
+    const popEl = document.getElementById('pop');
+    const bestEl = document.getElementById('best');
+    const dnaLenEl = document.getElementById('dnaLen');
+    const dnaLenValEl = document.getElementById('dnaLenVal');
+    const mutRateEl = document.getElementById('mutRate');
+    const mutRateValEl = document.getElementById('mutRateVal');
+    const eliteEl = document.getElementById('elite');
+    const eliteValEl = document.getElementById('eliteVal');
+    const btnRestart = document.getElementById('restart');
+    const btnPause = document.getElementById('pause');
+    const selMethodEl = document.getElementById('selMethod');
+    const showTrailsEl = document.getElementById('showTrails');
+
+    // Obsługa UI
+    dnaLenEl.oninput = () => { DNA_LEN = +dnaLenEl.value; dnaLenValEl.textContent = DNA_LEN; resetPopulation(); };
+    mutRateEl.oninput = () => { MUT_RATE = +mutRateEl.value / 100; mutRateValEl.textContent = Math.round(MUT_RATE*100) + '%'; };
+    eliteEl.oninput   = () => { ELITE_COUNT = +eliteEl.value; eliteValEl.textContent = ELITE_COUNT; };
+    btnRestart.onclick = () => resetPopulation(true);
+    let paused = false;
+    btnPause.onclick = () => { paused = !paused; btnPause.textContent = paused ? 'Wznów' : 'Pauza'; };
+
+    popEl.textContent = POP_SIZE;
+
+    // =========================
+    // --- LABIRYNT (ściany)
+    // =========================
+    const walls = [
+      {x: 0, y: 0, w: W, h: 20},
+      {x: 0, y: H-20, w: W, h: 20},
+      {x: 0, y: 0, w: 20, h: H},
+      {x: W-20, y: 0, w: 20, h: H},
+
+      {x: 120, y: 80, w: 480, h: 20},
+      {x: 120, y: 80, w: 20, h: 300},
+      {x: 120, y: 360, w: 400, h: 20},
+      {x: 500, y: 140, w: 20, h: 240},
+      {x: 260, y: 140, w: 260, h: 20},
+      {x: 260, y: 200, w: 20, h: 160},
+      {x: 320, y: 260, w: 180, h: 20},
+    ];
+
+    function drawMaze() {
+      // tło
+      ctx.fillStyle = '#222';
+      ctx.fillRect(0,0,W,H);
+
+      // cel
+      ctx.beginPath();
+      ctx.fillStyle = '#2ecc71';
+      ctx.arc(goal.x, goal.y, goal.r, 0, Math.PI*2);
+      ctx.fill();
+
+      // start
+      ctx.beginPath();
+      ctx.fillStyle = '#3498db';
+      ctx.arc(start.x, start.y, 6, 0, Math.PI*2);
+      ctx.fill();
+
+      // ściany
+      ctx.fillStyle = '#777';
+      for (const w of walls) ctx.fillRect(w.x, w.y, w.w, w.h);
+    }
+
+    // proste sprawdzenie kolizji okrąg-prostokąt (aproksymacja)
+    function collides(x, y, r=3) {
+      for (const w of walls) {
+        const nearestX = Math.max(w.x, Math.min(x, w.x + w.w));
+        const nearestY = Math.max(w.y, Math.min(y, w.y + w.h));
+        const dx = x - nearestX;
+        const dy = y - nearestY;
+        if (dx*dx + dy*dy <= r*r) return true;
+      }
+      // ramy canvasa traktujemy jak ściany
+      if (x < 20+r || x > W-20-r || y < 20+r || y > H-20-r) return true;
+      return false;
+    }
+
+    // =========================
+    // --- AGENT (z DNA i śladem)
+    // =========================
+    class Agent {
+      constructor(dna = null) {
+        // pozycja startowa
+        this.x = start.x;
+        this.y = start.y;
+
+        // statusy
+        this.dead = false;      // zginął (kolizja lub brak kroków)
+        this.reached = false;   // dotarł do celu
+        this.step = 0;          // aktualny indeks genu
+        this.r = 3;             // promień do kolizji
+
+        // DNA: tablica wektorów ruchu
+        this.dna = dna || Agent.randomDNA();
+
+        // fitness i ślad (trajektoria)
+        this.fitness = 0;
+        this.trail = [{x: this.x, y: this.y}]; // przechowujemy pozycje, aby narysować trajektorię
+      }
+
+      // Tworzy losowe DNA: każdy gen to mały wektor (dx,dy)
+      static randomDNA() {
+        const dna = new Array(DNA_LEN);
+        for (let i = 0; i < DNA_LEN; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 1.6;
+          dna[i] = { dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed };
+        }
+        return dna;
+      }
+
+      // Wykonaj kolejny krok DNA
+      update() {
+        // jeśli już martwy lub dotarł do celu, nic nie robimy
+        if (this.dead || this.reached) return;
+
+        // jeśli skończyły się geny -> umiera (brak energii)
+        if (this.step >= this.dna.length) { this.dead = true; return; }
+
+        // pobierz ruch i spróbuj go wykonać
+        const move = this.dna[this.step++];
+        const nx = this.x + move.dx;
+        const ny = this.y + move.dy;
+
+        // kolizja = śmierć
+        if (collides(nx, ny, this.r)) {
+          this.dead = true;
+          // zapisujemy pozycję kolizji do śladu (opcjonalnie)
+          this.trail.push({x: nx, y: ny});
+          return;
+        }
+
+        // aktualizujemy pozycję i zapisujemy do śladu
+        this.x = nx; this.y = ny;
+        this.trail.push({x: this.x, y: this.y});
+
+        // sprawdź, czy dotarł do celu
+        const dx = this.x - goal.x;
+        const dy = this.y - goal.y;
+        if (dx*dx + dy*dy <= goal.r*goal.r) {
+          this.reached = true;
+        }
+      }
+
+      // Oblicz fitness: im mniejszy dystans, tym większy wynik; bonus za dotarcie
+      computeFitness() {
+        const dx = this.x - goal.x;
+        const dy = this.y - goal.y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        const base = 1 / (dist + 1e-6); // odwrotność dystansu
+        const bonus = this.reached ? 5 : 0; // silny bonus za dotarcie
+        const survivalPenalty = this.dead ? 0.9 : 1.0; // lekka kara za śmierć
+        this.fitness = base * survivalPenalty + bonus;
+        return this.fitness;
+      }
+
+      // Rysowanie agenta (kropki)
+      draw() {
+        ctx.beginPath();
+        ctx.fillStyle = this.reached ? '#2ecc71' : (this.dead ? '#aa4444' : '#e0e0e0');
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      // Rysowanie trajektorii (ścieżki) agenta
+      drawTrail(alpha = 0.12, color = '#ddd', width = 1) {
+        if (this.trail.length < 2) return;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        ctx.moveTo(this.trail[0].x, this.trail[0].y);
+        for (let i = 1; i < this.trail.length; i++) ctx.lineTo(this.trail[i].x, this.trail[i].y);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // =========================
+    // --- POPULACJA I EWOLUCJA
+    // =========================
+    let population = [];
+    let generation = 0;
+    let bestFitness = 0;
+    let bestAgentEver = null; // przechowuje najlepszego z całego przebiegu (opcjonalnie)
+
+    function resetPopulation(hard = false) {
+      if (hard) generation = 0;
+      population = new Array(POP_SIZE).fill(0).map(() => new Agent());
+      bestFitness = 0;
+      bestAgentEver = null;
+      genEl.textContent = generation;
+      bestEl.textContent = bestFitness.toFixed(3);
+    }
+    resetPopulation();
+
+    // --- Krzyżowanie (jednopunktowe) ---
+    function crossover(dna1, dna2) {
+      const cut = Math.floor(Math.random() * dna1.length);
+      const child = new Array(dna1.length);
+      for (let i = 0; i < dna1.length; i++) child[i] = i < cut ? dna1[i] : dna2[i];
+      return child;
+    }
+
+    // --- Mutacja: drobna zmiana kierunku i prędkości ---
+    function mutate(dna) {
+      for (let i = 0; i < dna.length; i++) {
+        if (Math.random() < MUT_RATE) {
+          const angle = Math.atan2(dna[i].dy, dna[i].dx) + (Math.random() * 0.8 - 0.4);
+          const speed = 1.6 * (1 + (Math.random() * 0.2 - 0.1));
+          dna[i] = { dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed };
+        }
+      }
+    }
+
+    // --- METODY SELEKCJI ---
+    // Wybór rodzica zależnie od ustawienia w UI: 'roulette', 'tournament', 'rank'
+    function pickParent(method, population, totalFit) {
+      if (method === 'roulette') return pickRoulette(population, totalFit);
+      if (method === 'tournament') return pickTournament(population, 5); // turniej z 5 uczestnikami
+      if (method === 'rank') return pickRank(population);
+      return pickRoulette(population, totalFit);
+    }
+
+    // 1) Ruletka: prawdopodobieństwo proporcjonalne do fitnessu
+    function pickRoulette(population, totalFit) {
+      // jeśli totalFit jest bliskie 0 (np. wszyscy mają 0), wybieramy losowo
+      if (totalFit <= 0) return population[Math.floor(Math.random() * population.length)];
+      const r = Math.random() * totalFit;
+      let acc = 0;
+      for (const a of population) {
+        acc += a.fitness;
+        if (acc >= r) return a;
+      }
+      return population[population.length - 1];
+    }
+
+    // 2) Turniej: losujemy k osobników i wybieramy najlepszego
+    function pickTournament(population, k = 3) {
+      let best = null;
+      for (let i = 0; i < k; i++) {
+        const cand = population[Math.floor(Math.random() * population.length)];
+        if (!best || cand.fitness > best.fitness) best = cand;
+      }
+      return best;
+    }
+
+    // 3) Ranka: sortujemy po fitness i wybieramy według rozkładu rangi
+    function pickRank(population) {
+      // tworzymy tablicę posortowaną rosnąco (najgorszy -> najlepszy)
+      const sorted = [...population].sort((a, b) => a.fitness - b.fitness);
+      // przypisujemy rangi 1..N, ale chcemy większe prawdopodobieństwo dla wyższych rang
+      // użyjemy prostego rozkładu liniowego: waga = index+1
+      const n = sorted.length;
+      const totalRank = (n * (n + 1)) / 2;
+      let r = Math.random() * totalRank;
+      let acc = 0;
+      for (let i = 0; i < n; i++) {
+        acc += (i + 1);
+        if (acc >= r) return sorted[i];
+      }
+      return sorted[n - 1];
+    }
+
+    // --- GŁÓWNA FUNKCJA EWOLUCJI ---
+    function evolve() {
+      // oblicz fitnessy i znajdź najlepszego
+      let totalFit = 0;
+      let best = null;
+      for (const a of population) {
+        const f = a.computeFitness();
+        totalFit += f;
+        if (!best || f > best.fitness) best = a;
+      }
+
+      // aktualizujemy statystyki
+      bestFitness = best.fitness;
+      bestEl.textContent = bestFitness.toFixed(3);
+      if (!bestAgentEver || bestFitness > bestAgentEver.fitness) {
+        // kopiujemy najlepszego jako "najlepszy w historii"
+        bestAgentEver = new Agent(JSON.parse(JSON.stringify(best.dna)));
+        // ustawiamy jego pozycję i trail na aktualne (opcjonalne)
+        bestAgentEver.trail = best.trail.slice();
+        bestAgentEver.x = best.x; bestAgentEver.y = best.y; bestAgentEver.fitness = best.fitness;
+      }
+
+      // sortujemy populację wg fitness malejąco (przydatne dla elity i rank)
+      const sorted = [...population].sort((a, b) => b.fitness - a.fitness);
+
+      // przygotowujemy nowe pokolenie
+      const next = [];
+
+      // elita: kopiujemy najlepszych bez zmian (chronimy dobre rozwiązania)
+      for (let i = 0; i < ELITE_COUNT; i++) {
+        // głębokie kopiowanie DNA, aby potomkowie nie dzielili referencji
+        const dnaCopy = JSON.parse(JSON.stringify(sorted[i].dna));
+        next.push(new Agent(dnaCopy));
+      }
+
+      // wybieramy metodę selekcji z UI
+      const method = selMethodEl.value;
+
+      // tworzymy potomków aż do osiągnięcia rozmiaru populacji
+      while (next.length < POP_SIZE) {
+        const p1 = pickParent(method, population, totalFit);
+        const p2 = pickParent(method, population, totalFit);
+        const childDNA = crossover(p1.dna, p2.dna);
+        mutate(childDNA);
+        next.push(new Agent(childDNA));
+      }
+
+      population = next;
+      generation++;
+      genEl.textContent = generation;
+    }
+
+    // =========================
+    // --- PĘTLA SYMULACJI I RYSOWANIA
+    // =========================
+    let t = 0; // krok w obrębie DNA
+    function loop() {
+      if (!paused) {
+        // symulujemy kolejne kroki DNA (t od 0 do DNA_LEN-1)
+        if (t < DNA_LEN) {
+          drawMaze();
+
+          // opcjonalnie rysujemy trajektorie wszystkich agentów (słabe, półprzezroczyste)
+          if (showTrailsEl.checked) {
+            for (const a of population) {
+              // rysujemy cienkie, półprzezroczyste ślady
+              a.drawTrail(0.06, '#ddd', 1);
+            }
+          }
+
+          // aktualizujemy i rysujemy agentów
+          for (const a of population) {
+            a.update();
+            a.draw();
+          }
+
+          // dodatkowo rysujemy najlepszą trajektorię z poprzedniej generacji grubszą linią
+          if (bestAgentEver && bestAgentEver.trail && bestAgentEver.trail.length > 1) {
+            // wyróżniona trajektoria najlepszego w historii
+            ctx.save();
+            ctx.globalAlpha = 0.9;
+            ctx.strokeStyle = '#ffd166';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(bestAgentEver.trail[0].x, bestAgentEver.trail[0].y);
+            for (let i = 1; i < bestAgentEver.trail.length; i++) ctx.lineTo(bestAgentEver.trail[i].x, bestAgentEver.trail[i].y);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          t++;
+        } else {
+          // koniec epoki -> ewolucja
+          evolve();
+
+          // resetujemy krok i czyścimy ślady nowych agentów (nowe agenty mają pusty trail z pozycją startową)
+          t = 0;
+
+          // rysujemy stan po ewolucji (można zobaczyć nowe potomstwo)
+          drawMaze();
+          if (showTrailsEl.checked) {
+            for (const a of population) a.drawTrail(0.06, '#ddd', 1);
+          }
+          for (const a of population) a.draw();
+        }
+      }
+
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    // =========================
+    // --- DODATKOWE KOMENTARZE "PO LUDZKU"
+    // =========================
+    /*
+      - Trajektorie (trail) przechowują kolejne pozycje agenta. Dzięki temu możemy narysować
+        ścieżkę, którą agent przebył. Rysujemy wszystkie trajektorie półprzezroczyste, a najlepszą
+        (najlepszy w historii) grubszą i wyróżnioną, żeby łatwiej zobaczyć "co działa".
+
+      - Metody selekcji:
+        * Ruletka (roulette): daje szansę proporcjonalną do fitnessu. Jeśli ktoś ma 2x fitness,
+          ma 2x większą szansę zostać rodzicem. Proste, ale wrażliwe na outliery (bardzo dobrych).
+        * Turniej (tournament): losujemy k osobników i wybieramy najlepszego. Mniej wrażliwe na
+          ekstremalne wartości i łatwe do zrównoleglenia.
+        * Ranga (rank): sortujemy po fitness i wybieramy według rangi (np. liniowo). Redukuje
+          wpływ bardzo dużych różnic w fitnessie, co pomaga utrzymać różnorodność.
+
+      - Elitaryzm: kopiujemy kilka najlepszych bez zmian, aby nie stracić dobrych rozwiązań przez
+        przypadkową mutację. To prosty sposób na stabilizację uczenia.
+
+      - Mutacja i krzyżowanie: krzyżowanie miesza DNA rodziców (tu jednopunktowe), mutacja
+        wprowadza losowe zmiany (tu drobne przesunięcie kąta i prędkości). To odpowiada
+        rekombinacji i mutacjom w biologii.
+
+      - John H. Holland: w latach 60. i 70. opisał koncepcję algorytmów genetycznych — ideę
+        używania mechanizmów podobnych do ewolucji (selekcja, krzyżowanie, mutacja) do
+        rozwiązywania problemów optymalizacyjnych. W praktyce algorytmy genetyczne są
+        heurystyką: nie gwarantują optymalnego rozwiązania, ale często znajdują dobre rozwiązania
+        w złożonych przestrzeniach poszukiwań.
+    */
+  </script>
+</body>

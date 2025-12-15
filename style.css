@@ -50,6 +50,25 @@
       font-size: 13px;
     }
 
+    /* wyróżnienie wartości najlepszego fitnessu */
+    .pill b#best {
+      color: #ffd166;
+      font-weight: 700;
+      display: inline-block;
+      min-width: 64px;
+      text-align: right;
+    }
+
+    /* histogram rozkładu fitnessu */
+    #hist {
+      width: 100%;
+      height: 64px;
+      border: 1px solid #333;
+      border-radius: 6px;
+      background: #0b0b0b;
+      display: block;
+    }
+
     label { display:block; margin:12px 0 6px; font-size:14px; color:#ccc; }
     input[type=range] { width:100%; }
     button {

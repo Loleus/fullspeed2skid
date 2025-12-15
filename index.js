@@ -352,24 +352,41 @@
         const bins = 20;
         const counts = new Array(bins).fill(0);
         for (const a of population) {
-          const v = Math.max(0, Math.min(100, a.fitness));
-          let idx = Math.floor((v / 100) * bins);
+          // fitness jest w [0..1], więc normalizujemy do [0..1] przed wyliczeniem indeksu
+          const v = Math.max(0, Math.min(1, a.fitness));
+          let idx = Math.floor(v * bins);
           if (idx >= bins) idx = bins - 1;
           counts[idx]++;
         }
         const cw = histCanvas.width, ch = histCanvas.height;
         hctx.clearRect(0,0,cw,ch);
+        // tło
         hctx.fillStyle = '#111';
         hctx.fillRect(0,0,cw,ch);
-        const maxC = Math.max(1, ...counts);
+        const maxC = Math.max(1, counts.reduce((m,c)=>Math.max(m,c), 0));
         const barW = cw / bins;
+        // słupki
         for (let i = 0; i < bins; i++) {
-          const h = (counts[i] / maxC) * ch;
+          const h = (counts[i] / maxC) * (ch - 36); // zostaw miejsce na nagłówek/etykiety
           const x = i * barW;
-          const y = ch - h;
+          const y = (ch - 20) - h;
           hctx.fillStyle = '#ffd166';
           hctx.fillRect(x + 1, y, Math.max(1, barW - 2), h);
         }
+        // opis i etykiety (skala fitness 0.0..1.0)
+        hctx.fillStyle = '#fff';
+        hctx.font = '12px sans-serif';
+        hctx.textAlign = 'center';
+        hctx.fillText('Fitness histogram (skala: 0.0 — 1.0)', cw / 2, 14);
+        hctx.font = '11px sans-serif';
+        hctx.textAlign = 'left';
+        hctx.fillText('Count', 6, 28);
+        // oznaczenia skali na osi X (0.0 i 1.0)
+        hctx.textAlign = 'center';
+        const leftX = barW * 0.5;
+        const rightX = cw - barW * 0.5;
+        hctx.fillText('0.0', leftX, ch - 4);
+        hctx.fillText('1.0', rightX, ch - 4);
       }
       // zapisz najlepszego w historii (porównuj po surowym wyniku jeśli dostępny)
       if (!bestAgentEver || (typeof best._rawFitness === 'number' && typeof bestAgentEver._rawFitness === 'number' ? best._rawFitness > bestAgentEver._rawFitness : best.fitness > bestAgentEver.fitness)) {

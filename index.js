@@ -322,154 +322,308 @@
     }
 
     // --- GŁÓWNA FUNKCJA EWOLUCJI ---
-    function evolve() {
-      // 1) Oblicz surowe fitnessy (z Agent.computeFitness) i znajdź min/max
-      for (const a of population) a.computeFitness();
-      let minRaw = Infinity, maxRaw = -Infinity;
-      for (const a of population) {
-        const r = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
-        if (r < minRaw) minRaw = r;
-        if (r > maxRaw) maxRaw = r;
+
+    // function evolve() {
+    //   // 1) Oblicz surowe fitnessy (z Agent.computeFitness) i znajdź min/max
+    //   for (const a of population) a.computeFitness();
+    //   let minRaw = Infinity, maxRaw = -Infinity;
+    //   for (const a of population) {
+    //     const r = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
+    //     if (r < minRaw) minRaw = r;
+    //     if (r > maxRaw) maxRaw = r;
+    //   }
+
+    //   // 2) Normalizacja populacyjna i skala — trzymajmy fitness do selekcji w [0..1]
+    //   const eps = 1e-8;
+    //   let totalFit = 0;
+    //   for (const a of population) {
+    //     const raw = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
+    //     let norm = (raw - minRaw) / (Math.max(eps, (maxRaw - minRaw)));
+    //     norm = Math.pow(Math.max(0, Math.min(1, norm)), 1.0); // zachowaj w [0..1]
+    //     a.fitness = norm; // fitness do selekcji w [0..1]
+    //     totalFit += a.fitness;
+    //   }
+
+    //   // UI: pokaż surowe best/avg jako procenty (0..100)
+    //   const avgRaw = population.reduce((s,a) => s + ((typeof a._rawFitness==='number')?a._rawFitness:a.fitness),0) / population.length;
+    //   const bestRaw = maxRaw;
+    //   bestEl.textContent = (bestRaw * 100).toFixed(1);
+    //   if (avgEl) avgEl.textContent = (avgRaw * 100).toFixed(1);
+
+    //   // 3) Wybierz najlepszego już po skalowaniu
+    //   const best = population.reduce((acc, a) => (!acc || a.fitness > acc.fitness) ? a : acc, null);
+
+    //   // aktualizujemy statystyki
+    //   bestFitness = best.fitness;
+    //   // średnia populacji
+    //   const avg = totalFit / Math.max(1, POP_SIZE);
+    //   if (avgEl) avgEl.textContent = avg.toFixed(3);
+
+    //   // rysuj prosty histogram rozkładu fitnessów
+    //   if (hctx) {
+    //     const bins = 20;
+    //     const counts = new Array(bins).fill(0);
+    //     for (const a of population) {
+    //       // fitness jest w [0..1], więc normalizujemy do [0..1] przed wyliczeniem indeksu
+    //       const v = Math.max(0, Math.min(1, a.fitness));
+    //       let idx = Math.floor(v * bins);
+    //       if (idx >= bins) idx = bins - 1;
+    //       counts[idx]++;
+    //     }
+    //     const cw = histCanvas.width, ch = histCanvas.height;
+    //     hctx.clearRect(0,0,cw,ch);
+    //     // tło
+    //     hctx.fillStyle = '#111';
+    //     hctx.fillRect(0,0,cw,ch);
+    //     const maxC = Math.max(1, counts.reduce((m,c)=>Math.max(m,c), 0));
+    //     const barW = cw / bins;
+    //     // słupki
+    //     for (let i = 0; i < bins; i++) {
+    //       const h = (counts[i] / maxC) * (ch - 40); // zostaw miejsce na nagłówek/etykiety
+    //       const x = i * barW;
+    //       const y = (ch - 20) - h;
+    //       hctx.fillStyle = '#ffd166';
+    //       hctx.fillRect(x + 1, y, Math.max(1, barW - 2), h);
+    //     }
+    //     // opis i etykiety (skala fitness 0.0..1.0)
+    //     hctx.fillStyle = '#fff';
+    //     hctx.font = '12px sans-serif';
+    //     hctx.textAlign = 'center';
+    //     hctx.fillText('Fitness histogram', cw / 2, 14);
+    //     hctx.textAlign = 'center';
+    //     const leftX = barW * 0.6;
+    //     const centerX = cw / 2;
+    //     const rightX = cw - barW * 0.6;
+    //     hctx.fillText('0.0', leftX, ch - 8);
+    //     hctx.fillText('0.5', centerX, ch - 8);
+    //     hctx.fillText('1.0', rightX, ch - 8);
+    //   }
+    //   // zapisz najlepszego w historii (porównuj po surowym wyniku jeśli dostępny)
+    //   if (!bestAgentEver || (typeof best._rawFitness === 'number' && typeof bestAgentEver._rawFitness === 'number' ? best._rawFitness > bestAgentEver._rawFitness : best.fitness > bestAgentEver.fitness)) {
+    //       bestAgentEver = new Agent(new Float32Array(best.dna));
+    //       bestAgentEver.trail = best.trail.slice();
+    //       bestAgentEver.trailLen = best.trailLen || 0;
+    //       bestAgentEver.x = best.x; bestAgentEver.y = best.y; bestAgentEver.fitness = best.fitness;
+    //       bestAgentEver._rawFitness = best._rawFitness;
+    //   }
+
+    //   // Oblicz uśrednioną trasę populacji (avgAgentEver) — średnia pozycji po indeksach trajektorii
+    //   try {
+    //     const maxLen = Math.max(...population.map(a => a.trailLen || 0));
+    //     if (maxLen > 1) {
+    //       const avgTrail = new Float32Array(maxLen * 2);
+    //       for (let i = 0; i < maxLen; i++) {
+    //         let sx = 0, sy = 0, cnt = 0;
+    //         for (const a of population) {
+    //           if (a.trailLen > i) {
+    //             sx += a.trail[i*2];
+    //             sy += a.trail[i*2 + 1];
+    //             cnt++;
+    //           }
+    //         }
+    //         if (cnt > 0) {
+    //           avgTrail[i*2] = sx / cnt;
+    //           avgTrail[i*2 + 1] = sy / cnt;
+    //         } else {
+    //           // jeżeli brak, skopiuj ostatnią wartość (bezpieczne domknięcie)
+    //           const j = Math.max(0, i-1);
+    //           avgTrail[i*2] = avgTrail[j*2];
+    //           avgTrail[i*2 + 1] = avgTrail[j*2 + 1];
+    //         }
+    //       }
+    //       // stwórz pseudo-agenta do rysowania
+    //       const proxy = new Agent(new Float32Array(DNA_LEN*2));
+    //       proxy.trail = avgTrail;
+    //       proxy.trailLen = maxLen;
+    //       avgAgentEver = proxy;
+    //     }
+    //   } catch (e) {
+    //     // w razie problemów z trailami — ignorujemy
+    //     console.warn('avg trail error', e);
+    //   }
+
+    //   // sortujemy populację wg fitness malejąco (przydatne dla elity i rank)
+    //   const sorted = [...population].sort((a, b) => b.fitness - a.fitness);
+
+    //   // przygotowujemy nowe pokolenie
+    //   const next = [];
+
+    //   // elita: kopiujemy najlepszych bez zmian (chronimy dobre rozwiązania)
+    //   for (let i = 0; i < ELITE_COUNT; i++) {
+    //     // kopiujemy Float32Array DNA
+    //     const dnaCopy = new Float32Array(sorted[i].dna);
+    //     next.push(new Agent(dnaCopy));
+    //   }
+
+    //   // wybieramy metodę selekcji z UI
+    //   const method = selMethodEl.value;
+
+    //   // tworzymy potomków aż do osiągnięcia rozmiaru populacji
+    //   while (next.length < POP_SIZE) {
+    //     const p1 = pickParent(method, population, totalFit);
+    //     const p2 = pickParent(method, population, totalFit);
+    //     const childDNA = crossover(p1.dna, p2.dna);
+    //     mutate(childDNA);
+    //     next.push(new Agent(childDNA));
+    //   }
+
+    //   population = next;
+    //   generation++;
+    //   genEl.textContent = generation;
+    // }
+
+
+function evolve() {
+  // 1) Oblicz surowe fitnessy
+  for (const a of population) a.computeFitness();
+  let minRaw = Infinity, maxRaw = -Infinity;
+  for (const a of population) {
+    const r = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
+    if (r < minRaw) minRaw = r;
+    if (r > maxRaw) maxRaw = r;
+  }
+
+  // 2) Normalizacja fitness do [0..1]
+  const eps = 1e-8;
+  let totalFit = 0;
+  for (const a of population) {
+    const raw = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
+    let norm = (raw - minRaw) / Math.max(eps, (maxRaw - minRaw));
+    a.fitness = Math.max(0, Math.min(1, norm));
+    totalFit += a.fitness;
+  }
+
+  // 3) Fitness sharing — obniż fitness w tłoku
+  const sigmaShare = 25; // promień niszy (dopasuj do skali labiryntu)
+  for (const a of population) {
+    let denom = 0;
+    for (const b of population) {
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < sigmaShare) {
+        denom += 1 - (dist / sigmaShare);
       }
-
-      // 2) Normalizacja populacyjna i skala — trzymajmy fitness do selekcji w [0..1]
-      const eps = 1e-8;
-      let totalFit = 0;
-      for (const a of population) {
-        const raw = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
-        let norm = (raw - minRaw) / (Math.max(eps, (maxRaw - minRaw)));
-        norm = Math.pow(Math.max(0, Math.min(1, norm)), 1.0); // zachowaj w [0..1]
-        a.fitness = norm; // fitness do selekcji w [0..1]
-        totalFit += a.fitness;
-      }
-
-      // UI: pokaż surowe best/avg jako procenty (0..100)
-      const avgRaw = population.reduce((s,a) => s + ((typeof a._rawFitness==='number')?a._rawFitness:a.fitness),0) / population.length;
-      const bestRaw = maxRaw;
-      bestEl.textContent = (bestRaw * 100).toFixed(1);
-      if (avgEl) avgEl.textContent = (avgRaw * 100).toFixed(1);
-
-      // 3) Wybierz najlepszego już po skalowaniu
-      const best = population.reduce((acc, a) => (!acc || a.fitness > acc.fitness) ? a : acc, null);
-
-      // aktualizujemy statystyki
-      bestFitness = best.fitness;
-      // średnia populacji
-      const avg = totalFit / Math.max(1, POP_SIZE);
-      if (avgEl) avgEl.textContent = avg.toFixed(3);
-
-      // rysuj prosty histogram rozkładu fitnessów
-      if (hctx) {
-        const bins = 20;
-        const counts = new Array(bins).fill(0);
-        for (const a of population) {
-          // fitness jest w [0..1], więc normalizujemy do [0..1] przed wyliczeniem indeksu
-          const v = Math.max(0, Math.min(1, a.fitness));
-          let idx = Math.floor(v * bins);
-          if (idx >= bins) idx = bins - 1;
-          counts[idx]++;
-        }
-        const cw = histCanvas.width, ch = histCanvas.height;
-        hctx.clearRect(0,0,cw,ch);
-        // tło
-        hctx.fillStyle = '#111';
-        hctx.fillRect(0,0,cw,ch);
-        const maxC = Math.max(1, counts.reduce((m,c)=>Math.max(m,c), 0));
-        const barW = cw / bins;
-        // słupki
-        for (let i = 0; i < bins; i++) {
-          const h = (counts[i] / maxC) * (ch - 40); // zostaw miejsce na nagłówek/etykiety
-          const x = i * barW;
-          const y = (ch - 20) - h;
-          hctx.fillStyle = '#ffd166';
-          hctx.fillRect(x + 1, y, Math.max(1, barW - 2), h);
-        }
-        // opis i etykiety (skala fitness 0.0..1.0)
-        hctx.fillStyle = '#fff';
-        hctx.font = '12px sans-serif';
-        hctx.textAlign = 'center';
-        hctx.fillText('Fitness histogram', cw / 2, 14);
-        hctx.textAlign = 'center';
-        const leftX = barW * 0.6;
-        const centerX = cw / 2;
-        const rightX = cw - barW * 0.6;
-        hctx.fillText('0.0', leftX, ch - 8);
-        hctx.fillText('0.5', centerX, ch - 8);
-        hctx.fillText('1.0', rightX, ch - 8);
-      }
-      // zapisz najlepszego w historii (porównuj po surowym wyniku jeśli dostępny)
-      if (!bestAgentEver || (typeof best._rawFitness === 'number' && typeof bestAgentEver._rawFitness === 'number' ? best._rawFitness > bestAgentEver._rawFitness : best.fitness > bestAgentEver.fitness)) {
-          bestAgentEver = new Agent(new Float32Array(best.dna));
-          bestAgentEver.trail = best.trail.slice();
-          bestAgentEver.trailLen = best.trailLen || 0;
-          bestAgentEver.x = best.x; bestAgentEver.y = best.y; bestAgentEver.fitness = best.fitness;
-          bestAgentEver._rawFitness = best._rawFitness;
-      }
-
-      // Oblicz uśrednioną trasę populacji (avgAgentEver) — średnia pozycji po indeksach trajektorii
-      try {
-        const maxLen = Math.max(...population.map(a => a.trailLen || 0));
-        if (maxLen > 1) {
-          const avgTrail = new Float32Array(maxLen * 2);
-          for (let i = 0; i < maxLen; i++) {
-            let sx = 0, sy = 0, cnt = 0;
-            for (const a of population) {
-              if (a.trailLen > i) {
-                sx += a.trail[i*2];
-                sy += a.trail[i*2 + 1];
-                cnt++;
-              }
-            }
-            if (cnt > 0) {
-              avgTrail[i*2] = sx / cnt;
-              avgTrail[i*2 + 1] = sy / cnt;
-            } else {
-              // jeżeli brak, skopiuj ostatnią wartość (bezpieczne domknięcie)
-              const j = Math.max(0, i-1);
-              avgTrail[i*2] = avgTrail[j*2];
-              avgTrail[i*2 + 1] = avgTrail[j*2 + 1];
-            }
-          }
-          // stwórz pseudo-agenta do rysowania
-          const proxy = new Agent(new Float32Array(DNA_LEN*2));
-          proxy.trail = avgTrail;
-          proxy.trailLen = maxLen;
-          avgAgentEver = proxy;
-        }
-      } catch (e) {
-        // w razie problemów z trailami — ignorujemy
-        console.warn('avg trail error', e);
-      }
-
-      // sortujemy populację wg fitness malejąco (przydatne dla elity i rank)
-      const sorted = [...population].sort((a, b) => b.fitness - a.fitness);
-
-      // przygotowujemy nowe pokolenie
-      const next = [];
-
-      // elita: kopiujemy najlepszych bez zmian (chronimy dobre rozwiązania)
-      for (let i = 0; i < ELITE_COUNT; i++) {
-        // kopiujemy Float32Array DNA
-        const dnaCopy = new Float32Array(sorted[i].dna);
-        next.push(new Agent(dnaCopy));
-      }
-
-      // wybieramy metodę selekcji z UI
-      const method = selMethodEl.value;
-
-      // tworzymy potomków aż do osiągnięcia rozmiaru populacji
-      while (next.length < POP_SIZE) {
-        const p1 = pickParent(method, population, totalFit);
-        const p2 = pickParent(method, population, totalFit);
-        const childDNA = crossover(p1.dna, p2.dna);
-        mutate(childDNA);
-        next.push(new Agent(childDNA));
-      }
-
-      population = next;
-      generation++;
-      genEl.textContent = generation;
     }
+    if (denom > 0) a.fitness = a.fitness / denom;
+  }
+// 3b) Rysowanie histogramu fitnessów
+if (hctx) {
+  const bins = 20;
+  const counts = new Array(bins).fill(0);
+  for (const a of population) {
+    const v = Math.max(0, Math.min(1, a.fitness));
+    let idx = Math.floor(v * bins);
+    if (idx >= bins) idx = bins - 1;
+    counts[idx]++;
+  }
+  const cw = histCanvas.width, ch = histCanvas.height;
+  hctx.clearRect(0,0,cw,ch);
+  hctx.fillStyle = '#111';
+  hctx.fillRect(0,0,cw,ch);
+  const maxC = Math.max(1, counts.reduce((m,c)=>Math.max(m,c), 0));
+  const barW = cw / bins;
+  for (let i = 0; i < bins; i++) {
+    const h = (counts[i] / maxC) * (ch - 40);
+    const x = i * barW;
+    const y = (ch - 20) - h;
+    hctx.fillStyle = '#ffd166';
+    hctx.fillRect(x + 1, y, Math.max(1, barW - 2), h);
+  }
+  hctx.fillStyle = '#fff';
+  hctx.font = '12px sans-serif';
+  hctx.textAlign = 'center';
+  hctx.fillText('Fitness histogram', cw / 2, 14);
+  hctx.fillText('0.0', barW * 0.6, ch - 8);
+  hctx.fillText('0.5', cw / 2, ch - 8);
+  hctx.fillText('1.0', cw - barW * 0.6, ch - 8);
+}
+
+  // 4) Statystyki i najlepszy agent
+  const best = population.reduce((acc, a) => (!acc || a.fitness > acc.fitness) ? a : acc, null);
+  bestFitness = best.fitness;
+  generation++;
+  genEl.textContent = generation;
+  bestEl.textContent = (best._rawFitness * 100).toFixed(1);
+
+  // 5) Sortowanie populacji
+  const sorted = [...population].sort((a, b) => b.fitness - a.fitness);
+// --- aktualizacja najlepszego agenta w historii ---
+if (!bestAgentEver || 
+    (typeof best._rawFitness === 'number' && typeof bestAgentEver._rawFitness === 'number'
+      ? best._rawFitness > bestAgentEver._rawFitness
+      : best.fitness > bestAgentEver.fitness)) {
+  bestAgentEver = new Agent(new Float32Array(best.dna));
+  bestAgentEver.trail = best.trail.slice();
+  bestAgentEver.trailLen = best.trailLen || 0;
+  bestAgentEver.x = best.x;
+  bestAgentEver.y = best.y;
+  bestAgentEver.fitness = best.fitness;
+  bestAgentEver._rawFitness = best._rawFitness;
+}
+
+// --- oblicz średnią trasę populacji ---
+try {
+  const maxLen = Math.max(...population.map(a => a.trailLen || 0));
+  if (maxLen > 1) {
+    const avgTrail = new Float32Array(maxLen * 2);
+    for (let i = 0; i < maxLen; i++) {
+      let sx = 0, sy = 0, cnt = 0;
+      for (const a of population) {
+        if (a.trailLen > i) {
+          sx += a.trail[i*2];
+          sy += a.trail[i*2 + 1];
+          cnt++;
+        }
+      }
+      if (cnt > 0) {
+        avgTrail[i*2] = sx / cnt;
+        avgTrail[i*2 + 1] = sy / cnt;
+      } else {
+        const j = Math.max(0, i-1);
+        avgTrail[i*2] = avgTrail[j*2];
+        avgTrail[i*2 + 1] = avgTrail[j*2 + 1];
+      }
+    }
+    const proxy = new Agent(new Float32Array(DNA_LEN*2));
+    proxy.trail = avgTrail;
+    proxy.trailLen = maxLen;
+    avgAgentEver = proxy;
+  }
+} catch (e) {
+  console.warn('avg trail error', e);
+}
+
+  // 6) Tworzymy nowe pokolenie
+  const next = [];
+
+  // Elita (1–2 osobniki)
+  for (let i = 0; i < ELITE_COUNT; i++) {
+    const dnaCopy = new Float32Array(sorted[i].dna);
+    next.push(new Agent(dnaCopy));
+  }
+
+  // Wybrana metoda selekcji
+  const method = selMethodEl.value;
+
+  // Potomkowie
+  while (next.length < POP_SIZE) {
+    const p1 = pickParent(method, population, totalFit);
+    const p2 = pickParent(method, population, totalFit);
+    const childDNA = crossover(p1.dna, p2.dna);
+    mutate(childDNA);
+    next.push(new Agent(childDNA));
+  }
+
+  // 7) Imigranci — wstrzykujemy 5% losowych agentów
+  const immigrants = Math.floor(POP_SIZE * 0.05);
+  for (let i = 0; i < immigrants; i++) {
+    next[next.length - 1 - i] = new Agent(); // nadpisz końcówkę populacji świeżymi
+  }
+
+  population = next;
+}
+
+
 
     // =========================
     // --- PĘTLA SYMULACJI I RYSOWANIA

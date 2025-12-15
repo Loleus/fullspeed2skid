@@ -192,10 +192,12 @@ class Agent {
     const px = this.x, py = this.y;
     const dist = Math.hypot(px - goalPos.x, py - goalPos.y);
     const startDist = Math.max(1e-6, START_TO_GOAL_DIST);
-    const progress = Math.max(0, 1 - dist / startDist); // 0..1
+    const progress = Math.max(0, 1 - dist / startDist);
+    // const progress = Math.max(0, 1 - dist / startDist); // 0..1
     const survival = (this.step || 0) / Math.max(1, maxSteps); // 0..1
     const reachedBonus = this.reached ? 0.6 + (1 - (this.step / maxSteps)) * 0.4 : 0; // 0..1 extra when reached
-    let raw = progress * 0.7 + survival * 0.2 + reachedBonus * 0.1;
+    // let raw = progress * 0.7 + survival * 0.2 + reachedBonus * 0.1;
+    let raw = progress * 0.8 + survival * 0.1 + reachedBonus * 0.1;
     raw = Math.max(0, Math.min(1, raw));
     this._rawFitness = raw;
     return raw;
@@ -264,7 +266,7 @@ function mutate(dna) {
   for (let g = 0; g < DNA_LEN; g++) {
     if (Math.random() < MUT_RATE) {
       const idx = g * 2;
-      const angle = Math.atan2(dna[idx + 1], dna[idx]) + (Math.random() * 0.8 - 0.4);
+      const angle = Math.atan2(dna[idx + 1], dna[idx]) + (Math.random() * 1.2 - 0.6);
       const speed = 1.6 * (1 + (Math.random() * 0.2 - 0.1));
       dna[idx] = Math.cos(angle) * speed;
       dna[idx + 1] = Math.sin(angle) * speed;
@@ -635,7 +637,7 @@ function evolve() {
   }
 
   // 7) Imigranci — wstrzykujemy 5% losowych agentów
-  const immigrants = Math.floor(POP_SIZE * 0.05);
+  const immigrants = Math.floor(POP_SIZE * 0.15);
   for (let i = 0; i < immigrants; i++) {
     next[next.length - 1 - i] = new Agent(); // nadpisz końcówkę populacji świeżymi
   }

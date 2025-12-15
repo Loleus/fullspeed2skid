@@ -1,20 +1,20 @@
   // =========================
   // --- USTAWIENIA GLOBALNE
   // =========================
-  const OLD_W = 720, OLD_H = 520;
   const W = 320, H = 320; // nowy rozmiar canvasa
-  const sx = W / OLD_W, sy = H / OLD_H;
   const WALL_THICK = 5; // grubość ścian w px
     const POP_SIZE = 100;
     let DNA_LEN = 300;
     let MUT_RATE = 0.05;
     let ELITE_COUNT = 5;
 
-    const start = { x: Math.round(50 * sx), y: H - Math.round(50 * sy) };
-    const goal  = { x: W - Math.round(70 * sx), y: Math.round(60 * sy), r: Math.max(4, Math.round(18 * ((sx + sy) / 2))) };
+    // stałe rozmiary markerów niezależne od poprzedniego rozmiaru
+    const START_R = 6;
+    const AGENT_R = 3;
+    // start i goal ustawione bezpośrednio w narożnikach nowego canvasa
+    const start = { x: WALL_THICK + START_R, y: H - WALL_THICK - START_R };
+    const goal  = { x: W - WALL_THICK - START_R, y: WALL_THICK + START_R, r: 12 };
     const START_TO_GOAL_DIST = Math.hypot(start.x - goal.x, start.y - goal.y);
-    const AGENT_R = Math.max(1, Math.round(3 * ((sx + sy) / 2)));
-    const START_R = Math.max(3, Math.round(6 * ((sx + sy) / 2)));
 
     // Canvas
     const cv = document.getElementById('cv');
@@ -59,35 +59,19 @@
     // =========================
     // --- LABIRYNT (ściany)
     // =========================
-    // surowe współrzędne labiryntu (skalujemy poniżej)
-    const wallsRaw = [
-      // ramy
-      {x: 0, y: 0, w: OLD_W, h: 20},
-      {x: 0, y: OLD_H-20, w: OLD_W, h: 20},
-      {x: 0, y: 0, w: 20, h: OLD_H},
-      {x: OLD_W-20, y: 0, w: 20, h: OLD_H},
+    // proste ściany labiryntu dopasowane do nowego rozmiaru
+    const walls = [
+      { x: 0, y: 0, w: W, h: WALL_THICK },
+      { x: 0, y: H - WALL_THICK, w: W, h: WALL_THICK },
+      { x: 0, y: 0, w: WALL_THICK, h: H },
+      { x: W - WALL_THICK, y: 0, w: WALL_THICK, h: H },
 
-      // wewnętrzne ściany (oryginalne wartości)
-      {x: 120, y: 80, w: 480, h: 20},
-      {x: 120, y: 80, w: 20, h: 300},
-      {x: 120, y: 360, w: 400, h: 20},
-      {x: 500, y: 140, w: 20, h: 240},
-      {x: 260, y: 140, w: 260, h: 20},
-      {x: 260, y: 200, w: 20, h: 160},
-      {x: 320, y: 260, w: 180, h: 20},
+      // wewnętrzne, prosty układ w środku canvasu
+      { x: Math.round(W * 0.2), y: Math.round(H * 0.2), w: Math.round(W * 0.6), h: WALL_THICK },
+      { x: Math.round(W * 0.2), y: Math.round(H * 0.2), w: WALL_THICK, h: Math.round(H * 0.6) },
+      { x: Math.round(W * 0.4), y: Math.round(H * 0.55), w: Math.round(W * 0.4), h: WALL_THICK },
+      { x: Math.round(W * 0.7), y: Math.round(H * 0.2), w: WALL_THICK, h: Math.round(H * 0.4) },
     ];
-
-    // funkcje pomocnicze skalujące współrzędne
-    const sX = v => Math.round(v * sx);
-    const sY = v => Math.round(v * sy);
-
-    // tworzymy finalne ściany już w nowym układzie i z poprawioną grubością krawędzi
-    const walls = wallsRaw.map(w => ({ x: sX(w.x), y: sY(w.y), w: Math.max(1, sX(w.w)), h: Math.max(1, sY(w.h)) }));
-    // nadpisz ramy, by korzystały z WALL_THICK i dokładnie wypełniały krawędzie
-    walls[0] = { x: 0, y: 0, w: W, h: WALL_THICK };
-    walls[1] = { x: 0, y: H - WALL_THICK, w: W, h: WALL_THICK };
-    walls[2] = { x: 0, y: 0, w: WALL_THICK, h: H };
-    walls[3] = { x: W - WALL_THICK, y: 0, w: WALL_THICK, h: H };
 
     function drawMaze() {
       // tło

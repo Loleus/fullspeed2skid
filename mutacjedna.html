@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Algorytm genetyczny: 100 kropek w labiryncie</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css">  
 </head>
 
 <body>
@@ -14,36 +15,19 @@
       <span class="pill">Populacja: <b id="pop">100</b></span>
       <span class="pill">Generacja: <b id="gen">0</b></span>
     </div>
-    <div class="stat">
-      <span class="pill">Najlepszy fitness: <b id="best">0</b></span>
-      <span class="pill">Średni fitness: <b id="avg">0</b></span>
-    </div>
-    <div class="stat"><span class="pill">Różnorodność genetyczna: <b id="diversity">0%</b></span></div>
-
-    <label>Rozmiar populacji</label>
-    <input id="popSize" type="range" min="10" max="500" value="100">
-    <div>Wartość: <b id="popSizeVal">100</b></div>
-    <div style="font-size:12px; color:#999; margin-top:2px;">Większa populacja = większa różnorodność, ale wolniejsze obliczenia</div>
+    <div class="stat"><span class="pill">Najlepszy fitness: <b id="best">0</b></span></div>
 
     <label>Długość DNA (kroki)</label>
     <input id="dnaLen" type="range" min="50" max="800" value="300">
     <div>Wartość: <b id="dnaLenVal">300</b></div>
-    <div style="font-size:12px; color:#999; margin-top:2px;">Liczba ruchów zapisanych w DNA każdego agenta</div>
-
-    <label>Współczynnik krzyżowania (%)</label>
-    <input id="crossoverRate" type="range" min="0" max="100" value="100">
-    <div>Wartość: <b id="crossoverRateVal">100%</b></div>
-    <div style="font-size:12px; color:#999; margin-top:2px;">Prawdopodobieństwo krzyżowania DNA rodziców (rekombinacja genetyczna)</div>
 
     <label>Mutacja (%)</label>
     <input id="mutRate" type="range" min="0" max="20" value="5">
     <div>Wartość: <b id="mutRateVal">5%</b></div>
-    <div style="font-size:12px; color:#999; margin-top:2px;">Prawdopodobieństwo mutacji pojedynczego genu</div>
 
     <label>Elitaryzm (ile najlepszych)</label>
-    <input id="elite" type="range" min="0" max="50" value="5">
+    <input id="elite" type="range" min="1" max="20" value="5">
     <div>Wartość: <b id="eliteVal">5</b></div>
-    <div style="font-size:12px; color:#999; margin-top:2px;">Liczba najlepszych osobników przechodzących bez zmian</div>
 
     <label>Metoda selekcji</label>
     <select id="selMethod">
@@ -54,16 +38,11 @@
     <div style="font-size:13px; color:#bbb; margin-top:6px;">
       <b>Wyjaśnienie metod:</b>
       <ul style="margin:6px 0 0 18px; color:#aaa;">
-        <li><b>Ruletka</b> – prawdopodobieństwo proporcjonalne do fitnessu (selekcja proporcjonalna).</li>
+        <li><b>Ruletka</b> – prawdopodobieństwo proporcjonalne do fitnessu.</li>
         <li><b>Turniej</b> – losujemy kilku osobników, wybieramy najlepszego (mniej wrażliwe na skrajne wartości).</li>
         <li><b>Ranga</b> – sortujemy po fitness i wybieramy według rangi (redukuje wpływ wartości odstających).</li>
       </ul>
     </div>
-
-    <label>Rozmiar turnieju</label>
-    <input id="tournamentSize" type="range" min="2" max="20" value="5">
-    <div>Wartość: <b id="tournamentSizeVal">5</b></div>
-    <div style="font-size:12px; color:#999; margin-top:2px;">Liczba uczestników turnieju (tylko dla selekcji turniejowej)</div>
 
     <label style="margin-top:12px;">
       <input type="checkbox" id="showTrails" checked> Pokaż trajektorie (ścieżki)
@@ -83,15 +62,15 @@
       Twórcą algorytmów genetycznych był <b>John Henry Holland</b> (1929–2015), profesor Uniwersytetu Michigan. 
       Zainspirował się procesami biologicznej ewolucji – selekcją naturalną, dziedziczeniem cech i mutacjami – 
       oraz matematyką: teorią systemów złożonych, kombinatoryką i teorią informacji. 
-      Chciał pokazać, że komputer może „uczyć się" poprzez symulację ewolucji, 
+      Chciał pokazać, że komputer może „uczyć się” poprzez symulację ewolucji, 
       bez konieczności pełnej wiedzy o strukturze problemu.
     </p>
     <p>
       W praktyce oznacza to, że rozwiązania problemu traktujemy jak osobniki z DNA. 
-      DNA to zapis parametrów lub instrukcji. Osobniki podlegają ocenie – mierzymy ich <b>fitness</b>, 
-      czyli jak dobrze radzą sobie z zadaniem - matematyczna miara „przystosowania" rozwiązania do zadania. 
-      Najlepsi mają większą szansę na reprodukcję. Tworzymy nowe pokolenia poprzez <b>krzyżowanie</b> DNA 
-      (rekombinacja genetyczna) i <b>mutacje</b>, co pozwala populacji eksplorować przestrzeń rozwiązań.
+      DNA to zapis parametrów lub instrukcji. Osobniki podlegają ocenie – mierzymy ich „fitness”, 
+      czyli jak dobrze radzą sobie z zadaniem - matematyczna miara „przystosowania” rozwiązania do zadania. Najlepsi mają większą szansę na reprodukcję. 
+      Tworzymy nowe pokolenia poprzez krzyżowanie DNA i mutacje, co pozwala populacji 
+      eksplorować przestrzeń rozwiązań. 
     </p>
     <p>
       Holland pokazał, że nawet proste reguły – ocena, selekcja, krzyżowanie, mutacja – 
@@ -99,17 +78,6 @@
       modele inspirowane naturą mogą rozwiązywać problemy, których nie umiemy ugryźć 
       klasycznymi metodami analitycznymi.
     </p>
-    <h3>Kluczowe parametry genetyczne</h3>
-    <ul>
-      <li><b>Rozmiar populacji</b> – większa populacja zwiększa różnorodność genetyczną i szansę na znalezienie 
-        dobrego rozwiązania, ale spowalnia obliczenia. W biologii: większa populacja = większa pula genowa.</li>
-      <li><b>Współczynnik krzyżowania</b> – prawdopodobieństwo rekombinacji genetycznej. W biologii odpowiada 
-        procesowi crossing-over podczas mejozy. Wartość 100% oznacza, że zawsze krzyżujemy DNA rodziców.</li>
-      <li><b>Współczynnik mutacji</b> – prawdopodobieństwo mutacji pojedynczego genu. Zbyt wysoka prowadzi 
-        do chaotycznych zmian, zbyt niska ogranicza eksplorację przestrzeni rozwiązań.</li>
-      <li><b>Elitaryzm</b> – zachowanie najlepszych osobników bez zmian. Zapewnia stabilność i chroni 
-        przed utratą dobrych rozwiązań przez przypadkową mutację.</li>
-    </ul>
 
     <h3>Jak to działa?</h3>
     <p>
@@ -118,21 +86,12 @@
       oceniamy, które były najbliżej celu (fitness). Najlepsze kopiujemy, mieszamy i losowo zmieniamy.
       To proste odzwierciedlenie selekcji naturalnej: różnorodność + selekcja = lepsze rozwiązania.
     </p>
-    <h3>Funkcja fitness</h3>
-    <p>
-      Fitness jest obliczany na podstawie odległości od celu, statusu agenta (żywy/martwy/osiągnął cel) 
-      oraz efektywności ścieżki. Im bliżej celu, tym wyższy fitness. Agent otrzymuje duży bonus za 
-      osiągnięcie celu (selekcja pozytywna) i karę za śmierć (selekcja negatywna). 
-      Funkcja uwzględnia również długość przebytej ścieżki, promując bardziej efektywne rozwiązania.
-    </p>
-    <h3>Różnorodność genetyczna</h3>
-    <p>
-      Różnorodność genetyczna mierzy, jak różne są DNA osobników w populacji. Wysoka różnorodność 
-      oznacza szeroką eksplorację przestrzeni rozwiązań, niska może prowadzić do przedwczesnej zbieżności 
-      (premature convergence) – sytuacji, gdy populacja utknęła w lokalnym optimum. 
-      Monitorowanie różnorodności jest kluczowe dla zrozumienia dynamiki ewolucji.
-    </p>
+    <h3>Opis działania suwaków:</h3>
+    <ul>
+      <li><b>Długość DNA (kroki)</b> – liczba ruchów zapisanych w DNA każdej kropki. Większa wartość daje dłuższe trajektorie, ale spowalnia uczenie.</li>
+      <li><b>Mutacja (%)</b> – procent losowych zmian w DNA potomków. Wyższa wartość zwiększa różnorodność, niższa stabilizuje dobre rozwiązania.</li>
+      <li><b>Elitaryzm</b> – liczba najlepszych osobników, którzy przechodzą do kolejnej generacji bez zmian. Zwiększa stabilność i zachowanie dobrych rozwiązań, ale zbyt duża wartość może ograniczyć różnorodność.</li>
+    </ul>
   </div>
-
-  <script src="index.js"></script>
+<script src="index.js"></script>
 </body>

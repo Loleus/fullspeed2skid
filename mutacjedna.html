@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="pl">
+
 <head>
   <meta charset="UTF-8" />
   <title>Algorytm genetyczny: 100 kropek w labiryncie</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css">  
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -16,6 +17,9 @@
       <span class="pill">Generacja: <b id="gen">0</b></span>
     </div>
     <div class="stat">
+      <div style="margin-top:12px;">
+        <canvas id="hist" width="280" height="96"></canvas>
+      </div>
       <span class="pill">Najlepszy fitness: <b id="best">0</b></span>
       <span class="pill">Średni fitness: <b id="avg">0</b></span>
     </div>
@@ -55,33 +59,32 @@
       <button id="restart">Restart</button>
       <button id="pause">Pauza</button>
     </div>
-    <div style="margin-top:12px;">
-      <canvas id="hist" width="280" height="94"></canvas>
-    </div>
+
   </div>
 
-  <canvas id="cv" width="720" height="520"></canvas>
+  <canvas id="cv" width="320" height="320"></canvas>
 
   <div id="desc">
     <h3>Podstawy algorytmów genetycznych</h3>
     <p>
-      Twórcą algorytmów genetycznych był <b>John Henry Holland</b> (1929–2015), profesor Uniwersytetu Michigan. 
-      Zainspirował się procesami biologicznej ewolucji – selekcją naturalną, dziedziczeniem cech i mutacjami – 
-      oraz matematyką: teorią systemów złożonych, kombinatoryką i teorią informacji. 
-      Chciał pokazać, że komputer może „uczyć się” poprzez symulację ewolucji, 
+      Twórcą algorytmów genetycznych był <b>John Henry Holland</b> (1929–2015), profesor Uniwersytetu Michigan.
+      Zainspirował się procesami biologicznej ewolucji – selekcją naturalną, dziedziczeniem cech i mutacjami –
+      oraz matematyką: teorią systemów złożonych, kombinatoryką i teorią informacji.
+      Chciał pokazać, że komputer może „uczyć się” poprzez symulację ewolucji,
       bez konieczności pełnej wiedzy o strukturze problemu.
     </p>
     <p>
-      W praktyce oznacza to, że rozwiązania problemu traktujemy jak osobniki z DNA. 
-      DNA to zapis parametrów lub instrukcji. Osobniki podlegają ocenie – mierzymy ich „fitness”, 
-      czyli jak dobrze radzą sobie z zadaniem - matematyczna miara „przystosowania” rozwiązania do zadania. Najlepsi mają większą szansę na reprodukcję. 
-      Tworzymy nowe pokolenia poprzez krzyżowanie DNA i mutacje, co pozwala populacji 
-      eksplorować przestrzeń rozwiązań. 
+      W praktyce oznacza to, że rozwiązania problemu traktujemy jak osobniki z DNA.
+      DNA to zapis parametrów lub instrukcji. Osobniki podlegają ocenie – mierzymy ich „fitness”,
+      czyli jak dobrze radzą sobie z zadaniem - matematyczna miara „przystosowania” rozwiązania do zadania. Najlepsi
+      mają większą szansę na reprodukcję.
+      Tworzymy nowe pokolenia poprzez krzyżowanie DNA i mutacje, co pozwala populacji
+      eksplorować przestrzeń rozwiązań.
     </p>
     <p>
-      Holland pokazał, że nawet proste reguły – ocena, selekcja, krzyżowanie, mutacja – 
-      mogą prowadzić do złożonych i skutecznych rozwiązań. To przykład, jak matematyczne 
-      modele inspirowane naturą mogą rozwiązywać problemy, których nie umiemy ugryźć 
+      Holland pokazał, że nawet proste reguły – ocena, selekcja, krzyżowanie, mutacja –
+      mogą prowadzić do złożonych i skutecznych rozwiązań. To przykład, jak matematyczne
+      modele inspirowane naturą mogą rozwiązywać problemy, których nie umiemy ugryźć
       klasycznymi metodami analitycznymi.
     </p>
 
@@ -94,10 +97,13 @@
     </p>
     <h3>Opis działania suwaków:</h3>
     <ul>
-      <li><b>Długość DNA (kroki)</b> – liczba ruchów zapisanych w DNA każdej kropki. Większa wartość daje dłuższe trajektorie, ale spowalnia uczenie.</li>
-      <li><b>Mutacja (%)</b> – procent losowych zmian w DNA potomków. Wyższa wartość zwiększa różnorodność, niższa stabilizuje dobre rozwiązania.</li>
-      <li><b>Elitaryzm</b> – liczba najlepszych osobników, którzy przechodzą do kolejnej generacji bez zmian. Zwiększa stabilność i zachowanie dobrych rozwiązań, ale zbyt duża wartość może ograniczyć różnorodność.</li>
+      <li><b>Długość DNA (kroki)</b> – liczba ruchów zapisanych w DNA każdej kropki. Większa wartość daje dłuższe
+        trajektorie, ale spowalnia uczenie.</li>
+      <li><b>Mutacja (%)</b> – procent losowych zmian w DNA potomków. Wyższa wartość zwiększa różnorodność, niższa
+        stabilizuje dobre rozwiązania.</li>
+      <li><b>Elitaryzm</b> – liczba najlepszych osobników, którzy przechodzą do kolejnej generacji bez zmian. Zwiększa
+        stabilność i zachowanie dobrych rozwiązań, ale zbyt duża wartość może ograniczyć różnorodność.</li>
     </ul>
   </div>
-<script src="index.js"></script>
+  <script src="index.js"></script>
 </body>

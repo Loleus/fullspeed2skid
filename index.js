@@ -225,14 +225,21 @@
     let bestFitness = 0;
     let bestAgentEver = null; // przechowuje najlepszego z całego przebiegu (opcjonalnie)
     let avgAgentEver = null; // przechowuje uśrednioną trasę z poprzedniej generacji
+    // krok symulacji (indeks DNA) — deklarujemy wcześniej, aby reset mógł go zresetować
+    let t = 0;
 
     function resetPopulation(hard = false) {
       if (hard) generation = 0;
       population = new Array(POP_SIZE).fill(0).map(() => new Agent());
       bestFitness = 0;
       bestAgentEver = null;
+      avgAgentEver = null;
+      // reset czasu symulacji (krok DNA)
+      t = 0;
       // clear trails buffer
       tctx.clearRect(0,0,W,H);
+      // clear main canvas to remove any leftover drawings
+      ctx.clearRect(0,0,W,H);
       genEl.textContent = generation;
       bestEl.textContent = bestFitness.toFixed(3);
       if (avgEl) avgEl.textContent = (0).toFixed(3);
@@ -467,7 +474,6 @@
     // =========================
     // --- PĘTLA SYMULACJI I RYSOWANIA
     // =========================
-    let t = 0; // krok w obrębie DNA
     function loop() {
       if (!paused) {
         // symulujemy kolejne kroki DNA (t od 0 do DNA_LEN-1)

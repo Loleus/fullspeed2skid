@@ -1,14 +1,19 @@
-// =========================
-    // --- USTAWIENIA GLOBALNE
-    // =========================
-    const W = 720, H = 520;
+  // =========================
+  // --- USTAWIENIA GLOBALNE
+  // =========================
+  const W = 320, H = 320; // nowy rozmiar canvasa
+  const WALL_THICK = 5; // grubość ścian w px
     const POP_SIZE = 100;
     let DNA_LEN = 300;
     let MUT_RATE = 0.05;
     let ELITE_COUNT = 5;
 
-    const start = { x: 50, y: H - 50 };
-    const goal  = { x: W - 70, y: 60, r: 18 };
+    // stałe rozmiary markerów niezależne od poprzedniego rozmiaru
+    const START_R = 6;
+    const AGENT_R = 3;
+    // start i goal ustawione bezpośrednio w narożnikach nowego canvasa
+    const start = { x: WALL_THICK + START_R, y: H - WALL_THICK - START_R };
+    const goal  = { x: W - WALL_THICK - START_R, y: WALL_THICK + START_R, r: 12 };
     const START_TO_GOAL_DIST = Math.hypot(start.x - goal.x, start.y - goal.y);
 
     // Canvas
@@ -54,19 +59,18 @@
     // =========================
     // --- LABIRYNT (ściany)
     // =========================
+    // proste ściany labiryntu dopasowane do nowego rozmiaru
     const walls = [
-      {x: 0, y: 0, w: W, h: 20},
-      {x: 0, y: H-20, w: W, h: 20},
-      {x: 0, y: 0, w: 20, h: H},
-      {x: W-20, y: 0, w: 20, h: H},
+      { x: 0, y: 0, w: W, h: WALL_THICK },
+      { x: 0, y: H - WALL_THICK, w: W, h: WALL_THICK },
+      { x: 0, y: 0, w: WALL_THICK, h: H },
+      { x: W - WALL_THICK, y: 0, w: WALL_THICK, h: H },
 
-      {x: 120, y: 80, w: 480, h: 20},
-      {x: 120, y: 80, w: 20, h: 300},
-      {x: 120, y: 360, w: 400, h: 20},
-      {x: 500, y: 140, w: 20, h: 240},
-      {x: 260, y: 140, w: 260, h: 20},
-      {x: 260, y: 200, w: 20, h: 160},
-      {x: 320, y: 260, w: 180, h: 20},
+      // wewnętrzne, prosty układ w środku canvasu
+      { x: Math.round(W * 0.2), y: Math.round(H * 0.2), w: Math.round(W * 0.6), h: WALL_THICK },
+      { x: Math.round(W * 0.2), y: Math.round(H * 0.2), w: WALL_THICK, h: Math.round(H * 0.6) },
+      { x: Math.round(W * 0.4), y: Math.round(H * 0.55), w: Math.round(W * 0.4), h: WALL_THICK },
+      { x: Math.round(W * 0.7), y: Math.round(H * 0.2), w: WALL_THICK, h: Math.round(H * 0.4) },
     ];
 
     function drawMaze() {
@@ -83,7 +87,7 @@
       // start
       ctx.beginPath();
       ctx.fillStyle = '#3498db';
-      ctx.arc(start.x, start.y, 6, 0, Math.PI*2);
+      ctx.arc(start.x, start.y, START_R, 0, Math.PI*2);
       ctx.fill();
 
       // ściany
@@ -92,7 +96,7 @@
     }
 
     // proste sprawdzenie kolizji okrąg-prostokąt (aproksymacja)
-    function collides(x, y, r=3) {
+    function collides(x, y, r=AGENT_R) {
       for (const w of walls) {
         const nearestX = Math.max(w.x, Math.min(x, w.x + w.w));
         const nearestY = Math.max(w.y, Math.min(y, w.y + w.h));
@@ -101,7 +105,7 @@
         if (dx*dx + dy*dy <= r*r) return true;
       }
       // ramy canvasa traktujemy jak ściany
-      if (x < 20+r || x > W-20-r || y < 20+r || y > H-20-r) return true;
+      if (x < WALL_THICK + r || x > W - WALL_THICK - r || y < WALL_THICK + r || y > H - WALL_THICK - r) return true;
       return false;
     }
 
@@ -112,8 +116,8 @@
     class Agent {
       constructor(dna = null) {
         this.x = start.x; this.y = start.y;
-        this.dead = false; this.reached = false;
-        this.step = 0; this.r = 3;
+          this.dead = false; this.reached = false;
+          this.step = 0; this.r = AGENT_R;
 
         // DNA jako Float32Array [dx,dy, dx,dy, ...]
         this.dna = dna ? new Float32Array(dna) : Agent.randomDNA();
@@ -367,7 +371,7 @@
         const barW = cw / bins;
         // słupki
         for (let i = 0; i < bins; i++) {
-          const h = (counts[i] / maxC) * (ch - 36); // zostaw miejsce na nagłówek/etykiety
+          const h = (counts[i] / maxC) * (ch - 40); // zostaw miejsce na nagłówek/etykiety
           const x = i * barW;
           const y = (ch - 20) - h;
           hctx.fillStyle = '#ffd166';
@@ -377,16 +381,14 @@
         hctx.fillStyle = '#fff';
         hctx.font = '12px sans-serif';
         hctx.textAlign = 'center';
-        hctx.fillText('Fitness histogram (skala: 0.0 — 1.0)', cw / 2, 14);
-        hctx.font = '11px sans-serif';
-        hctx.textAlign = 'left';
-        hctx.fillText('Count', 6, 28);
-        // oznaczenia skali na osi X (0.0 i 1.0)
+        hctx.fillText('Fitness histogram', cw / 2, 14);
         hctx.textAlign = 'center';
-        const leftX = barW * 0.5;
-        const rightX = cw - barW * 0.5;
-        hctx.fillText('0.0', leftX, ch - 4);
-        hctx.fillText('1.0', rightX, ch - 4);
+        const leftX = barW * 0.6;
+        const centerX = cw / 2;
+        const rightX = cw - barW * 0.6;
+        hctx.fillText('0.0', leftX, ch - 8);
+        hctx.fillText('0.5', centerX, ch - 8);
+        hctx.fillText('1.0', rightX, ch - 8);
       }
       // zapisz najlepszego w historii (porównuj po surowym wyniku jeśli dostępny)
       if (!bestAgentEver || (typeof best._rawFitness === 'number' && typeof bestAgentEver._rawFitness === 'number' ? best._rawFitness > bestAgentEver._rawFitness : best.fitness > bestAgentEver.fitness)) {

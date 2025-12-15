@@ -15,7 +15,10 @@
       <span class="pill">Populacja: <b id="pop">100</b></span>
       <span class="pill">Generacja: <b id="gen">0</b></span>
     </div>
-    <div class="stat"><span class="pill">Najlepszy fitness: <b id="best">0</b></span></div>
+    <div class="stat">
+      <span class="pill">Najlepszy fitness: <b id="best">0</b></span>
+      <span class="pill">Średni fitness: <b id="avg">0</b></span>
+    </div>
 
     <label>Długość DNA (kroki)</label>
     <input id="dnaLen" type="range" min="50" max="800" value="300">
@@ -51,6 +54,9 @@
     <div style="margin-top:16px;">
       <button id="restart">Restart</button>
       <button id="pause">Pauza</button>
+    </div>
+    <div style="margin-top:12px;">
+      <canvas id="hist" width="280" height="64"></canvas>
     </div>
   </div>
 

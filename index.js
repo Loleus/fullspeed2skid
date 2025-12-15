@@ -1,4 +1,4 @@
- // =========================
+// =========================
     // --- USTAWIENIA GLOBALNE
     // =========================
     const W = 720, H = 520;
@@ -9,6 +9,7 @@
 
     const start = { x: 50, y: H - 50 };
     const goal  = { x: W - 70, y: 60, r: 18 };
+    const START_TO_GOAL_DIST = Math.hypot(start.x - goal.x, start.y - goal.y);
 
     // Canvas
     const cv = document.getElementById('cv');
@@ -26,6 +27,9 @@
     const genEl = document.getElementById('gen');
     const popEl = document.getElementById('pop');
     const bestEl = document.getElementById('best');
+    const avgEl = document.getElementById('avg');
+    const histCanvas = document.getElementById('hist');
+    const hctx = histCanvas ? histCanvas.getContext('2d') : null;
     const dnaLenEl = document.getElementById('dnaLen');
     const dnaLenValEl = document.getElementById('dnaLenVal');
     const mutRateEl = document.getElementById('mutRate');
@@ -178,14 +182,19 @@
         if (ddx*ddx + ddy*ddy <= goal.r*goal.r) this.reached = true;
       }
 
-      computeFitness() {
-        const dx = this.x - goal.x; const dy = this.y - goal.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const base = 1 / (dist + 1e-6);
-        const bonus = this.reached ? 5 : 0;
-        const survivalPenalty = this.dead ? 0.9 : 1.0;
-        this.fitness = base * survivalPenalty + bonus;
-        return this.fitness;
+      // poprawiona funkcja licząca surowy fitness w [0..1]
+      computeFitness(startPos = start, goalPos = goal, maxSteps = DNA_LEN) {
+        // używaj aktualnej pozycji agenta (this.x, this.y)
+        const px = this.x, py = this.y;
+        const dist = Math.hypot(px - goalPos.x, py - goalPos.y);
+        const startDist = Math.max(1e-6, START_TO_GOAL_DIST);
+        const progress = Math.max(0, 1 - dist / startDist); // 0..1
+        const survival = (this.step || 0) / Math.max(1, maxSteps); // 0..1
+        const reachedBonus = this.reached ? 0.6 + (1 - (this.step / maxSteps)) * 0.4 : 0; // 0..1 extra when reached
+        let raw = progress * 0.7 + survival * 0.2 + reachedBonus * 0.1;
+        raw = Math.max(0, Math.min(1, raw));
+        this._rawFitness = raw;
+        return raw;
       }
 
       draw() {
@@ -211,6 +220,7 @@
     let generation = 0;
     let bestFitness = 0;
     let bestAgentEver = null; // przechowuje najlepszego z całego przebiegu (opcjonalnie)
+    let avgAgentEver = null; // przechowuje uśrednioną trasę z poprzedniej generacji
 
     function resetPopulation(hard = false) {
       if (hard) generation = 0;
@@ -221,6 +231,7 @@
       tctx.clearRect(0,0,W,H);
       genEl.textContent = generation;
       bestEl.textContent = bestFitness.toFixed(3);
+      if (avgEl) avgEl.textContent = (0).toFixed(3);
     }
     resetPopulation();
 
@@ -301,24 +312,107 @@
 
     // --- GŁÓWNA FUNKCJA EWOLUCJI ---
     function evolve() {
-      // oblicz fitnessy i znajdź najlepszego
-      let totalFit = 0;
-      let best = null;
+      // 1) Oblicz surowe fitnessy (z Agent.computeFitness) i znajdź min/max
+      for (const a of population) a.computeFitness();
+      let minRaw = Infinity, maxRaw = -Infinity;
       for (const a of population) {
-        const f = a.computeFitness();
-        totalFit += f;
-        if (!best || f > best.fitness) best = a;
+        const r = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
+        if (r < minRaw) minRaw = r;
+        if (r > maxRaw) maxRaw = r;
       }
+
+      // 2) Normalizacja populacyjna i skala — trzymajmy fitness do selekcji w [0..1]
+      const eps = 1e-8;
+      let totalFit = 0;
+      for (const a of population) {
+        const raw = (typeof a._rawFitness === 'number') ? a._rawFitness : a.fitness;
+        let norm = (raw - minRaw) / (Math.max(eps, (maxRaw - minRaw)));
+        norm = Math.pow(Math.max(0, Math.min(1, norm)), 1.0); // zachowaj w [0..1]
+        a.fitness = norm; // fitness do selekcji w [0..1]
+        totalFit += a.fitness;
+      }
+
+      // UI: pokaż surowe best/avg jako procenty (0..100)
+      const avgRaw = population.reduce((s,a) => s + ((typeof a._rawFitness==='number')?a._rawFitness:a.fitness),0) / population.length;
+      const bestRaw = maxRaw;
+      bestEl.textContent = (bestRaw * 100).toFixed(1);
+      if (avgEl) avgEl.textContent = (avgRaw * 100).toFixed(1);
+
+      // 3) Wybierz najlepszego już po skalowaniu
+      const best = population.reduce((acc, a) => (!acc || a.fitness > acc.fitness) ? a : acc, null);
 
       // aktualizujemy statystyki
       bestFitness = best.fitness;
-      bestEl.textContent = bestFitness.toFixed(3);
-      if (!bestAgentEver || bestFitness > bestAgentEver.fitness) {
-          // kopiujemy najlepszego jako "najlepszy w historii" (kopiujemy Float32Array)
+      // średnia populacji
+      const avg = totalFit / Math.max(1, POP_SIZE);
+      if (avgEl) avgEl.textContent = avg.toFixed(3);
+
+      // rysuj prosty histogram rozkładu fitnessów
+      if (hctx) {
+        const bins = 20;
+        const counts = new Array(bins).fill(0);
+        for (const a of population) {
+          const v = Math.max(0, Math.min(100, a.fitness));
+          let idx = Math.floor((v / 100) * bins);
+          if (idx >= bins) idx = bins - 1;
+          counts[idx]++;
+        }
+        const cw = histCanvas.width, ch = histCanvas.height;
+        hctx.clearRect(0,0,cw,ch);
+        hctx.fillStyle = '#111';
+        hctx.fillRect(0,0,cw,ch);
+        const maxC = Math.max(1, ...counts);
+        const barW = cw / bins;
+        for (let i = 0; i < bins; i++) {
+          const h = (counts[i] / maxC) * ch;
+          const x = i * barW;
+          const y = ch - h;
+          hctx.fillStyle = '#ffd166';
+          hctx.fillRect(x + 1, y, Math.max(1, barW - 2), h);
+        }
+      }
+      // zapisz najlepszego w historii (porównuj po surowym wyniku jeśli dostępny)
+      if (!bestAgentEver || (typeof best._rawFitness === 'number' && typeof bestAgentEver._rawFitness === 'number' ? best._rawFitness > bestAgentEver._rawFitness : best.fitness > bestAgentEver.fitness)) {
           bestAgentEver = new Agent(new Float32Array(best.dna));
           bestAgentEver.trail = best.trail.slice();
           bestAgentEver.trailLen = best.trailLen || 0;
           bestAgentEver.x = best.x; bestAgentEver.y = best.y; bestAgentEver.fitness = best.fitness;
+          bestAgentEver._rawFitness = best._rawFitness;
+      }
+
+      // Oblicz uśrednioną trasę populacji (avgAgentEver) — średnia pozycji po indeksach trajektorii
+      try {
+        const maxLen = Math.max(...population.map(a => a.trailLen || 0));
+        if (maxLen > 1) {
+          const avgTrail = new Float32Array(maxLen * 2);
+          for (let i = 0; i < maxLen; i++) {
+            let sx = 0, sy = 0, cnt = 0;
+            for (const a of population) {
+              if (a.trailLen > i) {
+                sx += a.trail[i*2];
+                sy += a.trail[i*2 + 1];
+                cnt++;
+              }
+            }
+            if (cnt > 0) {
+              avgTrail[i*2] = sx / cnt;
+              avgTrail[i*2 + 1] = sy / cnt;
+            } else {
+              // jeżeli brak, skopiuj ostatnią wartość (bezpieczne domknięcie)
+              const j = Math.max(0, i-1);
+              avgTrail[i*2] = avgTrail[j*2];
+              avgTrail[i*2 + 1] = avgTrail[j*2 + 1];
+            }
+          }
+          // stwórz pseudo-agenta do rysowania
+          const proxy = new Agent(new Float32Array(DNA_LEN*2));
+          proxy.trail = avgTrail;
+          proxy.trailLen = maxLen;
+          avgAgentEver = proxy;
+        }
+      } catch (e) {
+        // w razie problemów z trailami — ignorujemy
+        console.warn('avg trail error', e);
       }
 
       // sortujemy populację wg fitness malejąco (przydatne dla elity i rank)
@@ -373,6 +467,10 @@
           if (bestAgentEver && bestAgentEver.trailLen > 1) {
             bestAgentEver.drawStoredTrail(0.9, '#ffd166', 2.5);
           }
+          // oraz uśrednioną trasę populacji (jeśli dostępna)
+          if (avgAgentEver && avgAgentEver.trailLen > 1) {
+            avgAgentEver.drawStoredTrail(0.6, '#6ec1ff', 2.0);
+          }
 
           t++;
         } else {
@@ -387,6 +485,7 @@
           drawMaze();
           if (showTrailsEl.checked) ctx.drawImage(trailsBuf, 0, 0);
           for (const a of population) a.draw();
+          if (avgAgentEver && avgAgentEver.trailLen > 1) avgAgentEver.drawStoredTrail(0.9, '#6ec1ff', 2.0);
         }
       }
 

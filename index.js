@@ -516,7 +516,7 @@ function evolve() {
   if (avgEl) avgEl.textContent = (avgRaw * 100).toFixed(1);
   // <<< KONIEC DODANEGO FRAGMENTU >>>
   // 3) Fitness sharing — obniż fitness w tłoku
-  const sigmaShare = 2; // promień niszy (dopasuj do skali labiryntu)
+  const sigmaShare = 5; // promień niszy (dopasuj do skali labiryntu)
   for (const a of population) {
     let denom = 0;
     for (const b of population) {

@@ -36,7 +36,8 @@
    box-shadow: 0 0 16px rgba(0, 0, 0, 0.5);
  }
  #cv {
-  margin: auto 0 ;
+  width: 400px;
+  margin: auto 0;
   display: block;
  }
 
@@ -53,6 +54,7 @@
 
  h2 {
    font-weight: 600;
+   margin-bottom: 10px;
  }
 
  .stat {
@@ -126,7 +128,7 @@
  }
 
  #desc h3 {
-   margin-top: 18px;
+   margin-top: 10px;
    margin-bottom: 8px;
    color: #eee;
    font-size: 15px;

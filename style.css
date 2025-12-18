@@ -9,6 +9,7 @@
    background: #111;
    color: #eee;
    display: flex;
+   flex-direction: row;
    justify-content: center;
    align-items: flex-start;
    height: 100vh;
@@ -24,7 +25,7 @@
    overflow: auto;
    background: #1a1a1a;
    padding: 10px 20px;
-   border-radius: 12px;
+   border-radius:12px;
    box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
  }
 
@@ -34,9 +35,13 @@
    border-radius: 8px;
    box-shadow: 0 0 16px rgba(0, 0, 0, 0.5);
  }
+ #cv {
+  margin: auto 0 ;
+  display: block;
+ }
 
  #desc {
-   width: 340px;
+   width: 320px;
    max-height: calc(100vh - 48px);
    /* odejmujemy padding body */
    font-size: 14px;

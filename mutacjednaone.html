@@ -60,6 +60,35 @@
   <canvas id="cv" width="320" height="320"></canvas>
 
   <div id="desc">
+    <h3>Jak to działa?</h3>
+    <p>
+      Mamy populację kropek. Każda kropka ma DNA — listę małych wektorów ruchu.
+      Symulujemy je jednocześnie; jeśli kropka uderzy w ścianę, umiera. Po wykonaniu wszystkich kroków
+      oceniamy, które były najbliżej celu (fitness). Najlepsze kopiujemy, mieszamy i losowo zmieniamy.
+      To proste odzwierciedlenie selekcji naturalnej: różnorodność + selekcja = lepsze rozwiązania.
+    </p>
+    <h3>Opis działania suwaków:</h3>
+    <ul>
+      <li><b>Długość DNA (kroki)</b> – liczba ruchów zapisanych w DNA każdej kropki. Większa wartość daje dłuższe
+        trajektorie, ale spowalnia uczenie.</li>
+      <li><b>Mutacja (%)</b> – procent losowych zmian w DNA potomków. Wyższa wartość zwiększa różnorodność, niższa
+        stabilizuje dobre rozwiązania.</li>
+      <li><b>Elitaryzm</b> – liczba najlepszych osobników, którzy przechodzą do kolejnej generacji bez zmian. Zwiększa
+        stabilność i zachowanie dobrych rozwiązań, ale zbyt duża wartość może ograniczyć różnorodność.</li>
+      <li><b>Rozmiar turnieju</b> – liczba osobników losowanych do pojedynczego turnieju. Im większy rozmiar, tym
+        większa
+        szansa, że wygra bardzo dobry osobnik, co przyspiesza konwergencję, ale może zmniejszyć różnorodność.</li>
+      <li><b>Bez powtórzeń</b> – jeśli zaznaczone, osobnik w danym turnieju nie może być wylosowany więcej niż raz.
+        Zwiększa to sprawiedliwość selekcji i zmniejsza ryzyko dominacji jednego osobnika w wielu próbach.</li>
+    </ul>
+    <div style="font-size:13px; color:#bbb; margin-top:6px;">
+      <b>Wyjaśnienie metod:</b>
+      <ul style="margin:6px 0 0 18px; color:#aaa;">
+        <li><b>Ruletka</b> – prawdopodobieństwo proporcjonalne do fitnessu.</li>
+        <li><b>Turniej</b> – losujemy kilku osobników, wybieramy najlepszego (mniej wrażliwe na skrajne wartości).</li>
+        <li><b>Ranking</b> – sortujemy po fitness i wybieramy według rangi (redukuje wpływ wartości odstających).</li>
+      </ul>
+    </div>
     <h3>Podstawy algorytmów genetycznych</h3>
     <p>
       Twórcą algorytmów genetycznych był <b>John Henry Holland</b> (1929–2015), profesor Uniwersytetu Michigan.
@@ -82,31 +111,6 @@
       modele inspirowane naturą mogą rozwiązywać problemy, których nie umiemy ugryźć
       klasycznymi metodami analitycznymi.
     </p>
-
-    <h3>Jak to działa?</h3>
-    <p>
-      Mamy populację kropek. Każda kropka ma DNA — listę małych wektorów ruchu.
-      Symulujemy je jednocześnie; jeśli kropka uderzy w ścianę, umiera. Po wykonaniu wszystkich kroków
-      oceniamy, które były najbliżej celu (fitness). Najlepsze kopiujemy, mieszamy i losowo zmieniamy.
-      To proste odzwierciedlenie selekcji naturalnej: różnorodność + selekcja = lepsze rozwiązania.
-    </p>
-    <h3>Opis działania suwaków:</h3>
-    <ul>
-      <li><b>Długość DNA (kroki)</b> – liczba ruchów zapisanych w DNA każdej kropki. Większa wartość daje dłuższe
-        trajektorie, ale spowalnia uczenie.</li>
-      <li><b>Mutacja (%)</b> – procent losowych zmian w DNA potomków. Wyższa wartość zwiększa różnorodność, niższa
-        stabilizuje dobre rozwiązania.</li>
-      <li><b>Elitaryzm</b> – liczba najlepszych osobników, którzy przechodzą do kolejnej generacji bez zmian. Zwiększa
-        stabilność i zachowanie dobrych rozwiązań, ale zbyt duża wartość może ograniczyć różnorodność.</li>
-    </ul>
-        <div style="font-size:13px; color:#bbb; margin-top:6px;">
-      <b>Wyjaśnienie metod:</b>
-      <ul style="margin:6px 0 0 18px; color:#aaa;">
-        <li><b>Ruletka</b> – prawdopodobieństwo proporcjonalne do fitnessu.</li>
-        <li><b>Turniej</b> – losujemy kilku osobników, wybieramy najlepszego (mniej wrażliwe na skrajne wartości).</li>
-        <li><b>Ranking</b> – sortujemy po fitness i wybieramy według rangi (redukuje wpływ wartości odstających).</li>
-      </ul>
-    </div>
   </div>
   <script src="index.js"></script>
 </body>

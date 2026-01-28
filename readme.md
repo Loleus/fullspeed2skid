@@ -1,6 +1,5 @@
 # 🚗 Full Speed 2 SKID
 
-
 ---
 
 ## 🎮 Sterowanie
@@ -25,7 +24,7 @@
 ---
 
 ## 📦 Technologie
-- [Phaser.js](https://phaser.io/) – silnik gry 2D
+- [Phaser.js](https://phaser.io/) – framework
 - JavaScript – logika gry i interakcje
 - HTML/CSS = alerty, prompty systemowe
 
@@ -33,10 +32,11 @@
 
 ## 📸 Co tam jest na razie
 - Dwa tryby: ćwiczenia / wyścig
-- Gra dla dwóch graczy na jednym ekranie
+- Gra dla dwóch graczy na jednym ekranie (przeciwnik programowany)
 - Różne trasy (można dodać swoje - wszystko w pliku SVG)
-- Widok z góry z możliwością przełączenia na FPV
-- Efekty wizualne: ślady opon (poślizgi)
+- Widok z góry z możliwością przełączenia na FPV (helikopter)
+- Efekty wizualne: ślady opon (poślizgi, palenie gumu), spaliny (emisja zależna od przepustnicy)
+- Efekty dźwiękowe (muzyka, zdarzenia)
 - tablica wyników
 
 ---

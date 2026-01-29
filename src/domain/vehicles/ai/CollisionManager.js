@@ -53,6 +53,6 @@ export class CollisionManager {
 
     // Oblicza czas trwania manewru unikania
     getAvoidanceDuration() {
-        return 2000 + Math.random() * 1000; // 2-3 sekundy
+        return 1000 + Math.random() * 1000; // 1-2 sekundy
     }
 }

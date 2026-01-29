@@ -152,7 +152,7 @@ export class Car {
     }
     this.collisionCount++;
 
-    // Jeśli mamy normalę -> 2D reflect z separacją (eliminuje tunelowanie)
+    // Jeśli mamy normalę -> 2D reflect z separacją wzdłuż normalu
     if (collisionInfo && collisionInfo.normal) {
       const n = collisionInfo.normal;
       const cosA = Math.cos(this.carAngle);
@@ -219,43 +219,43 @@ export class Car {
     }
 
     // Fallback - oryginalne, proste odbicie jednowymiarowe
-    {
-      let cosA = Math.cos(this.carAngle);
-      let sinA = Math.sin(this.carAngle);
-      let v_global_x = this.v_x * cosA - this.v_y * sinA;
-      let v_global_y = this.v_x * sinA + this.v_y * cosA;
+    // {
+    //   let cosA = Math.cos(this.carAngle);
+    //   let sinA = Math.sin(this.carAngle);
+    //   let v_global_x = this.v_x * cosA - this.v_y * sinA;
+    //   let v_global_y = this.v_x * sinA + this.v_y * cosA;
 
-      const speedMagnitude = Math.sqrt(v_global_x * v_global_x + v_global_y * v_global_y);
-      const bounceStrength = speedMagnitude < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
-      let minBounce = 80;
-      let bounceVecX = -v_global_x * bounceStrength;
-      let bounceVecY = -v_global_y * bounceStrength;
-      let bounceMag = Math.sqrt(bounceVecX * bounceVecX + bounceVecY * bounceVecY);
-      let angle = Math.atan2(bounceVecY, bounceVecX);
-      if (bounceMag < minBounce) {
-        bounceVecX = Math.cos(angle) * minBounce;
-        bounceVecY = Math.sin(angle) * minBounce;
-      }
+    //   const speedMagnitude = Math.sqrt(v_global_x * v_global_x + v_global_y * v_global_y);
+    //   const bounceStrength = speedMagnitude < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
+    //   let minBounce = 80;
+    //   let bounceVecX = -v_global_x * bounceStrength;
+    //   let bounceVecY = -v_global_y * bounceStrength;
+    //   let bounceMag = Math.sqrt(bounceVecX * bounceVecX + bounceVecY * bounceVecY);
+    //   let angle = Math.atan2(bounceVecY, bounceVecX);
+    //   if (bounceMag < minBounce) {
+    //     bounceVecX = Math.cos(angle) * minBounce;
+    //     bounceVecY = Math.sin(angle) * minBounce;
+    //   }
 
-      this.v_x = bounceVecX * cosA + bounceVecY * sinA;
-      this.v_y = -bounceVecX * sinA + bounceVecY * cosA;
+    //   this.v_x = bounceVecX * cosA + bounceVecY * sinA;
+    //   this.v_y = -bounceVecX * sinA + bounceVecY * cosA;
 
-      this.carX = prevX;
-      this.carY = prevY;
-      this.carSprite.x = this.carX;
-      this.carSprite.y = this.carY;
+    //   this.carX = prevX;
+    //   this.carY = prevY;
+    //   this.carSprite.x = this.carX;
+    //   this.carSprite.y = this.carY;
 
-      for (let i = 0; i < 5; i++) {
-        if (!this.checkEllipseCollision()) break;
-        this.carX += Math.cos(angle) * 2;
-        this.carY += Math.sin(angle) * 2;
-        this.carSprite.x = this.carX;
-        this.carSprite.y = this.carY;
-      }
+    //   for (let i = 0; i < 5; i++) {
+    //     if (!this.checkEllipseCollision()) break;
+    //     this.carX += Math.cos(angle) * 2;
+    //     this.carY += Math.sin(angle) * 2;
+    //     this.carSprite.x = this.carX;
+    //     this.carSprite.y = this.carY;
+    //   }
 
-      this.throttleLock = true;
-      this.collisionImmunity = 0.2;
-    }
+    //   this.throttleLock = true;
+    //   this.collisionImmunity = 0.2;
+    // }
   }
 
   // Aktualizuj sterowanie - metoda bazowa do nadpisania

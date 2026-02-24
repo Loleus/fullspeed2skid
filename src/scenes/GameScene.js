@@ -58,6 +58,7 @@ export class GameScene extends window.Phaser.Scene {
 
         const factory = new VehicleFactory(this, worldData);
         const { controller, sprite, speed } = factory.createPlayer({ x: start.x, y: start.y });
+        
         this.carController = controller;
         this.car = sprite;
 

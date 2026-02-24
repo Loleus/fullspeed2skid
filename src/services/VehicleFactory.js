@@ -17,7 +17,7 @@ export class VehicleFactory {
 
     // Nakładka wizualna z kierunkami ze spritesheetu
     const visualSprite = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
-      .setOrigin(0.5)
+      .setOrigin(0.5, 0.5)
       .setDepth(3)
       .setScale(0.5);
     controller.visualSprite = visualSprite;

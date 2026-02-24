@@ -470,34 +470,31 @@ export class Car {
   // Nakładka wizualna: sprite z arkusza kierunków, który siedzi na fizycznym aucie
   updateVisualSpriteFromAngle() {
     const vs = this.visualSprite;
-    const s = this.carSprite;
+    const s  = this.carSprite;
     if (!vs || !s || !vs.texture) return;
-
-    // Pozycja zawsze taka jak fizycznego sprite'a
+  
+    // Pozycja taka sama jak fizycznego sprite’a
     vs.x = s.x;
     vs.y = s.y;
-
-    const tex = vs.texture;
-    const totalFrames = tex.frameTotal || 1;
-
-    // Brak arkusza – po prostu kopiujemy rotację
+  
+    const totalFrames = vs.texture.frameTotal || 1;
     if (totalFrames <= 1) {
       vs.rotation = s.rotation;
       return;
     }
-
+  
     // 25 klatek: 0–23 unikalne, 24 == 0
     const dirFrames = totalFrames === 25 ? 24 : totalFrames;
-
-    // Używamy kąta rysunku (sprite.angle) – zawiera już wszystkie offsety fizyki.
-    // 360° dzielimy na 24 sektory po 15° i mapujemy 0..23, zawsze omijając prawdziwą klatkę 24.
-    let angleDeg = Phaser.Math.Wrap(s.angle, 0, 360);
-    const stepDeg = 360 / dirFrames; // przy 24 klatkach: 15°
-    let frameIndex = Math.floor(angleDeg / stepDeg);
-    if (frameIndex >= dirFrames) frameIndex = dirFrames - 1;
-
+  
+    // KLUCZ: bierzemy kąt rysunku, nie kombinujemy ze startFix na piechotę.
+    // s.rotation to radiany, dokładnie to, co Phaser używa do narysowania auta.
+    let angleDeg = Phaser.Math.Wrap(Phaser.Math.RadToDeg(s.rotation), 0, 360);
+  
+    // Stały podział 360° na 24 sektory po 15°
+    const stepDeg = 360 / dirFrames;
+    let frameIndex = Math.round(angleDeg / stepDeg) % dirFrames;
+  
     vs.setFrame(frameIndex);
-    // Klatka zawiera już obrót – nakładka nie jest dodatkowo obracana
     vs.rotation = 0;
   }
 }

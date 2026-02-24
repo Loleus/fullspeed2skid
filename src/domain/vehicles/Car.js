@@ -41,7 +41,8 @@ export class Car {
     this.collisionCount = 0;
     this.MAX_COLLISIONS_PER_FRAME = 1;
     this.collisionImmunity = 0;
-    this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
+    this.visualSprite = null;
+    // this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
     this.lastSurfaceType = null;
     this.lastSurfaceCheckX = null;
     this.lastSurfaceCheckY = null;
@@ -75,6 +76,7 @@ export class Car {
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
+    this.updateVisualSpriteFromAngle();
   }
 
   // Pobierz rogi auta dla kolizji
@@ -385,6 +387,8 @@ export class Car {
         }
       }
     }
+
+    this.updateVisualSpriteFromAngle();
   }
 
   // Gettery dla pozycji i stanu
@@ -461,5 +465,39 @@ export class Car {
       v_y: this.v_y,
       speed: Math.abs(this.v_x)
     };
+  }
+
+  // Nakładka wizualna: sprite z arkusza kierunków, który siedzi na fizycznym aucie
+  updateVisualSpriteFromAngle() {
+    const vs = this.visualSprite;
+    const s = this.carSprite;
+    if (!vs || !s || !vs.texture) return;
+
+    // Pozycja zawsze taka jak fizycznego sprite'a
+    vs.x = s.x;
+    vs.y = s.y;
+
+    const tex = vs.texture;
+    const totalFrames = tex.frameTotal || 1;
+
+    // Brak arkusza – po prostu kopiujemy rotację
+    if (totalFrames <= 1) {
+      vs.rotation = s.rotation;
+      return;
+    }
+
+    // 25 klatek: 0–23 unikalne, 24 == 0
+    const dirFrames = totalFrames === 25 ? 24 : totalFrames;
+
+    // Używamy kąta rysunku (sprite.angle) – zawiera już wszystkie offsety fizyki.
+    // 360° dzielimy na 24 sektory po 15° i mapujemy 0..23, zawsze omijając prawdziwą klatkę 24.
+    let angleDeg = Phaser.Math.Wrap(s.angle, 0, 360);
+    const stepDeg = 360 / dirFrames; // przy 24 klatkach: 15°
+    let frameIndex = Math.floor(angleDeg / stepDeg);
+    if (frameIndex >= dirFrames) frameIndex = dirFrames - 1;
+
+    vs.setFrame(frameIndex);
+    // Klatka zawiera już obrót – nakładka nie jest dodatkowo obracana
+    vs.rotation = 0;
   }
 }

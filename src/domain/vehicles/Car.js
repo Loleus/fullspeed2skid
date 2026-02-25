@@ -558,7 +558,7 @@ export class Car {
     this.currentFrameIndex = 0;        // Aktualnie wyświetlana klatka
     this.previousFrameIndex = 0;       // Poprzednia klatka (do animacji przejścia)
     this.frameTransitionProgress = 1;  // 0-1, postęp przejścia między klatkami
-    this.frameTransitionSpeed = 6;    // Szybkość przejścia (większa = szybciej)
+    this.frameTransitionSpeed = 4;    // Szybkość przejścia (większa = szybciej)
 
     // Importuj parametry z configa
     Object.assign(this, carConfig);
@@ -592,7 +592,7 @@ export class Car {
     this.MAX_COLLISIONS_PER_FRAME = 1;
     this.collisionImmunity = 0;
     this.visualSprite = null;
-    // this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
+    this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
     this.lastSurfaceType = null;
     this.lastSurfaceCheckX = null;
     this.lastSurfaceCheckY = null;
@@ -955,8 +955,8 @@ export class Car {
     }
   
     const dirFrames = totalFrames === 25 ? 24 : Math.min(totalFrames, 24);
-    const stepDeg   = 360 / dirFrames;   // np. 15°
-    const halfStep  = stepDeg / 2;       // np. 7.5°
+    const stepDeg   = 360 / dirFrames;
+    const halfStep  = stepDeg /2;
   
     // 0° = góra (oś Y)
     const normalizedAngleRad = this.carAngle + Math.PI / 2;

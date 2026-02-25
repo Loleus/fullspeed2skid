@@ -11,7 +11,7 @@ export class VehicleFactory {
     // Fizyczny sprite auta (kolizje, dym itp.) – zachowujemy jak było
     const sprite = this.scene.physics.add.sprite(x, y, texture).setOrigin(0.5).setDepth(2);
     sprite.body.allowRotation = false;
-    sprite.setVisible(false); // Fizyka działa, grafika znika
+    // sprite.setVisible(false); // Fizyka działa, grafika znika
     const controller = new PlayerCar(this.scene, sprite, this.worldData);
     controller.resetState(x, y);
 

@@ -37,13 +37,9 @@ export class GameScene extends window.Phaser.Scene {
         this.load.atlas('flares', 'assets/images/flares.png', 'assets/images/smoke.json');
         this.load.image("car_p1", "assets/images/car.png");
         this.load.image("car_p2", "assets/images/car_X.png");
-        this.load.spritesheet("car_p1_sprite", "assets/images/car_166.png", {
+        this.load.spritesheet("car_p1_sprite", "assets/images/car_160.png", {
             frameWidth: 166,
             frameHeight: 166,
-            // startFrame: startFrame,
-            // endFrame: endFrame,
-            // margin: margin,
-            // spacing: spacing
           });
         this.audioService.preload();
     }

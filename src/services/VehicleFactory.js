@@ -9,9 +9,9 @@ export class VehicleFactory {
 
   createPlayer({ x, y, texture = "car_p1" }) {
     // Fizyczny sprite auta (kolizje, dym itp.) – zachowujemy jak było
-    const sprite = this.scene.physics.add.sprite(x, y, texture).setOrigin(0.5).setDepth(2).setScale(0.5);
+    const sprite = this.scene.physics.add.sprite(x, y, texture).setOrigin(0.5).setDepth(4).setScale(0.5);
     sprite.body.allowRotation = false;
-    // sprite.setVisible(false); // Fizyka działa, grafika znika
+    sprite.setVisible(false); // Fizyka działa, grafika znika
     const controller = new PlayerCar(this.scene, sprite, this.worldData);
     controller.resetState(x, y);
 
@@ -19,7 +19,7 @@ export class VehicleFactory {
     const visualSprite = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
       .setOrigin(0.5, 0.5)
       .setDepth(3)
-      .setScale(0.6, 0.8);
+      .setScale(0.5, 0.8);
     controller.visualSprite = visualSprite;
 
     return { controller, sprite };

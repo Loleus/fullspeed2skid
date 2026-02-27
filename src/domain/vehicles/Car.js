@@ -85,7 +85,7 @@ export class Car {
 
     // Zresetuj stan animacji klatek
     this.frameTransitionProgress = 1;
-    
+
     // Wywołaj aktualizację wizualną (z guardem na null)
     this.updateVisualSpriteFromAngle(0);
   }
@@ -245,6 +245,18 @@ export class Car {
     let prevCarX = this.carX;
     let prevCarY = this.carY;
 
+    // this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
+
+    // if (this.collisionImmunity > 0) {
+    //   this.collisionImmunity -= dt;
+    //   if (this.collisionImmunity < 0) this.collisionImmunity = 0;
+    // }
+
+    // if (this.collisionImmunity <= 0) {
+    //   const ellipseCollisionInfo = this.checkEllipseCollision();
+    //   if (ellipseCollisionInfo) {
+    //     this.handleCollision(prevCarX, prevCarY, worldW, worldH, ellipseCollisionInfo);
+    //   }
     this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
 
     if (this.collisionImmunity > 0) {
@@ -253,9 +265,38 @@ export class Car {
     }
 
     if (this.collisionImmunity <= 0) {
-      const ellipseCollisionInfo = this.checkEllipseCollision();
-      if (ellipseCollisionInfo) {
-        this.handleCollision(prevCarX, prevCarY, worldW, worldH, ellipseCollisionInfo);
+      // Dodajemy detekcję tunelowania
+      const dx = this.carX - prevCarX;
+      const dy = this.carY - prevCarY;
+      const moveDist = Math.hypot(dx, dy);
+
+      let collisionFound = null;
+
+      // Jeśli ruch był duży, sprawdź kolizję po drodze
+      if (moveDist > this.COLLISION_HALF_WIDTH * 1.5) {
+        const steps = Math.ceil(moveDist / (this.COLLISION_HALF_WIDTH * 0.75));
+        for (let i = 1; i <= steps; i++) {
+          const t = i / steps;
+          const px = prevCarX + dx * t;
+          const py = prevCarY + dy * t;
+
+          // Tymczasowo ustaw pozycję i sprawdź kolizję
+          this.carX = px;
+          this.carY = py;
+          collisionFound = this.checkEllipseCollision();
+          if (collisionFound) break;
+        }
+
+        // Przywróć rzeczywistą pozycję
+        this.carX = prevCarX + dx;
+        this.carY = prevCarY + dy;
+      } else {
+        // Ruch mały – normalne sprawdzenie
+        collisionFound = this.checkEllipseCollision();
+      }
+
+      if (collisionFound) {
+        this.handleCollision(prevCarX, prevCarY, worldW, worldH, collisionFound);
       }
       if (this.checkWorldEdgeCollision(worldW, worldH)) {
         const clampX = Math.min(Math.max(this.carX, 0), worldW);
@@ -398,45 +439,45 @@ export class Car {
 
   updateVisualSpriteFromAngle(dt = 0) {
     const vs = this.visualSprite;
-    const s  = this.carSprite;
+    const s = this.carSprite;
     if (!vs || !s || !vs.texture) return;
-  
+
     vs.x = s.x;
     vs.y = s.y;
-  
+
     const totalFrames = vs.texture.frameTotal || 1;
     if (totalFrames <= 1) {
       vs.rotation = s.rotation;
       return;
     }
-  
+
     const dirFrames = totalFrames === 25 ? 24 : Math.min(totalFrames, 24);
-    const stepDeg   = 360 / dirFrames;
-    const halfStep  = stepDeg /2;
-  
+    const stepDeg = 360 / dirFrames;
+    const halfStep = stepDeg / 2;
+
     // 0° = góra (oś Y)
     const normalizedAngleRad = this.carAngle + Math.PI / 2;
     const angleDeg = Phaser.Math.Wrap(Phaser.Math.RadToDeg(normalizedAngleRad), 0, 360);
-  
+
     // 1) NAJBLIŻSZA klatka (ważne: round, nie floor)
     let frameIndex = Math.round(angleDeg / stepDeg);
     if (frameIndex >= dirFrames) frameIndex = 0; // wyklucz "24"
-  
+
     const frameAngleDeg = frameIndex * stepDeg;
-  
+
     // 2) mikrorotacja jako "najkrótsza różnica" (wrap do [-180..180])
     let micro = angleDeg - frameAngleDeg;
     micro = Phaser.Math.Wrap(micro + 180, 0, 360) - 180; // teraz [-180..180)
-  
+
     // 3) dociśnij do zakresu [-halfStep..+halfStep]
     // (z round to prawie zawsze już tam będzie, ale na wrap 0/360 bywa przydatne)
-    if (micro >  halfStep) micro -= stepDeg;
+    if (micro > halfStep) micro -= stepDeg;
     if (micro < -halfStep) micro += stepDeg;
-  
+
     // 4) jeśli CHCESZ kroki co 1 stopień (opcjonalnie)
     // Uwaga: to robi "snap" do pełnych stopni (może pomóc na jitter)
     micro = Math.round(micro); // 1° kroki
-  
+
     vs.setFrame(frameIndex);
     vs.rotation = Phaser.Math.DegToRad(micro);
   }

@@ -25,7 +25,7 @@ createPlayer({ x, y, texture = "car_p1" }) {
     .setDepth(2.5)          // pod autem, ale nad fizycznym sprite
     .setScale(0.35, 0.66)   // spłaszczony cień
     .setTint(0x000000)      // czarny
-    .setAlpha(0.38);        // półprzezroczysty
+    .setAlpha(0.35);        // półprzezroczysty
 
   // --- WIZUALNY SPRITE AUTA ---
   const visualSprite = this.scene.add.sprite(x, y, "car_p1_sprite", 0)

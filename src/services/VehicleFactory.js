@@ -7,23 +7,54 @@ export class VehicleFactory {
     this.worldData = worldData;
   }
 
-  createPlayer({ x, y, texture = "car_p1" }) {
-    // Fizyczny sprite auta (kolizje, dym itp.) – zachowujemy jak było
-    const sprite = this.scene.physics.add.sprite(x, y, texture).setOrigin(0.5).setDepth(4).setScale(0.5);
-    sprite.body.allowRotation = false;
-    sprite.setVisible(false); // Fizyka działa, grafika znika
-    const controller = new PlayerCar(this.scene, sprite, this.worldData);
-    controller.resetState(x, y);
+createPlayer({ x, y, texture = "car_p1" }) {
+  const sprite = this.scene.physics.add.sprite(x, y, texture)
+    .setOrigin(0.5)
+    .setDepth(2)
+    .setScale(1);
 
-    // Nakładka wizualna z kierunkami ze spritesheetu
-    const visualSprite = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
-      .setOrigin(0.5, 0.5)
-      .setDepth(3)
-      .setScale(0.5, 0.8);
-    controller.visualSprite = visualSprite;
+  sprite.body.allowRotation = false;
+  sprite.setVisible(false);
 
-    return { controller, sprite };
-  }
+  const controller = new PlayerCar(this.scene, sprite, this.worldData);
+  controller.resetState(x, y);
+
+  // --- CIEŃ POD AUTEM ---
+  const shadow = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
+    .setOrigin(0.5, 0.5)
+    .setDepth(2.5)          // pod autem, ale nad fizycznym sprite
+    .setScale(0.35, 0.66)   // spłaszczony cień
+    .setTint(0x000000)      // czarny
+    .setAlpha(0.38);        // półprzezroczysty
+
+  // --- WIZUALNY SPRITE AUTA ---
+  const visualSprite = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
+    .setOrigin(0.5, 0.5)
+    .setDepth(3)
+    .setScale(0.35, 0.66);
+
+  controller.visualSprite = visualSprite;
+  controller.shadowSprite = shadow;
+
+  // Aktualizacja pozycji cienia w update PlayerCar
+  const originalUpdate = controller.update.bind(controller);
+const SHADOW_OFFSET_X = 0;
+const SHADOW_OFFSET_Y = -12;
+
+controller.update = (time, delta) => {
+  originalUpdate(time, delta);
+visualSprite.y -= 12
+  shadow.x = visualSprite.x + SHADOW_OFFSET_X;
+  shadow.y = visualSprite.y + SHADOW_OFFSET_Y;
+
+  shadow.rotation = visualSprite.rotation;
+  shadow.setFrame(visualSprite.frame.name);
+};
+
+
+  return { controller, sprite };
+}
+
 
   createAI({ x, y, texture = "car_p2", waypoints }) {
     const sprite = this.scene.physics.add.sprite(x, y, texture).setOrigin(0.5).setDepth(2);

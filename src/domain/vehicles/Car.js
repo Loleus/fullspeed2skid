@@ -47,7 +47,7 @@ export class Car {
     this.MAX_COLLISIONS_PER_FRAME = 1;
     this.collisionImmunity = 0;
     this.visualSprite = null;
-    
+    // this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
     this.lastSurfaceType = null;
     this.lastSurfaceCheckX = null;
     this.lastSurfaceCheckY = null;

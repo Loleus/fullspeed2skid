@@ -104,10 +104,19 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   worldCanvas.height = worldSize;
   const worldCtx = worldCanvas.getContext('2d');
   // Tło
+  // NOWA LOGIKA DLA TŁA: rozciągnij na cały świat jeśli obraz > tileSize
   if (bgImg) {
-    for (let x = 0; x < worldSize; x += tileSize) {
-      for (let y = 0; y < worldSize; y += tileSize) {
-        worldCtx.drawImage(bgImg, x, y, tileSize, tileSize);
+    if (bgImg.width > tileSize || bgImg.height > tileSize) {
+      // ROZCIĄGNIJ NA CAŁY ŚWIAT (stretch to fit world size)
+      console.log(`[SVG LOADER] Rozciąganie tła ${bgTexture} (${bgImg.width}x${bgImg.height}) na świat ${worldSize}x${worldSize}`);
+      worldCtx.drawImage(bgImg, 0, 0, worldSize, worldSize);  // ← KLUCZOWA ZMIANA
+    } else {
+      // POWTÓRZ jak poprzednio (tile-based repeat)
+      console.log(`[SVG LOADER] Powtarzanie tła ${bgTexture} (${bgImg.width}x${bgImg.height}) tileSize=${tileSize}`);
+      for (let x = 0; x < worldSize; x += tileSize) {
+        for (let y = 0; y < worldSize; y += tileSize) {
+          worldCtx.drawImage(bgImg, x, y, tileSize, tileSize);
+        }
       }
     }
   } else {
@@ -164,7 +173,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
             worldCtx.fillStyle = pattern;
             worldCtx.fillRect(x, y, tileSize, tileSize);
           } else {
-            worldCtx.fillStyle = '#fff';
+            worldCtx.fillStyle = '#ffffff00';
             worldCtx.fillRect(x, y, tileSize, tileSize);
           }
           worldCtx.restore();

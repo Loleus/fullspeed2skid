@@ -531,17 +531,18 @@ handleCollision(worldW, worldH, collisionInfo = null) {
       return;
     }
   
-    const dirFrames = totalFrames === 25 ? 24 : Math.min(totalFrames, 24);
+    const dirFrames = totalFrames === 49 ? 48 : Math.min(totalFrames, 48);
     const stepDeg   = 360 / dirFrames;
     const halfStep  = stepDeg /2;
   
     const normalizedAngleRad = this.carAngle + Math.PI / 2;
     const angleDeg = Phaser.Math.Wrap(Phaser.Math.RadToDeg(normalizedAngleRad), 0, 360);
   
-    let frameIndex = Math.round(angleDeg / stepDeg);
-    if (frameIndex >= dirFrames) frameIndex = 0;
+    let frameIndex = Math.round(angleDeg / stepDeg) + 36;
+    frameIndex = frameIndex % dirFrames;
+    if (frameIndex < 0) frameIndex += dirFrames;
   
-    const frameAngleDeg = frameIndex * stepDeg;
+    const frameAngleDeg = (frameIndex - 36) * stepDeg;
   
     let micro = angleDeg - frameAngleDeg;
     micro = Phaser.Math.Wrap(micro + 180, 0, 360) - 180;

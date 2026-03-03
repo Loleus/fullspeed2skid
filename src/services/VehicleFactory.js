@@ -23,7 +23,7 @@ createPlayer({ x, y, texture = "car_p1" }) {
   const shadow = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
     .setOrigin(0.5, 0.5)
     .setDepth(2.5)          // pod autem, ale nad fizycznym sprite
-    .setScale(0.35, 0.66)   // spłaszczony cień
+    .setScale(1, 1)   // spłaszczony cień
     .setTint(0x000000)      // czarny
     .setAlpha(0.35);        // półprzezroczysty
 
@@ -31,7 +31,7 @@ createPlayer({ x, y, texture = "car_p1" }) {
   const visualSprite = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
     .setOrigin(0.5, 0.5)
     .setDepth(3)
-    .setScale(0.35, 0.66);
+    .setScale(1, 1);
 
   controller.visualSprite = visualSprite;
   controller.shadowSprite = shadow;
@@ -39,7 +39,7 @@ createPlayer({ x, y, texture = "car_p1" }) {
   // Aktualizacja pozycji cienia w update PlayerCar
   const originalUpdate = controller.update.bind(controller);
 const SHADOW_OFFSET_X = 0;
-const SHADOW_OFFSET_Y = -12;
+const SHADOW_OFFSET_Y = -6;
 
 controller.update = (time, delta) => {
   originalUpdate(time, delta);
@@ -60,6 +60,7 @@ visualSprite.y -= 12
     const sprite = this.scene.physics.add.sprite(x, y, texture).setOrigin(0.5).setDepth(2);
     sprite.body.allowRotation = false;
     const controller = new AICar(this.scene, sprite, this.worldData, waypoints);
+    
     controller.resetState(x, y);
     return controller;
   }

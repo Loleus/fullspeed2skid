@@ -106,63 +106,118 @@ export class Car {
   }
 
   // Zmodyfikowana metoda checkEllipseCollision - uproszczona do sprawdzania tylko okręgu
-  checkEllipseCollision() {
-    // Używamy tylko okręgu kolizyjnego (bez elipsy) dla prostszej detekcji
-    const radius = Math.max(this.COLLISION_HALF_WIDTH, this.COLLISION_HALF_HEIGHT);
+  // checkEllipseCollision() {
+  //   // Używamy tylko okręgu kolizyjnego (bez elipsy) dla prostszej detekcji
+  //   const radius = Math.max(this.COLLISION_HALF_WIDTH, this.COLLISION_HALF_HEIGHT);
 
-    // Sprawdzamy kilka punktów na obwodzie koła
-    for (let i = 0; i < this.collisionSteps; i++) {
-      const angle = this.collisionAngleStep * i;
-      const px = this.carX + radius * Math.cos(angle + this.carAngle);
-      const py = this.carY + radius * Math.sin(angle + this.carAngle);
+  //   // Sprawdzamy kilka punktów na obwodzie koła
+  //   for (let i = 0; i < this.collisionSteps; i++) {
+  //     const angle = this.collisionAngleStep * i;
+  //     const px = this.carX + radius * Math.cos(angle + this.carAngle);
+  //     const py = this.carY + radius * Math.sin(angle + this.carAngle);
 
-      if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
-        // Normalna zawsze wskazuje OD przeszkody DO auta
-        let nx = this.carX - px;
-        let ny = this.carY - py;
-        const nlen = Math.hypot(nx, ny) || 1;
-        return {
-          px: px,
-          py: py,
-          normal: { x: nx / nlen, y: ny / nlen },
-          penetrationDepth: radius - nlen
-        };
-      }
-    }
+  //     if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
+  //       // Normalna zawsze wskazuje OD przeszkody DO auta
+  //       let nx = this.carX - px;
+  //       let ny = this.carY - py;
+  //       const nlen = Math.hypot(nx, ny) || 1;
+  //       return {
+  //         px: px,
+  //         py: py,
+  //         normal: { x: nx / nlen, y: ny / nlen },
+  //         penetrationDepth: radius - nlen
+  //       };
+  //     }
+  //   }
 
-    // Sprawdzamy też środek (na wypadek gdyby był wewnątrz przeszkody)
-    if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
-      // Jeśli środek jest w przeszkodzie, szukamy najbliższego wolnego punktu
-      const testRadius = radius * 2;
-      let bestNormal = { x: 0, y: -1 };
-      let bestDist = 0;
+  //   // Sprawdzamy też środek (na wypadek gdyby był wewnątrz przeszkody)
+  //   if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
+  //     // Jeśli środek jest w przeszkodzie, szukamy najbliższego wolnego punktu
+  //     const testRadius = radius * 2;
+  //     let bestNormal = { x: 0, y: -1 };
+  //     let bestDist = 0;
 
-      for (let i = 0; i < this.collisionSteps; i++) {
-        const angle = this.collisionAngleStep * i;
-        const px = this.carX + testRadius * Math.cos(angle);
-        const py = this.carY + testRadius * Math.sin(angle);
+  //     for (let i = 0; i < this.collisionSteps; i++) {
+  //       const angle = this.collisionAngleStep * i;
+  //       const px = this.carX + testRadius * Math.cos(angle);
+  //       const py = this.carY + testRadius * Math.sin(angle);
 
-        if (this.worldData.getSurfaceTypeAt(px, py) !== 'obstacle') {
-          const nx = this.carX - px;
-          const ny = this.carY - py;
-          const nlen = Math.hypot(nx, ny) || 1;
-          if (nlen > bestDist) {
-            bestDist = nlen;
-            bestNormal = { x: nx / nlen, y: ny / nlen };
-          }
-        }
-      }
+  //       if (this.worldData.getSurfaceTypeAt(px, py) !== 'obstacle') {
+  //         const nx = this.carX - px;
+  //         const ny = this.carY - py;
+  //         const nlen = Math.hypot(nx, ny) || 1;
+  //         if (nlen > bestDist) {
+  //           bestDist = nlen;
+  //           bestNormal = { x: nx / nlen, y: ny / nlen };
+  //         }
+  //       }
+  //     }
+
+  //     return {
+  //       px: this.carX,
+  //       py: this.carY,
+  //       normal: bestNormal,
+  //       penetrationDepth: radius
+  //     };
+  //   }
+
+  //   return null;
+  // }
+
+checkEllipseCollision() {
+  const a = this.COLLISION_HALF_WIDTH;   // pół oś pozioma
+  const b = this.COLLISION_HALF_HEIGHT;  // pół oś pionowa
+
+  const cx = this.carX;
+  const cy = this.carY;
+
+  const cosA = Math.cos(this.carAngle);
+  const sinA = Math.sin(this.carAngle);
+
+  // Punkty na obwodzie PRAWDZIWEJ elipsy
+  for (let i = 0; i < this.collisionSteps; i++) {
+    const angle = this.collisionAngleStep * i;
+
+    // elipsa w lokalnym układzie auta
+    const ex = a * Math.cos(angle);
+    const ey = b * Math.sin(angle);
+
+    // obrót do świata
+    const px = cx + ex * cosA - ey * sinA;
+    const py = cy + ex * sinA + ey * cosA;
+
+    if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
+      // NORMALNA DOKŁADNIE JAK U CIEBIE: od przeszkody do auta
+      let nx = cx - px;
+      let ny = cy - py;
+      const nlen = Math.hypot(nx, ny) || 1;
+      nx /= nlen;
+      ny /= nlen;
 
       return {
-        px: this.carX,
-        py: this.carY,
-        normal: bestNormal,
-        penetrationDepth: radius
+        px,
+        py,
+        normal: { x: nx, y: ny },
+        // mała, stała penetracja – tylko do separacji
+        penetrationDepth: 5
       };
     }
-
-    return null;
   }
+
+  // Środek w przeszkodzie – awaryjnie
+  if (this.worldData.getSurfaceTypeAt(cx, cy) === 'obstacle') {
+    return {
+      px: cx,
+      py: cy,
+      normal: { x: 0, y: -1 },
+      penetrationDepth: Math.min(a, b)
+    };
+  }
+
+  return null;
+}
+
+
 
   // Poprawiona metoda handleCollision
   handleCollision(worldW, worldH, collisionInfo = null) {

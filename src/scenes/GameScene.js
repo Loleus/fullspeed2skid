@@ -41,7 +41,7 @@ export class GameScene extends window.Phaser.Scene {
             frameWidth: 100,
             frameHeight: 100,
           });
-        this.load.spritesheet("car_p2_sprite", "assets/images/car_cpu.png", {
+        this.load.spritesheet("car_p2_sprite", "assets/images/car_cpu1.png", {
             frameWidth: 100,
             frameHeight: 100,
           });

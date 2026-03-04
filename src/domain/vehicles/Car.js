@@ -9,10 +9,6 @@ export class Car {
     this.isAI = false;
     this.isPlayer = false;
 
-    this.renderAngle = 0;        // interpolowany kąt
-    this.renderLerpSpeed = 24;   // szybkość doganiania (10–30)
-
-
     // Importuj parametry z configa
     Object.assign(this, carConfig);
 
@@ -65,7 +61,6 @@ export class Car {
       Phaser.Math.DegToRad(parseFloat(this.worldData.startFix)) : 0;
 
     this.carAngle = startAngle + startFix;
-    this.renderAngle = this.carAngle;
 
     this.v_x = 0;
     this.v_y = 0;

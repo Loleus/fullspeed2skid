@@ -96,29 +96,57 @@ export class Car {
   }
 
 checkWorldEdgeCollision(worldW, worldH) {
-  const cx = this.carX;
-  const cy = this.carY;
+  const corners = this.getCarCorners(
+    this.carX, this.carY, this.carAngle,
+    this.CAR_HEIGHT, this.CAR_WIDTH
+  );
 
-  let nx = 0, ny = 0, penetration = 0;
+  for (const c of corners) {
 
-  if (cx < 0) { nx = 1; penetration = -cx; }
-  else if (cx > worldW) { nx = -1; penetration = cx - worldW; }
+    // Lewa ściana
+    if (c.x < 0) {
+      return {
+        px: c.x,
+        py: c.y,
+        normal: { x: 1, y: 0 },
+        penetrationDepth: -c.x
+      };
+    }
 
-  if (cy < 0) { ny = 1; penetration = -cy; }
-  else if (cy > worldH) { ny = -1; penetration = cy - worldH; }
+    // Prawa ściana
+    if (c.x > worldW) {
+      return {
+        px: c.x,
+        py: c.y,
+        normal: { x: -1, y: 0 },
+        penetrationDepth: c.x - worldW
+      };
+    }
 
-  if (nx !== 0 || ny !== 0) {
-    const len = Math.hypot(nx, ny) || 1;
-    return {
-      px: cx,
-      py: cy,
-      normal: { x: nx / len, y: ny / len },
-      penetrationDepth: penetration
-    };
+    // Górna ściana
+    if (c.y < 0) {
+      return {
+        px: c.x,
+        py: c.y,
+        normal: { x: 0, y: 1 },
+        penetrationDepth: -c.y
+      };
+    }
+
+    // Dolna ściana
+    if (c.y > worldH) {
+      return {
+        px: c.x,
+        py: c.y,
+        normal: { x: 0, y: -1 },
+        penetrationDepth: c.y - worldH
+      };
+    }
   }
 
   return null;
 }
+
 
 
 checkEllipseCollision() {

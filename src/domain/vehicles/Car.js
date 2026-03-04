@@ -10,7 +10,7 @@ export class Car {
     this.isPlayer = false;
 
     this.renderAngle = 0;        // interpolowany kąt
-    this.renderLerpSpeed = 30;   // szybkość doganiania (10–30)
+    this.renderLerpSpeed = 24;   // szybkość doganiania (10–30)
 
 
     // Importuj parametry z configa
@@ -109,66 +109,6 @@ export class Car {
     }
     return false;
   }
-
-  // POPRAWIONE: Nie cofa już "na siłę" do prevX (robi to update), tylko odbija i wypycha
-  // handleCollision(worldW, worldH, collisionInfo = null) {
-  //   if (this.collisionCount >= this.MAX_COLLISIONS_PER_FRAME) {
-  //     return;
-  //   }
-  //   this.collisionCount++;
-
-  //   if (collisionInfo && collisionInfo.normal) {
-  //     const n = collisionInfo.normal;
-
-  //     // 1. Oblicz prędkość w układzie globalnym
-  //     const cosA = Math.cos(this.carAngle);
-  //     const sinA = Math.sin(this.carAngle);
-  //     let gVx = this.v_x * cosA - this.v_y * sinA;
-  //     let gVy = this.v_x * sinA + this.v_y * cosA;
-
-  //     // 2. Odbicie w układzie globalnym
-  //     const dot = gVx * n.x + gVy * n.y;
-
-  //     // Tylko jeśli jedziemy w stronę ściany
-  //     if (dot < 0) {
-  //         let rx = gVx - 2 * dot * n.x;
-  //         let ry = gVy - 2 * dot * n.y;
-
-  //         const speedMag = Math.hypot(rx, ry);
-  //         const bounceF = speedMag < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
-  //         rx *= bounceF; ry *= bounceF;
-
-  //         let rMag = Math.hypot(rx, ry);
-  //         const minBounce = 80;
-  //         if (rMag < minBounce) {
-  //           const ang = Math.atan2(ry, rx);
-  //           rx = Math.cos(ang) * minBounce;
-  //           ry = Math.sin(ang) * minBounce;
-  //         }
-
-  //         // Konwersja z powrotem na lokalny układ auta
-  //         this.v_x = rx * cosA + ry * sinA;
-  //         this.v_y = -rx * sinA + ry * cosA;
-  //     }
-
-  //     // 3. Wypychanie (Separation) - jeśli nadal jesteśmy w kolizji
-  //     // (Zabezpieczenie na wypadek gdyby update nie zdążył cofnąć idealnie)
-  //     let separated = false;
-  //     for (let i = 0; i < 12; i++) {
-  //       const step = (i + 1) * 1.5; // Mniejsze kroki, częściej
-  //       // Wypychamy w stronę normalnej (która wskazuje od przeszkody do auta)
-  //       this.carX += n.x * step;
-  //       this.carY += n.y * step;
-  //       this.carSprite.x = this.carX;
-  //       this.carSprite.y = this.carY;
-  //       if (!this.checkEllipseCollision()) { separated = true; break; }
-  //     }
-
-  //     this.throttleLock = true;
-  //     this.collisionImmunity = 0.2;
-  //     return;
-  //   }
-  // }
 
   // Zmodyfikowana metoda checkEllipseCollision - uproszczona do sprawdzania tylko okręgu
   checkEllipseCollision() {
@@ -541,7 +481,7 @@ updateVisualSpriteFromAngle(dt = 0) {
   // 🔥 2. Wyliczenie klatki z interpolowanego kąta
   const dirFrames = totalFrames === 49 ? 48 : Math.min(totalFrames, 48);
   const stepDeg   = 360 / dirFrames;
-  const halfStep  = stepDeg / 2;
+  const halfStep  = stepDeg / 2 ;
 
   const normalizedAngleRad = this.renderAngle + Math.PI / 2;
   const angleDeg = Phaser.Math.Wrap(Phaser.Math.RadToDeg(normalizedAngleRad), 0, 360);

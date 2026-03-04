@@ -44,9 +44,9 @@ createAI({ x, y, texture = "car_p2", waypoints }) {
 
   // 1. TWORZYMY visualSprite
   const visualSprite = this.scene.add.sprite(x, y, "car_p2_sprite", 0)
-    .setOrigin(0.5)
+    .setOrigin(0.5, 0.6)
     .setDepth(3)
-    .setScale(1);
+    .setScale(1.2, 1);
 
 
   controller.visualSprite = visualSprite;

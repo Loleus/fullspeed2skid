@@ -66,6 +66,7 @@ export class Car {
 
     this.carAngle = startAngle + startFix;
     this.renderAngle = this.carAngle;
+    
     this.v_x = 0;
     this.v_y = 0;
     this.steerAngle = 0;

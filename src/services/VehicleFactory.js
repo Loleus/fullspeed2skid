@@ -22,9 +22,9 @@ export class VehicleFactory {
 
     // --- WIZUALNY SPRITE AUTA ---
     const visualSprite = this.scene.add.sprite(x, y, "car_p1_sprite", 0)
-      .setOrigin(0.5, 0.6)
+      .setOrigin(0.5, 0.5)
       .setDepth(3)
-      .setScale(1.2, 1);
+      .setScale(1, 1);
 
     controller.visualSprite = visualSprite;
 

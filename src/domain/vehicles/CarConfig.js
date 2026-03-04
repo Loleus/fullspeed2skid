@@ -1,8 +1,8 @@
 // carConfig.js
 export const carConfig = {
   CAR_WIDTH: 40,
-  CAR_HEIGHT: 80,
-  wheelBase: 50,
+  CAR_HEIGHT: 68,
+  wheelBase: 60,
   carMass: 1200,
   carDragCoefficient: 1.2,
   carFrontalArea: 2.2,

@@ -95,78 +95,35 @@ export class Car {
     throw new Error('updatePhysics must be implemented in derived class');
   }
 
-  checkWorldEdgeCollision(worldW, worldH) {
-    const carCorners = this.getCarCorners(this.carX, this.carY, this.carAngle, this.CAR_HEIGHT, this.CAR_WIDTH);
-    for (const corner of carCorners) {
-      if (corner.x < 0 || corner.x > worldW || corner.y < 0 || corner.y > worldH) {
-        return true;
-      }
-    }
-    return false;
+checkWorldEdgeCollision(worldW, worldH) {
+  const cx = this.carX;
+  const cy = this.carY;
+
+  let nx = 0, ny = 0, penetration = 0;
+
+  if (cx < 0) { nx = 1; penetration = -cx; }
+  else if (cx > worldW) { nx = -1; penetration = cx - worldW; }
+
+  if (cy < 0) { ny = 1; penetration = -cy; }
+  else if (cy > worldH) { ny = -1; penetration = cy - worldH; }
+
+  if (nx !== 0 || ny !== 0) {
+    const len = Math.hypot(nx, ny) || 1;
+    return {
+      px: cx,
+      py: cy,
+      normal: { x: nx / len, y: ny / len },
+      penetrationDepth: penetration
+    };
   }
 
-  // Zmodyfikowana metoda checkEllipseCollision - uproszczona do sprawdzania tylko okręgu
-  // checkEllipseCollision() {
-  //   // Używamy tylko okręgu kolizyjnego (bez elipsy) dla prostszej detekcji
-  //   const radius = Math.max(this.COLLISION_HALF_WIDTH, this.COLLISION_HALF_HEIGHT);
+  return null;
+}
 
-  //   // Sprawdzamy kilka punktów na obwodzie koła
-  //   for (let i = 0; i < this.collisionSteps; i++) {
-  //     const angle = this.collisionAngleStep * i;
-  //     const px = this.carX + radius * Math.cos(angle + this.carAngle);
-  //     const py = this.carY + radius * Math.sin(angle + this.carAngle);
-
-  //     if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
-  //       // Normalna zawsze wskazuje OD przeszkody DO auta
-  //       let nx = this.carX - px;
-  //       let ny = this.carY - py;
-  //       const nlen = Math.hypot(nx, ny) || 1;
-  //       return {
-  //         px: px,
-  //         py: py,
-  //         normal: { x: nx / nlen, y: ny / nlen },
-  //         penetrationDepth: radius - nlen
-  //       };
-  //     }
-  //   }
-
-  //   // Sprawdzamy też środek (na wypadek gdyby był wewnątrz przeszkody)
-  //   if (this.worldData.getSurfaceTypeAt(this.carX, this.carY) === 'obstacle') {
-  //     // Jeśli środek jest w przeszkodzie, szukamy najbliższego wolnego punktu
-  //     const testRadius = radius * 2;
-  //     let bestNormal = { x: 0, y: -1 };
-  //     let bestDist = 0;
-
-  //     for (let i = 0; i < this.collisionSteps; i++) {
-  //       const angle = this.collisionAngleStep * i;
-  //       const px = this.carX + testRadius * Math.cos(angle);
-  //       const py = this.carY + testRadius * Math.sin(angle);
-
-  //       if (this.worldData.getSurfaceTypeAt(px, py) !== 'obstacle') {
-  //         const nx = this.carX - px;
-  //         const ny = this.carY - py;
-  //         const nlen = Math.hypot(nx, ny) || 1;
-  //         if (nlen > bestDist) {
-  //           bestDist = nlen;
-  //           bestNormal = { x: nx / nlen, y: ny / nlen };
-  //         }
-  //       }
-  //     }
-
-  //     return {
-  //       px: this.carX,
-  //       py: this.carY,
-  //       normal: bestNormal,
-  //       penetrationDepth: radius
-  //     };
-  //   }
-
-  //   return null;
-  // }
 
 checkEllipseCollision() {
-  const a = this.COLLISION_HALF_WIDTH;   // pół oś pozioma
-  const b = this.COLLISION_HALF_HEIGHT;  // pół oś pionowa
+  const a = this.COLLISION_HALF_WIDTH;
+  const b = this.COLLISION_HALF_HEIGHT;
 
   const cx = this.carX;
   const cy = this.carY;
@@ -174,37 +131,27 @@ checkEllipseCollision() {
   const cosA = Math.cos(this.carAngle);
   const sinA = Math.sin(this.carAngle);
 
-  // Punkty na obwodzie PRAWDZIWEJ elipsy
   for (let i = 0; i < this.collisionSteps; i++) {
     const angle = this.collisionAngleStep * i;
 
-    // elipsa w lokalnym układzie auta
     const ex = a * Math.cos(angle);
     const ey = b * Math.sin(angle);
 
-    // obrót do świata
     const px = cx + ex * cosA - ey * sinA;
     const py = cy + ex * sinA + ey * cosA;
 
     if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
-      // NORMALNA DOKŁADNIE JAK U CIEBIE: od przeszkody do auta
       let nx = cx - px;
       let ny = cy - py;
       const nlen = Math.hypot(nx, ny) || 1;
-      nx /= nlen;
-      ny /= nlen;
-
       return {
-        px,
-        py,
-        normal: { x: nx, y: ny },
-        // mała, stała penetracja – tylko do separacji
+        px, py,
+        normal: { x: nx / nlen, y: ny / nlen },
         penetrationDepth: 5
       };
     }
   }
 
-  // Środek w przeszkodzie – awaryjnie
   if (this.worldData.getSurfaceTypeAt(cx, cy) === 'obstacle') {
     return {
       px: cx,
@@ -217,253 +164,132 @@ checkEllipseCollision() {
   return null;
 }
 
+handleCollision(col) {
+  if (!col || !col.normal) return;
 
+  const n = col.normal;
+  const penetration = col.penetrationDepth || 5;
 
-  // Poprawiona metoda handleCollision
-  handleCollision(worldW, worldH, collisionInfo = null) {
-    if (this.collisionCount >= this.MAX_COLLISIONS_PER_FRAME) {
-      return;
+  const cosA = Math.cos(this.carAngle);
+  const sinA = Math.sin(this.carAngle);
+
+  let gVx = this.v_x * cosA - this.v_y * sinA;
+  let gVy = this.v_x * sinA + this.v_y * cosA;
+
+  const dot = gVx * n.x + gVy * n.y;
+
+  if (dot < 0) {
+    let rx = gVx - 2 * dot * n.x;
+    let ry = gVy - 2 * dot * n.y;
+
+    const speed = Math.hypot(rx, ry);
+    const bounceF = speed < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
+
+    rx *= bounceF;
+    ry *= bounceF;
+
+    const minBounce = 80;
+    const rMag = Math.hypot(rx, ry);
+    if (rMag < minBounce) {
+      const ang = Math.atan2(ry, rx);
+      rx = Math.cos(ang) * minBounce;
+      ry = Math.sin(ang) * minBounce;
     }
-    this.collisionCount++;
 
-    if (collisionInfo && collisionInfo.normal) {
-      const n = collisionInfo.normal;
-      const penetrationDepth = collisionInfo.penetrationDepth || 0;
-
-      // 1. Oblicz prędkość w układzie globalnym
-      const cosA = Math.cos(this.carAngle);
-      const sinA = Math.sin(this.carAngle);
-      let gVx = this.v_x * cosA - this.v_y * sinA;
-      let gVy = this.v_x * sinA + this.v_y * cosA;
-
-      // 2. Odbicie w układzie globalnym (tylko jeśli jedziemy w stronę ściany)
-      const dot = gVx * n.x + gVy * n.y;
-      if (dot < 0) {
-        // Odbicie z zachowaniem energii
-        let rx = gVx - 2 * dot * n.x;
-        let ry = gVy - 2 * dot * n.y;
-
-        // Skalowanie siły odbicia
-        const speedMag = Math.hypot(rx, ry);
-        const bounceF = speedMag < this.bounceSpeedThreshold ?
-          this.bounceStrengthWeak : this.obstacleBounce;
-        rx *= bounceF;
-        ry *= bounceF;
-
-        // Minimalna prędkość odbicia
-        const minBounce = 80;
-        let rMag = Math.hypot(rx, ry);
-        if (rMag < minBounce) {
-          const ang = Math.atan2(ry, rx);
-          rx = Math.cos(ang) * minBounce;
-          ry = Math.sin(ang) * minBounce;
-        }
-
-        // Konwersja z powrotem na lokalny układ auta
-        this.v_x = rx * cosA + ry * sinA;
-        this.v_y = -rx * sinA + ry * cosA;
-      }
-
-      // 3. Wypychanie (Separation) - ZAWSZE w kierunku normalnej
-      // Upewniamy się, że wypychamy wystarczająco daleko, aby wyjść z kolizji
-      const separationDistance = (penetrationDepth || 10) + 5; // Dodatkowy margines
-
-      // Wypychamy w kierunku normalnej (od przeszkody)
-      this.carX += n.x * separationDistance;
-      this.carY += n.y * separationDistance;
-      this.carSprite.x = this.carX;
-      this.carSprite.y = this.carY;
-
-      // Dodatkowa weryfikacja - jeśli nadal jesteśmy w kolizji, zwiększamy separację
-      for (let i = 0; i < 5; i++) {
-        if (!this.checkEllipseCollision()) break;
-
-        this.carX += n.x * separationDistance;
-        this.carY += n.y * separationDistance;
-        this.carSprite.x = this.carX;
-        this.carSprite.y = this.carY;
-      }
-
-      this.throttleLock = true;
-      this.collisionImmunity = 0.2;
-      return;
-    }
+    this.v_x = rx * cosA + ry * sinA;
+    this.v_y = -rx * sinA + ry * cosA;
   }
+
+  const sep = penetration + 5;
+  this.carX += n.x * sep;
+  this.carY += n.y * sep;
+  this.carSprite.x = this.carX;
+  this.carSprite.y = this.carY;
+
+  for (let i = 0; i < 5; i++) {
+    if (!this.checkEllipseCollision() && !this.checkWorldEdgeCollision(this.worldW, this.worldH)) break;
+    this.carX += n.x * 2;
+    this.carY += n.y * 2;
+    this.carSprite.x = this.carX;
+    this.carSprite.y = this.carY;
+  }
+
+  this.throttleLock = true;
+  this.collisionImmunity = 0.2;
+}
+
 
   updateInput(control) {
     throw new Error('updateInput must be implemented in derived class');
   }
 
-  checkCarCollision() {
-    if (!this.scene.collisionsEnabled || !this.opponentController) {
-      return false;
-    }
-    const opponent = this.opponentController || (this.isAI ? this.scene.carController : this.scene.aiController);
-    if (!opponent) return false;
-    const dx = this.carX - opponent.carX;
-    const dy = this.carY - opponent.carY;
-    const dist = Math.hypot(dx, dy);
-    return dist < (this.COLLISION_WIDTH + opponent.COLLISION_WIDTH) / 2;
+checkCarCollision() {
+  const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
+  if (!opponent) return null;
+
+  const dx = this.carX - opponent.carX;
+  const dy = this.carY - opponent.carY;
+  const dist = Math.hypot(dx, dy);
+
+  const minDist = this.COLLISION_HALF_WIDTH + opponent.COLLISION_HALF_WIDTH;
+
+  if (dist < minDist) {
+    const nx = dx / (dist || 1);
+    const ny = dy / (dist || 1);
+    return {
+      px: this.carX,
+      py: this.carY,
+      normal: { x: nx, y: ny },
+      penetrationDepth: minDist - dist
+    };
   }
 
-  update(dt, control, worldW, worldH) {
-    const { throttle, steerInput } = this.updateInput(control);
+  return null;
+}
 
-    // Surface check
-    let dxSurf = Math.abs((this.carX - (this.lastSurfaceCheckX ?? this.carX)));
-    let dySurf = Math.abs((this.carY - (this.lastSurfaceCheckY ?? this.carY)));
-    if (dxSurf > this.surfaceCheckThreshold || dySurf > this.surfaceCheckThreshold || this.lastSurfaceType === null) {
+update(dt, control, worldW, worldH) {
+  const { throttle, steerInput } = this.updateInput(control);
+
+  // 🔥 PRZYWRACAMY ROZPOZNAWANIE NAWIERZCHNI
+  {
+    const dx = Math.abs(this.carX - (this.lastSurfaceCheckX ?? this.carX));
+    const dy = Math.abs(this.carY - (this.lastSurfaceCheckY ?? this.carY));
+
+    if (dx > this.surfaceCheckThreshold || dy > this.surfaceCheckThreshold || this.lastSurfaceType === null) {
       this.lastSurfaceType = this.worldData.getSurfaceTypeAt(this.carX, this.carY);
       this.lastSurfaceCheckX = this.carX;
       this.lastSurfaceCheckY = this.carY;
     }
-
-    // Zapamiętaj stan przed fizyką
-    const prevCarX = this.carX;
-    const prevCarY = this.carY;
-
-    // Fizyka (porusza this.carX/Y)
-    this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
-
-    if (this.collisionImmunity > 0) {
-      this.collisionImmunity -= dt;
-      if (this.collisionImmunity < 0) this.collisionImmunity = 0;
-    }
-
-    if (this.collisionImmunity <= 0) {
-      // --- ANTY-TUNELOWANIE (Sub-stepping) ---
-      const moveX = this.carX - prevCarX;
-      const moveY = this.carY - prevCarY;
-      const moveDist = Math.hypot(moveX, moveY);
-
-      // Jeśli ruch był duży, dzielimy go na mniejsze kroki
-      // Krok co około połowa szerokości kolizji, żeby nie przeskoczyć ściany
-      const stepSize = this.COLLISION_HALF_WIDTH * 0.75;
-      const steps = Math.max(1, Math.ceil(moveDist / stepSize));
-
-      let collisionFound = null;
-      let safeX = prevCarX;
-      let safeY = prevCarY;
-
-      // Sprawdzamy punkty po drodze
-      for (let i = 1; i <= steps; i++) {
-        const t = i / steps;
-        const testX = prevCarX + moveX * t;
-        const testY = prevCarY + moveY * t;
-
-        // Tymczasowo ustaw pozycję do sprawdzenia
-        const oldX = this.carX;
-        const oldY = this.carY;
-        this.carX = testX;
-        this.carY = testY;
-
-        const col = this.checkEllipseCollision();
-
-        // Przywróć (sprawdzanie nie powinno zmieniać stanu na stałe)
-        this.carX = oldX;
-        this.carY = oldY;
-
-        if (col) {
-          collisionFound = col;
-          // Jeśli wykryto kolizję, cofamy się do bezpiecznego punktu
-          this.carX = safeX;
-          this.carY = safeY;
-          this.carSprite.x = this.carX;
-          this.carSprite.y = this.carY;
-          break; // Przerywamy sprawdzanie dalszej drogi
-        } else {
-          // Bezpieczny punkt
-          safeX = testX;
-          safeY = testY;
-        }
-      }
-
-      // Jeśli nie znaleziono kolizji na ścieżce, upewnij się, że jesteśmy na końcu
-      if (!collisionFound) {
-        this.carX = prevCarX + moveX;
-        this.carY = prevCarY + moveY;
-      }
-
-      // --- OBSŁUGA KOLIZJI ---
-      if (collisionFound) {
-        this.handleCollision(worldW, worldH, collisionFound);
-      }
-      else if (this.checkWorldEdgeCollision(worldW, worldH)) {
-        // Krawędzie świata - prostsze odbicie
-        const clampX = Math.min(Math.max(this.carX, 0), worldW);
-        const clampY = Math.min(Math.max(this.carY, 0), worldH);
-        let nx = this.carX - clampX;
-        let ny = this.carY - clampY;
-        if (nx === 0 && ny === 0) { nx = this.carX - prevCarX; ny = this.carY - prevCarY; }
-        const nlen = Math.hypot(nx, ny) || 1;
-        const normal = { x: nx / nlen, y: ny / nlen };
-
-        // Cofnij do bezpiecznego (prev) przy krawędzi
-        this.carX = prevCarX;
-        this.carY = prevCarY;
-        this.handleCollision(worldW, worldH, { px: this.carX, py: this.carY, normal });
-      }
-      else if (this.checkCarCollision()) {
-        // Kolizja z autem - tu nie tunelujemy, bo auta są wolne, ale zostawiamy logikę
-        // Jednak cofamy do prev, żeby konsekwentnie traktować fizykę
-        this.carX = prevCarX;
-        this.carY = prevCarY;
-
-        const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
-        if (opponent) {
-          let nx = this.carX - opponent.carX;
-          let ny = this.carY - opponent.carY;
-          const nlen = Math.hypot(nx, ny) || 1;
-          const normal = { x: nx / nlen, y: ny / nlen };
-
-          const cosA1 = Math.cos(this.carAngle), sinA1 = Math.sin(this.carAngle);
-          const g1x = this.v_x * cosA1 - this.v_y * sinA1;
-          const g1y = this.v_x * sinA1 + this.v_y * cosA1;
-          const cosA2 = Math.cos(opponent.carAngle), sinA2 = Math.sin(opponent.carAngle);
-          const g2x = opponent.v_x * cosA2 - opponent.v_y * sinA2;
-          const g2y = opponent.v_x * sinA2 + opponent.v_y * cosA2;
-
-          const rel = (g1x - g2x) * normal.x + (g1y - g2y) * normal.y;
-          if (rel < 0) {
-            const m1 = this.carMass || 1200;
-            const m2 = opponent.carMass || 1200;
-            const e = 0.6;
-            const j = -(1 + e) * rel / (1 / m1 + 1 / m2);
-
-            const impX = j * normal.x;
-            const impY = j * normal.y;
-            let ng1x = g1x + impX / m1;
-            let ng1y = g1y + impY / m1;
-            let ng2x = g2x - impX / m2;
-            let ng2y = g2y - impY / m2;
-
-            this.v_x = ng1x * cosA1 + ng1y * sinA1;
-            this.v_y = -ng1x * sinA1 + ng1y * cosA1;
-            opponent.v_x = ng2x * cosA2 + ng2y * sinA2;
-            opponent.v_y = -ng2x * sinA2 + ng2y * cosA2;
-
-            const sep = 6;
-            this.carX += normal.x * sep; // Dodajemy sep do już cofniętego prev
-            this.carY += normal.y * sep;
-            this.carSprite.x = this.carX; this.carSprite.y = this.carY;
-            opponent.carX -= normal.x * sep;
-            opponent.carY -= normal.y * sep;
-            opponent.carSprite.x = opponent.carX; opponent.carSprite.y = opponent.carY;
-
-            this.throttleLock = true;
-            this.collisionImmunity = 0.2;
-            opponent.throttleLock = true;
-            opponent.collisionImmunity = 0.2;
-          } else {
-            this.handleCollision(worldW, worldH, { px: this.carX, py: this.carY, normal });
-            opponent.handleCollision(worldW, worldH, { px: opponent.carX, py: opponent.carY, normal: { x: -normal.x, y: -normal.y } });
-          }
-        }
-      }
-    }
-
-    this.updateVisualSpriteFromAngle(dt);
   }
+
+  const prevX = this.carX;
+  const prevY = this.carY;
+
+  this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
+
+  if (this.collisionImmunity > 0) {
+    this.collisionImmunity -= dt;
+    if (this.collisionImmunity < 0) this.collisionImmunity = 0;
+  }
+
+  if (this.collisionImmunity <= 0) {
+
+    let col = this.checkEllipseCollision();
+    if (!col) col = this.checkWorldEdgeCollision(worldW, worldH);
+    if (!col) col = this.checkCarCollision();
+
+    if (col) {
+      this.carX = prevX;
+      this.carY = prevY;
+      this.carSprite.x = prevX;
+      this.carSprite.y = prevY;
+      this.handleCollision(col);
+    }
+  }
+
+  this.updateVisualSpriteFromAngle(dt);
+}
+
 
   getPosition() { return { x: this.carX, y: this.carY }; }
   getVelocity() { return { v_x: this.v_x, v_y: this.v_y }; }

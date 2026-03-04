@@ -458,49 +458,41 @@ export class Car {
 
   updateVisualSpriteFromAngle(dt = 0) {
     const vs = this.visualSprite;
-    const s = this.carSprite;
+    const s  = this.carSprite;
     if (!vs || !s || !vs.texture) return;
-
-    // Pozycja sprite’a
+  
     vs.x = s.x;
     vs.y = s.y;
-
+  
     const totalFrames = vs.texture.frameTotal || 1;
     if (totalFrames <= 1) {
       vs.rotation = s.rotation;
       return;
     }
-
-    // 🔥 1. Interpolacja KĄTA (najważniejsza część)
-    this.renderAngle = Phaser.Math.Angle.RotateTo(
-      this.renderAngle,
-      this.carAngle,
-      dt * this.renderLerpSpeed
-    );
-
-    // 🔥 2. Wyliczenie klatki z interpolowanego kąta
+  
     const dirFrames = totalFrames === 49 ? 48 : Math.min(totalFrames, 48);
-    const stepDeg = 360 / dirFrames;
-    const halfStep = stepDeg / 2;
-    const SPRITE_OFFSET_DEG = 90; // przykład
-    const angleDeg = Phaser.Math.Wrap(Phaser.Math.RadToDeg(this.renderAngle) + SPRITE_OFFSET_DEG, 0, 360);
-
-    let frameIndex = Math.round(angleDeg / stepDeg) + 36;
-    frameIndex = frameIndex % dirFrames;
-    if (frameIndex < 0) frameIndex += dirFrames;
-
-    vs.setFrame(frameIndex);
-
-    // 🔥 3. Mikro‑rotacja (płynna, bez skoków)
-    const frameAngleDeg = (frameIndex - 36) * stepDeg;
+    const stepDeg   = 360 / dirFrames;
+    const halfStep  = stepDeg /2;
+  
+    const normalizedAngleRad = this.carAngle + Math.PI / 2;
+    const angleDeg = Phaser.Math.Wrap(Phaser.Math.RadToDeg(normalizedAngleRad), 0, 360);
+  
+    let frameIndex = Math.round(angleDeg / stepDeg);
+    if (frameIndex >= dirFrames) frameIndex = 0;
+  
+    const frameAngleDeg = frameIndex * stepDeg;
+  
     let micro = angleDeg - frameAngleDeg;
-
     micro = Phaser.Math.Wrap(micro + 180, 0, 360) - 180;
-
-    if (micro > halfStep) micro -= stepDeg;
+  
+    if (micro >  halfStep) micro -= stepDeg;
     if (micro < -halfStep) micro += stepDeg;
-
+  
+    micro = Math.round(micro);
+  
+    vs.setFrame(frameIndex);
     vs.rotation = Phaser.Math.DegToRad(micro);
   }
+
 
 }

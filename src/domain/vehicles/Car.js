@@ -45,7 +45,7 @@ export class Car {
     this.MAX_COLLISIONS_PER_FRAME = 1;
     this.collisionImmunity = 0;
     this.visualSprite = null;
-    // this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
+    this.carSprite.setDisplaySize(this.CAR_WIDTH, this.CAR_HEIGHT);
     this.lastSurfaceType = null;
     this.lastSurfaceCheckX = null;
     this.lastSurfaceCheckY = null;
@@ -66,7 +66,7 @@ export class Car {
 
     this.carAngle = startAngle + startFix;
     this.renderAngle = this.carAngle;
-    
+
     this.v_x = 0;
     this.v_y = 0;
     this.steerAngle = 0;

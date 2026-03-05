@@ -139,7 +139,7 @@ export class PlayerCar extends Car {
     // Aktualizuj sprite
 
 
-    const p = this.worldToScreen(this.carX, this.carY);
+
 
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;

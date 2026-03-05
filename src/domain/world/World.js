@@ -24,7 +24,16 @@ export class World {
   static async loadWorld(svgPath, worldH, tileSize) {
     return await loadSVGPhaserWorld(svgPath, worldH, tileSize);
   }
+  js
 
+  // --- PROJEKCJA IZOMETRYCZNA / SPŁASZCZENIE ---
+  worldToScreen(x, y) {
+    const ISO_Y_SCALE = 0.55; // dobierz do gustu
+    return {
+      x: x,
+      y: y * ISO_Y_SCALE
+    };
+  }
   // Dynamiczne rysowanie kafli świata wokół pozycji (cx, cy)
   drawTiles(cx, cy) {
     // Zbierz kafle, które powinny być widoczne
@@ -38,22 +47,24 @@ export class World {
       for (let ty = minTileY; ty <= maxTileY; ty++) {
         let x = tx * this.tileSize;
         let y = ty * this.tileSize;
-        const dx = x + this.tileSize/2 - cx;
-        const dy = y + this.tileSize/2 - cy;
-        if (dx*dx + dy*dy <= radius*radius) {
+        const dx = x + this.tileSize / 2 - cx;
+        const dy = y + this.tileSize / 2 - cy;
+        if (dx * dx + dy * dy <= radius * radius) {
           const tileId = `tile_${tx}_${ty}`;
           neededTiles.add(tileId);
           if (this.scene.textures.exists(tileId)) {
             let tileObj = this.tilePool.get(tileId);
             if (!tileObj) {
-              tileObj = this.scene.add.image(x, y, tileId)
+              const p = this.worldToScreen(x, y);
+              tileObj = this.scene.add.image(p.x, p.y, tileId)
                 .setOrigin(0)
                 .setDepth(0);
               this.tilePool.set(tileId, tileObj);
               // --- IGNORUJ KAŻDY NOWY KAFEL NA HUD ---
               if (this.scene.hudCamera) this.scene.hudCamera.ignore(tileObj);
             } else {
-              tileObj.setPosition(x, y);
+              const p = this.worldToScreen(x, y);
+              tileObj.setPosition(p.x, p.y);
               tileObj.setVisible(true);
             }
             this.trackTiles.push(tileObj);
@@ -75,7 +86,7 @@ export class World {
     this.minimapKey = key;
     const minimapOffsetX = this.viewW - this.minimapSize - this.minimapMargin;
     const minimapOffsetY = this.minimapMargin;
-    this.minimapImage = this.scene.add.image(minimapOffsetX + this.minimapSize/2, minimapOffsetY + this.minimapSize/2, this.minimapKey)
+    this.minimapImage = this.scene.add.image(minimapOffsetX + this.minimapSize / 2, minimapOffsetY + this.minimapSize / 2, this.minimapKey)
       .setScrollFactor(0)
       .setDepth(100);
     this.minimapOverlay = this.scene.add.graphics().setScrollFactor(0).setDepth(101);
@@ -102,12 +113,12 @@ export class World {
     const carX = minimapOffsetX + (px / worldW * this.minimapSize);
     const carY = minimapOffsetY + (py / worldH * this.minimapSize);
     if (aiCarPos) {
-    const aipx = Phaser.Math.Clamp(aiCarPos.x, 0, worldW);
-    const aipy = Phaser.Math.Clamp(aiCarPos.y, 0, worldH);
-    const aicarX = minimapOffsetX + (aipx / worldW * this.minimapSize);
-    const aiCarY = minimapOffsetY + (aipy / worldH * this.minimapSize);
-    this.minimapOverlay.fillStyle(0xffff00, 1);
-    this.minimapOverlay.fillCircle(aicarX, aiCarY, 3);
+      const aipx = Phaser.Math.Clamp(aiCarPos.x, 0, worldW);
+      const aipy = Phaser.Math.Clamp(aiCarPos.y, 0, worldH);
+      const aicarX = minimapOffsetX + (aipx / worldW * this.minimapSize);
+      const aiCarY = minimapOffsetY + (aipy / worldH * this.minimapSize);
+      this.minimapOverlay.fillStyle(0xffff00, 1);
+      this.minimapOverlay.fillCircle(aicarX, aiCarY, 3);
     }
     this.minimapOverlay.fillStyle(0xffffff, 1);
     this.minimapOverlay.fillCircle(carX, carY, 3);

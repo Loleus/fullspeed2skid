@@ -137,8 +137,9 @@ export class PlayerCar extends Car {
     }
 
     // Aktualizuj sprite
-    this.carSprite.x = this.carX;
-    this.carSprite.y = this.carY;
+    const p = this.scene.world.worldToScreen(this.carX, this.carY);
+    this.carSprite.x = p.x;
+    this.carSprite.y = p.y;
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
     this.carSprite.steerAngle = this.steerAngle;
   }

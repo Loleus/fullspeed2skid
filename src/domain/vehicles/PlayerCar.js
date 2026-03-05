@@ -18,6 +18,13 @@ export class PlayerCar extends Car {
     this.touchControls = false;
   }
 
+  worldToScreen(x, y) {
+    const ISO_Y_SCALE = 0.55; // dobierz do gustu
+    return {
+      x: x,
+      y: y * ISO_Y_SCALE
+    };
+  }
   // Implementacja fizyki gracza
   updatePhysics(dt, steerInput, throttle, surface) {
 
@@ -137,9 +144,15 @@ export class PlayerCar extends Car {
     }
 
     // Aktualizuj sprite
-    const p = this.scene.world.worldToScreen(this.carX, this.carY);
-    this.carSprite.x = p.x;
-    this.carSprite.y = p.y;
+
+
+    const p = this.worldToScreen(this.carX, this.carY);
+
+    this.carSprite.x = this.carX;
+    this.carSprite.y = this.carY;
+    // this.carSprite.x = p.x;
+    // this.carSprite.y = p.y;
+
     this.carSprite.rotation = this.carAngle + Math.PI / 2;
     this.carSprite.steerAngle = this.steerAngle;
   }

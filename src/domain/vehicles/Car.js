@@ -326,10 +326,10 @@ update(dt, control, worldW, worldH) {
   getSprite() { return this.carSprite; }
 
   getWheelWorldPosition(i) {
-    const halfW = this.CAR_WIDTH / 2;
+    const halfW = (this.CAR_WIDTH / 2);
     const halfH = this.CAR_HEIGHT / 2;
-    const xOff = halfH - 8;
-    const yOff = halfW - 8;
+    const xOff = halfH - 12;
+    const yOff = halfW - 9;
     const offsets = [
       { x: -xOff, y: -yOff }, { x: xOff, y: -yOff },
       { x: -xOff, y: yOff }, { x: xOff, y: yOff },

@@ -61,12 +61,6 @@ createAI({ x, y, texture = "car_p2", waypoints }) {
   return controller;
 }
 
-
-
-
-
-
-
   linkOpponents(c1, c2) {
     if (!c1 || !c2) return;
     c1.opponentController = c2;

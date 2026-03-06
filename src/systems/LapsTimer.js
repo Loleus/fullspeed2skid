@@ -36,24 +36,24 @@ export class LapsTimer {
         const dispLaps = this.gameMode === "RACE" ? `LAPS:${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
 
         this.lapsText = this.scene.add.text(width / 2, 10, dispLaps, {
-            fontFamily: "Stormfaze",
+            fontFamily: "Harting",
             fontSize: "55px",
             color: "#63db00ff",
             align: "center",
-            // backgroundColor: "rgba(22, 72, 10,0.67)",
-            padding: { left: 12, right: 12, top: 4, bottom: -4 },
+            backgroundColor: "rgba(22, 72, 10,0.67)",
+            padding: { left: 25, right: 25, top: 4, bottom: 58 },
         })
         .setOrigin(0.5, 0)
         .setDepth(1000)
         .setShadow(3, 3, "#1d1d1dff", 2, false, true)
         .setScrollFactor(0);
 
-        this.lapTimerMainText = this.scene.add.text(width / 2, 72, "", {
+        this.lapTimerMainText = this.scene.add.text(width / 2, 70, "", {
             fontFamily: "Harting",
-            fontSize: "25px",
+            fontSize: "23px",
             color: "#63db00ff",
             align: "center",
-            // backgroundColor: "rgba(22, 72, 10,0.67)",
+            // backgroundColor: "rgba(52, 160, 25, 0.67)",
             padding: { left: 6, right: 8, top: 0, bottom: 4 },
         })
         .setOrigin(0.5, 0)
@@ -61,9 +61,9 @@ export class LapsTimer {
         .setShadow(1, 1, "#1d1d1dff", 1, false, true)
         .setScrollFactor(0);
 
-        this.bestLapText = this.scene.add.text(width / 2, 72 + 32, "BEST LAP: 0:00'00\"", {
+        this.bestLapText = this.scene.add.text(width / 2, 70 + 25, "BEST LAP: 0:00'00\"", {
             fontFamily: "Harting",
-            fontSize: "25px",
+            fontSize: "20px",
             color: "#63db00ff",
             align: "center",
             // backgroundColor: "rgba(22, 72, 10,0.67)",

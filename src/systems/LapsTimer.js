@@ -36,11 +36,11 @@ export class LapsTimer {
         const dispLaps = this.gameMode === "RACE" ? `LAPS:${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
 
         this.lapsText = this.scene.add.text(width / 2, 10, dispLaps, {
-            fontFamily: "Harting",
+            fontFamily: "Stormfaze",
             fontSize: "55px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(22, 72, 10,0.67)",
+            // backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 12, right: 12, top: 4, bottom: -4 },
         })
         .setOrigin(0.5, 0)
@@ -53,25 +53,25 @@ export class LapsTimer {
             fontSize: "25px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(22, 72, 10,0.67)",
+            // backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 6, right: 8, top: 0, bottom: 4 },
         })
         .setOrigin(0.5, 0)
         .setDepth(1000)
-        .setShadow(2, 2, "#333", 1, false, true)
+        .setShadow(1, 1, "#1d1d1dff", 1, false, true)
         .setScrollFactor(0);
 
         this.bestLapText = this.scene.add.text(width / 2, 72 + 32, "BEST LAP: 0:00'00\"", {
             fontFamily: "Harting",
-            fontSize: "20px",
+            fontSize: "25px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(22, 72, 10,0.67)",
+            // backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 13, right: 15, top: 4, bottom: 4 },
         })
         .setOrigin(0.5, 0)
         .setDepth(1000)
-        .setShadow(2, 2, "#333", 1, false, true)
+        .setShadow(1, 1, "#1d1d1dff", 1, false, true)
         .setScrollFactor(0);
         // this.speedText = this.scene.add.text(width / 2, 72 + 32 + 28, "000 km/h", {
         //     fontFamily: "Harting",

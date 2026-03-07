@@ -150,6 +150,7 @@ export class Car {
 
 
   checkEllipseCollision() {
+    
     const a = this.COLLISION_HALF_WIDTH;
     const b = this.COLLISION_HALF_HEIGHT;
 
@@ -234,7 +235,7 @@ export class Car {
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 40; i++) {
       if (!this.checkEllipseCollision() && !this.checkWorldEdgeCollision(this.worldW, this.worldH)) break;
       this.carX += n.x * 2;
       this.carY += n.y * 2;
@@ -252,6 +253,7 @@ export class Car {
   }
 
   checkCarCollision() {
+    
     const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
     if (!opponent) return null;
 

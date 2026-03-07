@@ -1,7 +1,7 @@
 // carConfig.js
 export const carConfig = {
-  CAR_WIDTH: 40,
-  CAR_HEIGHT: 68,
+  CAR_WIDTH: 35,
+  CAR_HEIGHT: 90,
   wheelBase: 55,
   carMass: 1200,
   carDragCoefficient: 1.2,
@@ -20,8 +20,8 @@ export const carConfig = {
   SLIP_START_SPEED_RATIO_REV: 0.6,
   SLIP_STEER_THRESHOLD_RATIO: 0.4,
   obstacleBounce: 0.3,
-  COLLISION_WIDTH_RATIO: 0.9,
-  COLLISION_HEIGHT_RATIO: 0.9,
+  COLLISION_WIDTH_RATIO: 1,
+  COLLISION_HEIGHT_RATIO: 1,
   collisionSteps: 64,
   safetyMarginFast: 1.5,
   safetyMarginSlow: 1,

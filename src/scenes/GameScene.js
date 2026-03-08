@@ -40,11 +40,11 @@ export class GameScene extends window.Phaser.Scene {
         this.load.spritesheet("car_p1_sprite", "assets/images/car_p1.png", {
             frameWidth: 100,
             frameHeight: 100,
-          });
+        });
         this.load.spritesheet("car_p2_sprite", "assets/images/car_cpu1.png", {
             frameWidth: 100,
             frameHeight: 100,
-          });
+        });
         this.audioService.preload();
     }
 
@@ -58,7 +58,7 @@ export class GameScene extends window.Phaser.Scene {
 
         const factory = new VehicleFactory(this, worldData);
         const { controller, sprite, speed } = factory.createPlayer({ x: start.x, y: start.y });
-        
+
         this.carController = controller;
         this.car = sprite;
 
@@ -69,7 +69,13 @@ export class GameScene extends window.Phaser.Scene {
         this.rKey = keys.rKey;
         this.xKey = keys.xKey;
         // Efekt dymu z rury wydechowej
-        this.smokeEmitter = new SmokeParticleEmitter(this, {
+        this.smokeEmitterP1 = new SmokeParticleEmitter(this, {
+            maxParticles: 1000,
+            textureKey: 'flares',
+            frameKey: 'black'
+        });
+
+        this.smokeEmitterAI = new SmokeParticleEmitter(this, {
             maxParticles: 1000,
             textureKey: 'flares',
             frameKey: 'black'
@@ -151,7 +157,36 @@ export class GameScene extends window.Phaser.Scene {
         const worldY = carY + offsetX * sin + offsetY * cos;
         return { x: worldX, y: worldY };
     }
+    updateSmokeForCar(controller, emitter, dt, control = null) {
+        if (!controller || !emitter) return;
 
+        const CAR_HEIGHT = controller.CAR_HEIGHT;
+        const carX = controller.carX;
+        const carY = controller.carY;
+        const carAngle = controller.carSprite.angle;
+
+        const offsetX = -7;
+        const offsetY = (CAR_HEIGHT / 2) - 7;
+
+        const worldPos = this.localToWorld(carX, carY, carAngle, offsetX, offsetY);
+        const emitAngle = carAngle + 90;
+
+        if (!controller._smokeTimer) controller._smokeTimer = 0;
+        controller._smokeTimer += dt;
+
+        const isMovingByInput = control ? (control.up || control.down) : false;
+        const speed = Math.hypot(controller.v_x, controller.v_y);
+        const isMoving = isMovingByInput || speed > 20;
+
+        const emitFreq = isMoving ? 60 : 300;
+
+        if (controller._smokeTimer >= emitFreq) {
+            emitter.emit(worldPos.x, worldPos.y, emitAngle);
+            controller._smokeTimer = 0;
+        }
+
+        emitter.update(dt);
+    }
     update(time, dt) {
         const deltaSeconds = dt / 1000;
 
@@ -250,28 +285,11 @@ export class GameScene extends window.Phaser.Scene {
             gameMode: this.gameMode,
         });
 
-        // Aktualizacja pozycji i kąta emitera dymu
-        const CAR_HEIGHT = 66;
-        // pozycja środka auta
-        const carX = this.carController.carX;
-        const carY = this.carController.carY;
-        // kąt auta w stopniach (użyj tego pola, które masz: carSprite.angle lub car.angle)
-        const carAngle = this.carController.carSprite.angle;
-        // lokalne przesunięcie emitera względem środka auta:
-        const offsetX = -8;
-        const offsetY = +(CAR_HEIGHT / 2) - 3; // minus -> w tył auta (przykład)
-        const worldPos = this.localToWorld(carX, carY, carAngle, offsetX, offsetY);
-        const backAngle = carAngle;
-        const emitAngle = backAngle + 90;
-        // oblicz worldPos i emitAngle jak wcześniej
-        if (!this._smokeTimer) this._smokeTimer = 0;
-        this._smokeTimer += dt;
-        const emitFreq = (control.down || control.up) ? 60 : 300;
-        if (this._smokeTimer >= emitFreq) {
-            this.smokeEmitter.emit(worldPos.x, worldPos.y, emitAngle);
-            this._smokeTimer = 0;
+        this.updateSmokeForCar(this.carController, this.smokeEmitterP1, dt, control);
+
+        if (this.aiController) {
+            this.updateSmokeForCar(this.aiController, this.smokeEmitterAI, dt);
         }
-        this.smokeEmitter.update(dt);
     }
 
     showRaceFinish() {
@@ -282,28 +300,34 @@ export class GameScene extends window.Phaser.Scene {
         }
     }
 
-    handleHiscorePrompt() {
-        if (this.hiscoreChecked) return;
-        this.hiscoreChecked = true;
-        const hiscoreParams = {
-            trackIndex: window._selectedTrack || 0,
-            lapsTimer: this.lapsTimer
-        }
-        if (this.hiscoreService.checked(hiscoreParams)) {
-            this.audioService.playApplause();
-            this.time.delayedCall(10000, () => { this.hiscoreService.tryQualify(hiscoreParams) });
-        }
-        if (this.sound.mute) {
-            this.hiscoreService.tryQualify(hiscoreParams)
-        }
+handleHiscorePrompt() {
+    if (this.hiscoreChecked) return;
+    this.hiscoreChecked = true;
+
+    const hiscoreParams = {
+        trackIndex: window._selectedTrack || 0,
+        lapsTimer: this.lapsTimer
+    };
+
+    if (!this.hiscoreService.checked(hiscoreParams)) return;
+
+    if (this.sound.mute) {
+        this.hiscoreService.tryQualify(hiscoreParams);
+        return;
     }
+
+    this.audioService.playApplause();
+    this.time.delayedCall(10000, () => {
+        this.hiscoreService.tryQualify(hiscoreParams);
+    });
+}
 
     resetGame() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
             this.audioService.reset();
             this.lapsTimer.reset();
-            
+
             const worldData = this.worldData || window._worldData;
             const start = worldData.startPos;
             this.raceFinished = false;
@@ -336,7 +360,7 @@ export class GameScene extends window.Phaser.Scene {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
             const audioSvc = this.audioService || this.game?.audioService;
-            
+
             setTimeout(() => {
                 // anuluj timery jeśli je rejestrujesz
                 audioSvc?.timers?.forEach(t => t.remove && t.remove());

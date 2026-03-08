@@ -87,9 +87,9 @@ export class Car {
 
     return [
       { x: x + (-hw) * cosA - (-hh) * sinA, y: y + (-hw) * sinA + (-hh) * cosA },
-      { x: x + ( hw) * cosA - (-hh) * sinA, y: y + ( hw) * sinA + (-hh) * cosA },
-      { x: x + ( hw) * cosA - ( hh) * sinA, y: y + ( hw) * sinA + ( hh) * cosA },
-      { x: x + (-hw) * cosA - ( hh) * sinA, y: y + (-hw) * sinA + ( hh) * cosA }
+      { x: x + (hw) * cosA - (-hh) * sinA, y: y + (hw) * sinA + (-hh) * cosA },
+      { x: x + (hw) * cosA - (hh) * sinA, y: y + (hw) * sinA + (hh) * cosA },
+      { x: x + (-hw) * cosA - (hh) * sinA, y: y + (-hw) * sinA + (hh) * cosA }
     ];
   }
 
@@ -258,54 +258,78 @@ export class Car {
     return this.checkObstacleCollisionAt(this.carX, this.carY, this.carAngle);
   }
 
-  handleCollision(col) {
+  handleCollision(col, prevX, prevY) {
     if (!col || !col.normal) return;
+    if (this.collisionCount >= this.MAX_COLLISIONS_PER_FRAME) return;
 
     this.collisionCount++;
+
     const n = col.normal;
-    const penetration = col.penetrationDepth || 15;
 
     const cosA = Math.cos(this.carAngle);
     const sinA = Math.sin(this.carAngle);
 
+    // lokalne -> globalne
     let gVx = this.v_x * cosA - this.v_y * sinA;
     let gVy = this.v_x * sinA + this.v_y * cosA;
 
+    const speedMagnitude = Math.hypot(gVx, gVy);
+
+    // odbicie względem normalnej
     const dot = gVx * n.x + gVy * n.y;
 
+    let bounceVecX = gVx;
+    let bounceVecY = gVy;
+
     if (dot < 0) {
-      let rx = gVx - 2 * dot * n.x;
-      let ry = gVy - 2 * dot * n.y;
+      bounceVecX = gVx - 2 * dot * n.x;
+      bounceVecY = gVy - 2 * dot * n.y;
 
-      const speed = Math.hypot(rx, ry);
-      const bounceF = speed < this.bounceSpeedThreshold ? this.bounceStrengthWeak : this.obstacleBounce;
+      const bounceStrength =
+        speedMagnitude < this.bounceSpeedThreshold
+          ? this.bounceStrengthWeak
+          : this.obstacleBounce;
 
-      rx *= bounceF;
-      ry *= bounceF;
+      bounceVecX *= bounceStrength;
+      bounceVecY *= bounceStrength;
 
-      const minBounce = 1;
-      const rMag = Math.hypot(rx, ry);
-      if (rMag < minBounce) {
-        const ang = Math.atan2(ry, rx || 1);
-        rx = Math.cos(ang) * minBounce;
-        ry = Math.sin(ang) * minBounce;
+      // dużo mniejszy minimalny bounce niż wcześniej
+      const minBounce = speedMagnitude < 60 ? 0 : 30;
+      const bounceMag = Math.hypot(bounceVecX, bounceVecY);
+
+      if (bounceMag > 0 && bounceMag < minBounce) {
+        const ang = Math.atan2(bounceVecY, bounceVecX);
+        bounceVecX = Math.cos(ang) * minBounce;
+        bounceVecY = Math.sin(ang) * minBounce;
       }
-
-      this.v_x = rx * cosA + ry * sinA;
-      this.v_y = -rx * sinA + ry * cosA;
+    } else {
+      // gdy prędkość już nie wchodzi w przeszkodę, nie rób sztucznego odbicia
+      bounceVecX *= 0.2;
+      bounceVecY *= 0.2;
     }
 
-    const sep = penetration + 5;
-    this.carX += n.x * sep;
-    this.carY += n.y * sep;
+    // globalne -> lokalne
+    this.v_x = bounceVecX * cosA + bounceVecY * sinA;
+    this.v_y = -bounceVecX * sinA + bounceVecY * cosA;
+
+    // wróć do ostatniej bezpiecznej pozycji
+    if (col.safeX !== undefined && col.safeY !== undefined) {
+      this.carX = col.safeX;
+      this.carY = col.safeY;
+    } else {
+      this.carX = prevX;
+      this.carY = prevY;
+    }
+
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;
 
-    for (let i = 0; i < 40; i++) {
-      if (!this.checkObstacleCollisionAt(this.carX, this.carY, this.carAngle) &&
-          !this.checkWorldEdgeCollision(this.worldW, this.worldH)) {
-        break;
-      }
+    // mały, miękki push-out jak w starej wersji
+    for (let i = 0; i < 5; i++) {
+      const stillObstacle = this.checkObstacleCollisionAt(this.carX, this.carY, this.carAngle);
+      const stillEdge = this.checkWorldEdgeCollision(this.worldW, this.worldH);
+
+      if (!stillObstacle && !stillEdge) break;
 
       this.carX += n.x * 2;
       this.carY += n.y * 2;
@@ -314,7 +338,7 @@ export class Car {
     }
 
     this.throttleLock = true;
-    this.collisionImmunity = 0.2;
+    this.collisionImmunity = 0.12;
   }
 
   updateInput(control) {
@@ -396,7 +420,9 @@ export class Car {
         this.carSprite.x = this.carX;
         this.carSprite.y = this.carY;
 
-        this.handleCollision(col);
+        if (col) {
+          this.handleCollision(col, prevX, prevY);
+        }
       }
     }
 

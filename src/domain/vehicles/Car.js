@@ -1,4 +1,5 @@
 import { carConfig } from './CarConfig.js';
+
 // Główna klasa GRACZA (Player i AI)
 export class Car {
   constructor(scene, carSprite, worldData) {
@@ -9,10 +10,8 @@ export class Car {
     this.isAI = false;
     this.isPlayer = false;
 
-    // Importuj parametry z configa
     Object.assign(this, carConfig);
 
-    // Przeliczenia
     this.maxSteer = Phaser.Math.DegToRad(this.MAX_STEER_DEG);
     this.steerSpeed = Phaser.Math.DegToRad(this.STEER_SPEED_DEG);
     this.steerReturnSpeed = Phaser.Math.DegToRad(this.STEER_RETURN_SPEED_DEG);
@@ -27,7 +26,6 @@ export class Car {
     this.COLLISION_HALF_HEIGHT = this.COLLISION_HEIGHT / 2;
     this.collisionAngleStep = (Math.PI * 2) / this.collisionSteps;
 
-    // Stan gry
     this.throttle = 0;
     this.v_x = 0;
     this.v_y = 0;
@@ -47,10 +45,15 @@ export class Car {
     this.lastSurfaceCheckY = null;
     this.surfaceCheckThreshold = 1;
     this.opponentController = null;
+
     this.collisionCircle = Array(this.collisionSteps).fill().map((_, i) => {
       const angle = this.collisionAngleStep * i;
       return { cos: Math.cos(angle), sin: Math.sin(angle) };
     });
+
+    // Maksymalny dystans pojedynczego podkroku dla CCD.
+    // Im mniejszy, tym pewniej wykrywa bardzo cienkie/przypadkowe przeszkody.
+    this.collisionSweepStep = 2;
   }
 
   resetState(startX, startY, startAngle = -Math.PI / 2) {
@@ -76,19 +79,18 @@ export class Car {
     this.updateVisualSpriteFromAngle(0);
   }
 
-  // Pobierz rogi auta dla kolizji
   getCarCorners(x, y, rot, width, height) {
-    const hw = width / 2, hh = height / 2;
-    const corners = [
-      { x: -hw, y: -hh },
-      { x: hw, y: -hh },
-      { x: hw, y: hh },
-      { x: -hw, y: hh }
+    const hw = width / 2;
+    const hh = height / 2;
+    const cosA = Math.cos(rot);
+    const sinA = Math.sin(rot);
+
+    return [
+      { x: x + (-hw) * cosA - (-hh) * sinA, y: y + (-hw) * sinA + (-hh) * cosA },
+      { x: x + ( hw) * cosA - (-hh) * sinA, y: y + ( hw) * sinA + (-hh) * cosA },
+      { x: x + ( hw) * cosA - ( hh) * sinA, y: y + ( hw) * sinA + ( hh) * cosA },
+      { x: x + (-hw) * cosA - ( hh) * sinA, y: y + (-hw) * sinA + ( hh) * cosA }
     ];
-    return corners.map(c => ({
-      x: x + c.x * Math.cos(rot) - c.y * Math.sin(rot),
-      y: y + c.x * Math.sin(rot) + c.y * Math.cos(rot)
-    }));
   }
 
   updatePhysics(dt, steerInput, throttle, surface) {
@@ -102,8 +104,6 @@ export class Car {
     );
 
     for (const c of corners) {
-
-      // Lewa ściana
       if (c.x < 0) {
         return {
           px: c.x,
@@ -113,7 +113,6 @@ export class Car {
         };
       }
 
-      // Prawa ściana
       if (c.x > worldW) {
         return {
           px: c.x,
@@ -123,7 +122,6 @@ export class Car {
         };
       }
 
-      // Górna ściana
       if (c.y < 0) {
         return {
           px: c.x,
@@ -133,7 +131,6 @@ export class Car {
         };
       }
 
-      // Dolna ściana
       if (c.y > worldH) {
         return {
           px: c.x,
@@ -147,57 +144,126 @@ export class Car {
     return null;
   }
 
+  // Punkt jest w przeszkodzie?
+  isObstacleAt(x, y) {
+    return this.worldData.getSurfaceTypeAt(x, y) === 'obstacle';
+  }
 
+  // Stabilniejsza normalna z mapy przeszkód, działa dla wypukłych i wklęsłych kształtów.
+  getObstacleNormalAt(px, py, fallbackX, fallbackY) {
+    const r = 2;
+    const sL = this.isObstacleAt(px - r, py) ? 1 : 0;
+    const sR = this.isObstacleAt(px + r, py) ? 1 : 0;
+    const sU = this.isObstacleAt(px, py - r) ? 1 : 0;
+    const sD = this.isObstacleAt(px, py + r) ? 1 : 0;
 
-  checkEllipseCollision() {
-    
+    let nx = sL - sR;
+    let ny = sU - sD;
+
+    if (nx === 0 && ny === 0) {
+      nx = fallbackX - px;
+      ny = fallbackY - py;
+    }
+
+    const len = Math.hypot(nx, ny) || 1;
+    return { x: nx / len, y: ny / len };
+  }
+
+  // Sprawdza pełny kształt auta w jednej pozycji:
+  // elipsa + środek + narożniki prostokątnego obrysu
+  checkObstacleCollisionAt(x, y, rot) {
     const a = this.COLLISION_HALF_WIDTH;
     const b = this.COLLISION_HALF_HEIGHT;
+    const cosA = Math.cos(rot);
+    const sinA = Math.sin(rot);
 
-    const cx = this.carX;
-    const cy = this.carY;
+    // 1. Środek
+    if (this.isObstacleAt(x, y)) {
+      return {
+        px: x,
+        py: y,
+        normal: this.getObstacleNormalAt(x, y, x, y - 1),
+        penetrationDepth: Math.min(a, b)
+      };
+    }
 
-    const cosA = Math.cos(this.carAngle);
-    const sinA = Math.sin(this.carAngle);
-
-    for (let i = 0; i < this.collisionSteps; i++) {
-      const angle = this.collisionAngleStep * i;
-
-      const ex = a * Math.cos(angle);
-      const ey = b * Math.sin(angle);
-
-      const px = cx + ex * cosA - ey * sinA;
-      const py = cy + ex * sinA + ey * cosA;
-
-      if (this.worldData.getSurfaceTypeAt(px, py) === 'obstacle') {
-        let nx = cx - px;
-        let ny = cy - py;
-        const nlen = Math.hypot(nx, ny) || 1;
+    // 2. Narożniki auta
+    const corners = this.getCarCorners(x, y, rot, this.CAR_HEIGHT, this.CAR_WIDTH);
+    for (const c of corners) {
+      if (this.isObstacleAt(c.x, c.y)) {
+        const normal = this.getObstacleNormalAt(c.x, c.y, x, y);
         return {
-          px, py,
-          normal: { x: nx / nlen, y: ny / nlen },
-          penetrationDepth: 5
+          px: c.x,
+          py: c.y,
+          normal,
+          penetrationDepth: Math.max(2, Math.hypot(c.x - x, c.y - y) * 0.15)
         };
       }
     }
 
-    if (this.worldData.getSurfaceTypeAt(cx, cy) === 'obstacle') {
-      return {
-        px: cx,
-        py: cy,
-        normal: { x: 0, y: -1 },
-        penetrationDepth: Math.min(a, b)
-      };
+    // 3. Obwód elipsy
+    for (let i = 0; i < this.collisionSteps; i++) {
+      const sample = this.collisionCircle[i];
+      const ex = a * sample.cos;
+      const ey = b * sample.sin;
+
+      const px = x + ex * cosA - ey * sinA;
+      const py = y + ex * sinA + ey * cosA;
+
+      if (this.isObstacleAt(px, py)) {
+        const normal = this.getObstacleNormalAt(px, py, x, y);
+        return {
+          px,
+          py,
+          normal,
+          penetrationDepth: 4
+        };
+      }
     }
 
     return null;
   }
 
+  // CCD: sprawdza cały tor ruchu od poprzedniej pozycji do nowej.
+  // Dzięki temu nie da się "przeskoczyć" przez przeszkodę w jednym dt.
+  checkObstacleCollisionSweep(fromX, fromY, fromRot, toX, toY, toRot) {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const dist = Math.hypot(dx, dy);
+
+    const steps = Math.max(1, Math.ceil(dist / this.collisionSweepStep));
+
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const x = Phaser.Math.Linear(fromX, toX, t);
+      const y = Phaser.Math.Linear(fromY, toY, t);
+      const rot = Phaser.Math.Angle.RotateTo(fromRot, toRot, Phaser.Math.Angle.Wrap(toRot - fromRot) * t);
+
+      const col = this.checkObstacleCollisionAt(x, y, rot);
+      if (col) {
+        return {
+          ...col,
+          hitT: t,
+          safeX: Phaser.Math.Linear(fromX, toX, Math.max(0, (i - 1) / steps)),
+          safeY: Phaser.Math.Linear(fromY, toY, Math.max(0, (i - 1) / steps))
+        };
+      }
+    }
+
+    return null;
+  }
+
+  // Zachowane dla kompatybilności, ale teraz używa pełniejszego testu.
+  checkEllipseCollision() {
+    return this.checkObstacleCollisionAt(this.carX, this.carY, this.carAngle);
+  }
+
   handleCollision(col) {
     if (!col || !col.normal) return;
+
     this.collisionCount++;
     const n = col.normal;
-    const penetration = col.penetrationDepth || 5;
+    const penetration = col.penetrationDepth || 15;
 
     const cosA = Math.cos(this.carAngle);
     const sinA = Math.sin(this.carAngle);
@@ -217,10 +283,10 @@ export class Car {
       rx *= bounceF;
       ry *= bounceF;
 
-      const minBounce = 80;
+      const minBounce = 1;
       const rMag = Math.hypot(rx, ry);
       if (rMag < minBounce) {
-        const ang = Math.atan2(ry, rx);
+        const ang = Math.atan2(ry, rx || 1);
         rx = Math.cos(ang) * minBounce;
         ry = Math.sin(ang) * minBounce;
       }
@@ -236,7 +302,11 @@ export class Car {
     this.carSprite.y = this.carY;
 
     for (let i = 0; i < 40; i++) {
-      if (!this.checkEllipseCollision() && !this.checkWorldEdgeCollision(this.worldW, this.worldH)) break;
+      if (!this.checkObstacleCollisionAt(this.carX, this.carY, this.carAngle) &&
+          !this.checkWorldEdgeCollision(this.worldW, this.worldH)) {
+        break;
+      }
+
       this.carX += n.x * 2;
       this.carY += n.y * 2;
       this.carSprite.x = this.carX;
@@ -247,13 +317,11 @@ export class Car {
     this.collisionImmunity = 0.2;
   }
 
-
   updateInput(control) {
     throw new Error('updateInput must be implemented in derived class');
   }
 
   checkCarCollision() {
-    
     const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
     if (!opponent) return null;
 
@@ -278,9 +346,11 @@ export class Car {
   }
 
   update(dt, control, worldW, worldH) {
+    this.worldW = worldW;
+    this.worldH = worldH;
+
     const { throttle, steerInput } = this.updateInput(control);
 
-    // 🔥 PRZYWRACAMY ROZPOZNAWANIE NAWIERZCHNI
     {
       const dx = Math.abs(this.carX - (this.lastSurfaceCheckX ?? this.carX));
       const dy = Math.abs(this.carY - (this.lastSurfaceCheckY ?? this.carY));
@@ -294,6 +364,7 @@ export class Car {
 
     const prevX = this.carX;
     const prevY = this.carY;
+    const prevAngle = this.carAngle;
 
     this.updatePhysics(dt, steerInput, throttle, this.lastSurfaceType);
 
@@ -303,23 +374,34 @@ export class Car {
     }
 
     if (this.collisionImmunity <= 0) {
+      // Najpierw przeszkody z CCD po całej trajektorii.
+      let col = this.checkObstacleCollisionSweep(prevX, prevY, prevAngle, this.carX, this.carY, this.carAngle);
 
-      let col = this.checkEllipseCollision();
+      // Reszta bez zmian.
       if (!col) col = this.checkWorldEdgeCollision(worldW, worldH);
       if (!col) col = this.checkCarCollision();
 
       if (col) {
-        this.carX = prevX;
-        this.carY = prevY;
-        this.carSprite.x = prevX;
-        this.carSprite.y = prevY;
+        // Dla przeszkód cofamy do ostatniej bezpiecznej pozycji z trajektorii,
+        // a nie tylko do prevX/prevY. To blokuje przypadek:
+        // teleport -> ściana świata -> odbicie -> powrót przez przeszkodę.
+        if (col.safeX !== undefined && col.safeY !== undefined) {
+          this.carX = col.safeX;
+          this.carY = col.safeY;
+        } else {
+          this.carX = prevX;
+          this.carY = prevY;
+        }
+
+        this.carSprite.x = this.carX;
+        this.carSprite.y = this.carY;
+
         this.handleCollision(col);
       }
     }
 
     this.updateVisualSpriteFromAngle(dt);
   }
-
 
   getPosition() { return { x: this.carX, y: this.carY }; }
   getVelocity() { return { v_x: this.v_x, v_y: this.v_y }; }
@@ -357,7 +439,8 @@ export class Car {
       carAngle: this.carAngle,
       carAngleDeg: Phaser.Math.RadToDeg(this.carAngle),
       maxSteerDeg: this.MAX_STEER_DEG,
-      v_x: this.v_x, v_y: this.v_y,
+      v_x: this.v_x,
+      v_y: this.v_y,
       speed: Math.abs(this.v_x)
     };
   }
@@ -399,6 +482,4 @@ export class Car {
     vs.setFrame(frameIndex);
     vs.rotation = Phaser.Math.DegToRad(micro);
   }
-
-
 }

@@ -1,7 +1,7 @@
 // carConfig.js
 export const carConfig = {
-  CAR_WIDTH: 35,
-  CAR_HEIGHT: 90,
+  CAR_WIDTH: 30,
+  CAR_HEIGHT: 80,
   wheelBase: 55,
   carMass: 1200,
   carDragCoefficient: 1.2,
@@ -11,7 +11,7 @@ export const carConfig = {
   MAX_STEER_DEG: 21,
   STEER_SPEED_DEG: 70,
   STEER_RETURN_SPEED_DEG: 120,
-  accel: 350,
+  accel: 400,
   revAccelRatio: 0.8,
   maxSpeed: 450,
   maxRevSpeedRatio: 0.8,

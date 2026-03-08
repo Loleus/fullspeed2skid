@@ -438,8 +438,8 @@ export class Car {
   getWheelWorldPosition(i) {
     const halfW = (this.CAR_WIDTH / 2);
     const halfH = this.CAR_HEIGHT / 2;
-    const xOff = halfH - 12;
-    const yOff = halfW - 9;
+    const xOff = halfH - 10;
+    const yOff = halfW - 5;
     const offsets = [
       { x: -xOff, y: -yOff }, { x: xOff, y: -yOff },
       { x: -xOff, y: yOff }, { x: xOff, y: yOff },

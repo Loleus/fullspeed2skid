@@ -53,7 +53,6 @@ export class LapsTimer {
             fontSize: "23px",
             color: "#63db00ff",
             align: "center",
-            // backgroundColor: "rgba(52, 160, 25, 0.67)",
             padding: { left: 6, right: 8, top: 0, bottom: 4 },
         })
         .setOrigin(0.5, 0)
@@ -66,25 +65,13 @@ export class LapsTimer {
             fontSize: "20px",
             color: "#63db00ff",
             align: "center",
-            // backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 13, right: 15, top: 4, bottom: 4 },
         })
         .setOrigin(0.5, 0)
         .setDepth(1000)
         .setShadow(1, 1, "#1d1d1dff", 1, false, true)
         .setScrollFactor(0);
-        // this.speedText = this.scene.add.text(width / 2, 72 + 32 + 28, "000 km/h", {
-        //     fontFamily: "Harting",
-        //     fontSize: "22px",
-        //     color: "#63db00ff",
-        //     align: "center",
-        //     backgroundColor: "rgba(22, 72, 10,0.67)",
-        //     padding: { left: 10, right: 10, top: 4, bottom: 4 },
-        // })
-        // .setOrigin(0.5, 0)
-        // .setDepth(1000)
-        // .setShadow(2, 2, "#333", 1, false, true)
-        // .setScrollFactor(0);
+
         this.updateLapTimerDisplay();
     }
 
@@ -134,21 +121,10 @@ export class LapsTimer {
             this._hudUpdateAccumulator += deltaTime;
             if (this._hudUpdateAccumulator >= this._hudUpdateInterval) {
                 this.updateLapTimerDisplay();
-                // this.updateSpeedDisplay();   // 🔽 aktualizacja prędkości
                 this._hudUpdateAccumulator = 0;
             }
         }
     }
-    // updateSpeedDisplay() {
-    //     if (!this.speedText) return;
-    
-    //     const state = this.scene.carController.getFullState();
-    //     const speed = state.speed * (169 / 450) || 0;
-    
-    //     // format 000 km/h
-    //     const formatted = speed.toFixed(0).padStart(3, "0");
-    //     this.speedText.setText(`${formatted} km/h`);
-    // }
     
     startTimer() {
         if (!this.timerStarted) {

@@ -18,7 +18,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
   const roadGroup = svgElem.querySelector('#ROAD');
   const obstaclesGroup = svgElem.querySelector('#OBSTACLES');
   const startElem = svgElem.querySelector('#START');
-  const layoutGroup = svgElem.querySelector('#layout');
+  const layoutGroup = svgElem.querySelector('#layout, [id^="layout_"]');
 
   // 2a. Pobierz domyślną nawierzchnię z BACKGROUND_*
   let bgTexture = 'grass';
@@ -243,6 +243,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
 
   // Rasteryzacja warstwy "layout"
 
+  // Rasteryzacja warstwy "layout"
   if (layoutGroup) {
     const layoutElements = Array.from(layoutGroup.children);
     layoutElements.forEach((element) => {
@@ -251,15 +252,11 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
         const className = element.getAttribute('class');
         if (className) {
           const styleSheet = doc.querySelector('style');
-          const rules = styleSheet.innerHTML.split('}');
+          const rules = styleSheet ? styleSheet.innerHTML.split('}') : [];
           const rule = rules.find(rule => rule.includes(`.${className}`));
           if (rule) {
             const fillValue = rule.match(/fill:\s*([^;]+)/);
-            if (fillValue) {
-              worldCtx.fillStyle = fillValue[1];
-            } else {
-              worldCtx.fillStyle = 'black';
-            }
+            worldCtx.fillStyle = fillValue ? fillValue[1] : 'black';
           } else {
             worldCtx.fillStyle = 'black';
           }
@@ -269,8 +266,35 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize = 4096, tileSize = 25
         worldCtx.fill(path2d);
       }
     });
+
+    // layout_overview -> assets/images/overview.png
+    // layout_city -> assets/images/city.png
+    // itd.
+    if (layoutGroup.id && layoutGroup.id.startsWith('layout_')) {
+      const layoutTextureName = layoutGroup.id.substring('layout_'.length);
+
+      try {
+        const layoutImg = await loadImage(`assets/images/${layoutTextureName}.png`);
+        console.log(`[SVG LOADER] Załadowano layout PNG: ${layoutTextureName}.png`);
+
+        if (layoutImg.width > tileSize || layoutImg.height > tileSize) {
+          worldCtx.drawImage(layoutImg, 0, 0, worldSize, worldSize);
+        } else {
+          for (let x = 0; x < worldSize; x += tileSize) {
+            for (let y = 0; y < worldSize; y += tileSize) {
+              worldCtx.drawImage(layoutImg, x, y, tileSize, tileSize);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn(`[SVG LOADER] Brak layout PNG: assets/images/${layoutTextureName}.png`);
+      }
+    }
   }
 
+
+
+  
   // Przygotuj canvas do rasteryzacji
   const surfCanvas = document.createElement('canvas');
   surfCanvas.width = collisionMapSize;

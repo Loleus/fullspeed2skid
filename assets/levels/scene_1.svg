@@ -55,15 +55,15 @@
 	<path id="31_grass2" class="st3" d="M876.2,109.8c-0.9,0-1.8,0.1-2.7,0.2c-11.3,1.2-20.4,10.2-21.6,21.6
 		c-0.8,7,1.4,13.7,6.1,18.9c4.6,5.1,11.3,8.1,18.1,8.1c0.9,0,1.8-0.1,2.7-0.2c11.3-1.2,20.4-10.2,21.6-21.6c0.8-7-1.4-13.7-6.1-18.9
 		C889.7,112.8,883,109.8,876.2,109.8z"/>
-			<rect id="_x31_2_1_" x="531.2" y="472.5" class="st1" width="122.5" height="27.8"/>
-	<rect id="2" x="637.5" y="370.8" class="st1" width="22.8" height="129.5"/>
-	<rect id="2" x="395.7" y="631.4" class="st1" width="22.8" height="118.3"/>
-	<rect id="2" x="134.9" y="644" class="st1" width="22.8" height="154.4"/>
-	<rect id="2" x="362.5" y="907" class="st1" width="22.8" height="110.9"/>
-	<rect id="2" x="608.5" y="3.3" class="st1" width="22.8" height="111.5"/>
-	<rect id="2" x="489.2" y="203.5" class="st1" width="22.8" height="125.2"/>
-	<rect id="2" x="272.1" y="373.3" class="st1" width="22.8" height="115.4"/>
-
+	<rect id="21" x="531.2" y="472.5" class="st2" width="122.5" height="27.8"/>
+	<rect id="32" x="637.5" y="370.8" class="st2" width="22.8" height="129.5"/>
+	<rect id="321" x="395.7" y="631.4" class="st2" width="22.8" height="118.3"/>
+	<rect id="322" x="134.9" y="644" class="st2" width="22.8" height="154.4"/>
+	<rect id="323" x="362.5" y="907" class="st2" width="22.8" height="110.9"/>
+	<rect id="324" x="608.5" y="3.3" class="st2" width="22.8" height="111.5"/>
+	<rect id="325" x="489.2" y="203.5" class="st2" width="22.8" height="125.2"/>
+	<rect id="326" x="272.1" y="373.3" class="st2" width="22.8" height="115.4"/>
+	<rect id="328" x="149.6" y="223.4" class="st2" width="22.8" height="115.4"/>
 </g>
 
 

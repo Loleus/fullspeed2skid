@@ -10,9 +10,9 @@ export class VehicleFactory {
   createPlayer({ x, y, texture = "car_p1" }) {
 
     const sprite = this.scene.physics.add.sprite(x, y, texture)
-      .setOrigin(0.5)
+      .setOrigin(0.5,0.6)
       .setDepth(3)
-      .setScale(1);
+      .setScale(0.9, 1.2);
 
     sprite.body.allowRotation = false;
     sprite.setVisible(false);

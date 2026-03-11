@@ -8,7 +8,7 @@ export class CameraManager {
     this.car = car;
     this.currentCamera = null;
     this.cameras = {};
-    
+
     // Parametry początkowe obu kamer
     this.cameraParams = {
       classic: {
@@ -19,19 +19,19 @@ export class CameraManager {
         // parametry FPV będą w module FPVCamera.js
       }
     };
-    
+
     this.initializeCameras();
   }
-  
+
   initializeCameras() {
     // Inicjalizacja kamer
     this.cameras.classic = new ClassicCamera(this.scene, this.car, this.cameraParams.classic);
     this.cameras.fpv = new FPVCamera(this.scene, this.car);
-    
+
     // Domyślnie aktywuj kamerę klasyczną
     this.activateClassic();
   }
-  
+
   activateClassic() {
     if (this.currentCamera) {
       this.currentCamera.deactivate();
@@ -39,43 +39,49 @@ export class CameraManager {
     this.cameras.classic.activate();
     this.currentCamera = this.cameras.classic;
   }
-  
+
   activateFPV() {
     if (this.currentCamera) {
       this.currentCamera.deactivate();
     }
     this.cameras.fpv.activate();
     this.currentCamera = this.cameras.fpv;
+
   }
-  
+
   toggle() {
     if (this.currentCamera === this.cameras.classic) {
+this.scene.carController.carSprite.setVisible(true);
+this.scene.carController.visualSprite.setVisible(false);
+console.log(this.scene.carController.visualSprite);
       this.activateFPV();
     } else {
+this.scene.carController.carSprite.setVisible(false);
+this.scene.carController.visualSprite.setVisible(true);
       this.activateClassic();
     }
   }
-  
+
   isFPVActive() {
     return this.currentCamera === this.cameras.fpv;
   }
-  
+
   isClassicActive() {
     return this.currentCamera === this.cameras.classic;
   }
-  
+
   update(dt) {
     if (this.currentCamera && this.currentCamera.update) {
       this.currentCamera.update(dt);
     }
   }
-  
+
   reset() {
     if (this.currentCamera && this.currentCamera.reset) {
       this.currentCamera.reset();
     }
   }
-  
+
   getCurrentCamera() {
     return this.currentCamera;
   }

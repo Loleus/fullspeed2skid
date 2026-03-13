@@ -649,7 +649,7 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
         canvas.width = outputSize;
         canvas.height = outputSize;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'rgba(31, 31, 31, 0.0)';
+        ctx.fillStyle = 'rgba(143, 143, 143, 0.5)';
         ctx.fillRect(0, 0, outputSize, outputSize);
 
 

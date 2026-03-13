@@ -33,14 +33,14 @@ export class LapsTimer {
 
     initializeHUD() {
         const { width } = this.scene.sys.game.canvas;
-        const dispLaps = this.gameMode === "RACE" ? `LAPS:${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
+        const dispLaps = this.gameMode === "RACE" ? `LAP:${this.currentLap}/${this.totalLaps}` : "TRAINING";
 
         this.lapsText = this.scene.add.text(width / 2, 10, dispLaps, {
             fontFamily: "Harting",
             fontSize: "55px",
             color: "#63db00ff",
             align: "center",
-            backgroundColor: "rgba(22, 72, 10,0.67)",
+            // backgroundColor: "rgba(22, 72, 10,0.67)",
             padding: { left: 25, right: 25, top: 4, bottom: 58 },
         })
         .setOrigin(0.5, 0)
@@ -108,7 +108,7 @@ export class LapsTimer {
     }
     
     updateLapsDisplay() {
-        const dispLaps = this.gameMode === "RACE" ? `LAPS:${this.currentLap}/${this.totalLaps}` : "LAPS: ∞";
+        const dispLaps = this.gameMode === "RACE" ? `LAP:${this.currentLap}/${this.totalLaps}` : "TRAINING";
         if (this.lapsText) {
             this.lapsText.setText(dispLaps);
         }

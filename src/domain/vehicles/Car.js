@@ -346,7 +346,7 @@ export class Car {
   }
 
   checkCarCollision() {
-    const opponent = this.isAI ? this.scene.carController : this.scene.aiController;
+    const opponent = this.opponentController;
     if (!opponent) return null;
 
     const dx = this.carX - opponent.carX;
@@ -403,7 +403,7 @@ export class Car {
 
       // Reszta bez zmian.
       if (!col) col = this.checkWorldEdgeCollision(worldW, worldH);
-      // if (!col) col = this.checkCarCollision();
+      if (!col) col = this.checkCarCollision();
 
       if (col) {
         // Dla przeszkód cofamy do ostatniej bezpiecznej pozycji z trajektorii,

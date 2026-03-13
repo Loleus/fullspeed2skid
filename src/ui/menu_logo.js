@@ -6,30 +6,30 @@ export function createLogo(scene, menuStyle) {
   const text1Glow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: '#ae0000ff',
+    color: 'rgb(167, 9, 9)',
     align: 'center'
-  }).setShadow(0, -2, '#ffe5c7ff', 3, false, true);
+  }).setShadow(3, -3, 'rgb(255, 255, 255)', 2, false, true);
 
   const text1Shadow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: '#000000ff',
+    color: 'rgb(255, 255, 255)',
     align: 'center'
-  }).setShadow(3, 4, '#330a00ff', 1, false, true);
+  }).setShadow(-1, 1, 'rgb(0, 0, 0)', 4, false, true);
 
   const text2Glow = scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
     fontSize: '80px',
-    color: 'rgba(0, 0, 0, 0)',
+    color: 'rgb(0, 0, 0)',
     align: 'center'
-  }).setShadow(3, -3, '#fff1e5ff', 6, false, true);
+  }).setShadow(1, 1, 'rgb(255, 255, 255)', 1, false, true);
 
   const text2Shadow = scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
     fontSize: '80px',
-    color: 'rgba(0, 0, 0, 1)',
+    color: 'rgb(255, 255, 255)',
     align: 'center'
-  }).setShadow(-3, 3, '#c2b0abff', 1, false, true);
+  }).setShadow(-3, 3, 'rgb(194, 176, 171)', 1, false, true);
 
   const totalTitleWidth = text1Shadow.width + text2Shadow.width;
   const startX = width / 2 - totalTitleWidth / 2;
@@ -45,7 +45,7 @@ export function createLogo(scene, menuStyle) {
   text2Glow.setPosition(text2X, text2Y).setOrigin(0, 0.5);
 
   // Ustaw głębokość
-  text1Shadow.setDepth(2);
+  text1Shadow.setDepth(2).setScale(1.01,1.01).setOrigin(0.005, 0.5) ;
   text1Glow.setDepth(3);
   text2Shadow.setDepth(2);
   text2Glow.setDepth(3);

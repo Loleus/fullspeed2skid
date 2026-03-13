@@ -13,7 +13,7 @@ export function createLogo(scene, menuStyle) {
   const text1Shadow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: 'rgb(70, 47, 47)',
+    color: 'rgb(160, 33, 33)',
     align: 'center'
   }).setShadow(0, 3, 'rgb(0, 0, 0)', 3, false, true);
 

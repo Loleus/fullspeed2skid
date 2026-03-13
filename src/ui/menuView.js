@@ -5,34 +5,34 @@ export class MenuUI {
   constructor(scene) {
     this.scene = scene;
     this.menuButtons = [];
-    this.gradientState = { stop1: 0.3, stop2: 0.7 };
+    this.gradientState = { stop1: 0.25, stop2: 0.75 };
     this.gradientCanvas = null;
     this.logo = null;
 
     this.menuStyle = {
-      buttonWidth: 230,
+      buttonWidth: 210,
       buttonHeight: 160,
       buttonMargin: 0,
       buttonPadding: 30,
-      buttonAlpha: 0.65,
+      buttonAlpha: 0.7,
       buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgb(63, 94, 1)").color,
       shadowButtonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 0, 0, 1)").color,
-      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgb(52, 76, 4)").color,
+      buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgb(56, 83, 3)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(38, 57, 0, 1)").color,
       buttonFontSize: '28px',
       buttonFontFamily: 'Harting',
-      buttonTextColor: 'rgba(181, 222, 0, 1)',
+      buttonTextColor: 'rgb(165, 199, 15)',
       buttonDisabledColor: '#666',
       offsetY: 30,
       shadowOffsetDefault: { x: 4, y: 2 },
       shadowOffsetPressed: { x: -2, y: -1 },
       customStartStyle: {
-        buttonWidth: 220,
-        buttonHeight: 230,
+        buttonWidth: 210,
+        buttonHeight: 200,
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgba(197, 36, 0, 1)").color,
         buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgb(178, 35, 3)").color,
-        buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(83, 37, 0, 1)").color,
-        buttonTextColor: '#fba912ff',
+        buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(92, 36, 5)").color,
+        buttonTextColor: 'rgb(255, 151, 24)',
         interactionRadiusOffset: 0,
         buttonFontSize: '58px',
       },
@@ -43,7 +43,7 @@ export class MenuUI {
         interactionRadiusOffset: 0,
         buttonFontSize: '24px',
         buttonFillColor: Phaser.Display.Color.RGBStringToColor("rgb(8, 114, 144)").color,
-        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgb(7, 126, 158)").color,
+        buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgb(3, 104, 132)").color,
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(0, 69, 83, 1)").color,
         buttonTextColor: '#2adfffff',
         offsetY: 90,

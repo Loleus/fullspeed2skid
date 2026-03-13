@@ -1,9 +1,11 @@
 import { World } from '../domain/index.js';
 import { TILE_SIZE, WORLD_HEIGHT } from '../core/constants.js';
+import { createBackground, createGradientOverlay, destroyBackgroundAssets } from '../ui/menu_background.js';
 
 export class LoadingScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'LoadingScene' });
+    this.gradientState = { stop1: 0.3, stop2: 0.7 };
   }
 
   init(data) {
@@ -21,12 +23,8 @@ export class LoadingScene extends window.Phaser.Scene {
 
   async create() {
     const { width, height } = this.sys.game.canvas;
-
-    // Dodaj tło jako obraz rozciągnięty na cały canvas, umieść na bardzo niskiej głębokości
-    const bg = this.add.image(0, 0, 'bgc').setOrigin(0, 0);
-    bg.setDisplaySize(width, height);
-    bg.setScrollFactor(0);
-    bg.setDepth(-1000);
+    createBackground(this);
+    createGradientOverlay(this, this.gradientState);
 
     const btnWidth = 720;
     const btnHeight = 80;

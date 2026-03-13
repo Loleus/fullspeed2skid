@@ -403,7 +403,7 @@ export class Car {
 
       // Reszta bez zmian.
       if (!col) col = this.checkWorldEdgeCollision(worldW, worldH);
-      if (!col) col = this.checkCarCollision();
+      // if (!col) col = this.checkCarCollision();
 
       if (col) {
         // Dla przeszkód cofamy do ostatniej bezpiecznej pozycji z trajektorii,

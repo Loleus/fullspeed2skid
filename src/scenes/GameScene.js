@@ -9,7 +9,7 @@ export class GameScene extends window.Phaser.Scene {
         super({ key: "GameScene" });
         this.minimapa = true;
         this.gameMode = "PRACTICE";
-        this.collisionsEnabled = false;
+        this.collisionsEnabled = true;
         this.raceFinished = false;
         this.hiscoreChecked = false;
         this.audioService = new AudioService(this);

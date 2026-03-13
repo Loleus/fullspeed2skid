@@ -32,17 +32,35 @@ export function createGradientOverlay(scene, gradientState) {
 
   return gradientCanvas;
 }
-
 export function updateGradient(ctx, width, height, gradientState) {
-  const g = ctx.createLinearGradient(0, 0, 0, height);
-  g.addColorStop(0, 'rgba(255, 255, 255, 1)');
-  g.addColorStop(gradientState.stop1, 'rgba(255, 255, 255, 0)');
-  g.addColorStop(gradientState.stop2, 'rgba(0, 0, 0, 0)');
-  g.addColorStop(1, 'rgba(0, 0, 0, 1)');
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = g;
+
+  // Gradient poziomy
+  const horizontal = ctx.createLinearGradient(0, 0, width, 0);
+  horizontal.addColorStop(0, 'rgb(0, 0, 0)');
+  horizontal.addColorStop(gradientState.stop1, 'rgba(255, 255, 255, 0)');
+  horizontal.addColorStop(gradientState.stop2, 'rgba(0, 0, 0, 0)');
+  horizontal.addColorStop(1, 'rgba(0, 0, 0, 1)');
+
+  ctx.fillStyle = horizontal;
   ctx.fillRect(0, 0, width, height);
+
+  // Gradient pionowy
+  const vertical = ctx.createLinearGradient(0, 0, 0, height);
+  vertical.addColorStop(0, 'rgb(0, 0, 0)');
+  vertical.addColorStop(gradientState.stop1, 'rgba(255, 255, 255, 0)');
+  vertical.addColorStop(gradientState.stop2, 'rgba(0, 0, 0, 0)');
+  vertical.addColorStop(1, 'rgba(0, 0, 0, 1)');
+
+  // Mnożenie gradientów = efekt prostokątny
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.fillStyle = vertical;
+  ctx.fillRect(0, 0, width, height);
+
+  // Przywrócenie normalnego trybu
+  ctx.globalCompositeOperation = 'source-over';
 }
+
 
 export function destroyBackgroundAssets(scene) {
   if (scene.textures.exists('gradientOverlay')) {

@@ -31,7 +31,7 @@ export class LoadingScene extends window.Phaser.Scene {
     const padding = 55;
 
     // Tło przycisku
-    this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, Phaser.Display.Color.RGBStringToColor("rgba(70, 105, 0, 1)").color, 1)
+    this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, Phaser.Display.Color.RGBStringToColor("rgb(63, 94, 1)").color, 1)
       .setOrigin(0.5)
       .setAlpha(0.87)
       .setDepth(10);

@@ -8,12 +8,12 @@ export function createLogo(scene, menuStyle) {
     fontSize: '54px',
     color: 'rgb(142, 0, 0)',
     align: 'center'
-  }).setShadow(2, -2, 'rgb(255, 206, 142)', 2, false, true);
+  }).setShadow(2, -2, 'rgb(250, 223, 132)', 2, false, true);
 
   const text1Shadow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: 'rgb(125, 100, 100)',
+    color: 'rgb(70, 47, 47)',
     align: 'center'
   }).setShadow(0, 3, 'rgb(0, 0, 0)', 3, false, true);
 

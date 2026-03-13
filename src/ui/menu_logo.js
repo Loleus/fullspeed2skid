@@ -6,16 +6,16 @@ export function createLogo(scene, menuStyle) {
   const text1Glow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: 'rgb(167, 9, 9)',
+    color: 'rgb(142, 0, 0)',
     align: 'center'
-  }).setShadow(2, -2, 'rgb(255, 174, 174)', 2, false, true);
+  }).setShadow(2, -2, 'rgb(255, 206, 142)', 2, false, true);
 
   const text1Shadow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: 'rgb(255, 172, 172)',
+    color: 'rgb(125, 100, 100)',
     align: 'center'
-  }).setShadow(0, 3, 'rgb(0, 0, 0)', 4, false, true);
+  }).setShadow(0, 3, 'rgb(0, 0, 0)', 3, false, true);
 
   const text2Glow = scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',
@@ -45,7 +45,7 @@ export function createLogo(scene, menuStyle) {
   text2Glow.setPosition(text2X, text2Y).setOrigin(0, 0.5);
 
   // Ustaw głębokość
-  text1Shadow.setDepth(2).setScale(1.01,1.01).setOrigin(0.005, 0.5) ;
+  text1Shadow.setDepth(2).setScale(1.02,1.02).setOrigin(0.01, 0.5) ;
   text1Glow.setDepth(3);
   text2Shadow.setDepth(2);
   text2Glow.setDepth(3);

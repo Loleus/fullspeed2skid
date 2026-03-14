@@ -16,7 +16,7 @@ export class LoadingScene extends window.Phaser.Scene {
 
   preload() {
     // Ładuj tekstury
-    this.load.image('grass', 'assets/images/grass.jpg');
+    this.load.image('cobblestone', 'assets/images/cobblestone.jpg');
     this.load.image('bgc', 'assets/images/bgc.jpg'); // pełnoekranowe tło
     this.load.image('hiscoreBG', 'assets/images/hiscoreBG.jpg');
   }
@@ -26,20 +26,20 @@ export class LoadingScene extends window.Phaser.Scene {
     createBackground(this);
     createGradientOverlay(this, this.gradientState);
 
-    const btnWidth = 720;
+    const btnWidth = 600;
     const btnHeight = 80;
     const padding = 55;
 
     // Tło przycisku
     this.add.rectangle(width / 2, height / 2, btnWidth, btnHeight, Phaser.Display.Color.RGBStringToColor("rgb(63, 94, 1)").color, 1)
       .setOrigin(0.5)
-      .setAlpha(0.87)
+      .setAlpha(0.7)
       .setDepth(10);
 
     // Tekst ładowania
     const loadingText = this.add.text(width / 2, height / 2, 'loading...', {
       fontFamily: 'Stormfaze',
-      fontSize: '71px',
+      fontSize: '60px',
       color: 'rgba(148, 182, 0, 1)',
       align: 'center',
       padding: { left: padding, right: padding, top: padding, bottom: padding },
@@ -75,7 +75,7 @@ export class LoadingScene extends window.Phaser.Scene {
     canvas.height = worldSize;
     const ctx = canvas.getContext('2d');
 
-    const grassImg = this.textures.get('grass').getSourceImage();
+    const grassImg = this.textures.get('cobblestone').getSourceImage();
 
     for (let x = 0; x < worldSize; x += TILE_SIZE) {
       for (let y = 0; y < worldSize; y += TILE_SIZE) {

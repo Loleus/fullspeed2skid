@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.6.0';
+const CACHE_NAME = 'fullspeed2skid-v2.6.1';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -24,26 +24,26 @@ const ASSETS = [
   '/fullspeed2skid/assets/fonts/punk_kid.ttf',
   '/fullspeed2skid/assets/fonts/Harting.ttf',
   // assets/images
-  '/fullspeed2skid/assets/images/asphalt.jpg',
   '/fullspeed2skid/assets/images/asphalt1.jpg',
   '/fullspeed2skid/assets/images/bgc.jpg',
+  '/fullspeed2skid/assets/images/car_cpu1.png',
+  '/fullspeed2skid/assets/images/car_p1.png',
   '/fullspeed2skid/assets/images/car_X.png',
   '/fullspeed2skid/assets/images/car.png',
+  '/fullspeed2skid/assets/images/clean.png',
   '/fullspeed2skid/assets/images/cobblestone.jpg',
   '/fullspeed2skid/assets/images/favicon-16x16.png',
   '/fullspeed2skid/assets/images/favicon-32x32.png',
+  '/fullspeed2skid/assets/images/flares.png',
   '/fullspeed2skid/assets/images/fullspeed2skid_icon.jpg',
   '/fullspeed2skid/assets/images/fullspeed2skid.jpg',
   '/fullspeed2skid/assets/images/grass.jpg',
-  '/fullspeed2skid/assets/images/grass1.jpg',
   '/fullspeed2skid/assets/images/hiscoreBG.jpg',
   '/fullspeed2skid/assets/images/icon-192x192-maskable.png',
   '/fullspeed2skid/assets/images/icon-192x192.png',
   '/fullspeed2skid/assets/images/icon-512x512.png',
-  '/fullspeed2skid/assets/images/stone.jpg',
-  '/fullspeed2skid/assets/images/stone1.jpg',
-  '/fullspeed2skid/assets/images/stone2.jpg',
-  '/fullspeed2skid/assets/images/stone3.jpg',
+  '/fullspeed2skid/assets/images/overview.png',
+  '/fullspeed2skid/assets/images/smoke.json',
   '/fullspeed2skid/assets/images/water.jpg',
   // assets/levels
   '/fullspeed2skid/assets/levels/hiscores.json',

@@ -20,7 +20,7 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     init(data) {
-        console.log(window._hiscores.tracks);
+        console.log(window._hiscores.tracks);  
         this.TILE_SIZE = data.TILE_SIZE;
         this.worldData = data.worldData;
         this.worldData.startFix = data.startFix;
@@ -89,6 +89,8 @@ export class GameScene extends window.Phaser.Scene {
         } else if (twoPlayers) {
             this.p2Controller = factory.createPlayer({ x: start.x, y: start.y, texture: "car_p2" });
             factory.linkOpponents(this.carController, this.p2Controller);
+        } else {
+            this.aiController = null;
         }
 
         this.skidMarksSystem = new SkidMarksSystem(this, { enabled: true, wheelWidth: 12, tileSize: this.TILE_SIZE });

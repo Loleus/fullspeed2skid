@@ -4,7 +4,7 @@
 export const TILE_SIZE = 256;
 
 // Wysokość świata gry (możliwe do przewijania poziomy itp.)
-export const WORLD_HEIGHT = 2048;
+export const WORLD_HEIGHT = 3072;
 
 // Konfiguracja gry Phaser
 export const GAME_CONFIG = {

@@ -1,5 +1,3 @@
-// svgPhaserWorldLoader.js – loader świata SVG do Phasera
-
 export async function loadSVGPhaserWorld(svgUrl, worldSize, tileSize) {
   // Debug: log start
   // console.log('[SVG LOADER] Start ładowania i rasteryzacji SVG:', svgUrl);

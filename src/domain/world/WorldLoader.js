@@ -38,7 +38,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize, tileSize) {
 
   // 3. Załaduj wszystkie obrazy przed rasteryzacją
   // Zbierz wszystkie surfaceType z ROAD
-  let surfaceTypes = new Set(['asphalt']);
+  let surfaceTypes = new Set(['asphalt1']);
   if (roadGroup) {
     const tracks = roadGroup.querySelectorAll('path');
     for (const track of tracks) {
@@ -127,12 +127,12 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize, tileSize) {
       const d = track.getAttribute('d');
       if (!d) continue;
       // Rozpoznaj typ nawierzchni po sufiksie id
-      let surfaceType = 'asphalt';
+      let surfaceType = 'asphalt1';
       if (track.id) {
         const match = track.id.match(/_([a-zA-Z0-9]+)$/);
         if (match) surfaceType = match[1].toLowerCase();
       }
-      let textureImg = textureMap[surfaceType] || textureMap['asphalt'];
+      let textureImg = textureMap[surfaceType] || textureMap['asphalt1'];
       const path2d = new Path2D(scaleSvgPath(d, scale));
       worldCtx.save();
       worldCtx.clip(path2d);
@@ -222,7 +222,6 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize, tileSize) {
   const surfaceAreaMap = new Array(collisionMapSize * collisionMapSize).fill('grass');
   // Mapowanie typów powierzchni na unikalne kolory (R,G,B)
   const surfaceTypeColors = {
-    asphalt: [0, 0, 0],
     asphalt1: [0, 0, 0],
     cobblestone: [128, 128, 128],
     gravel: [180, 180, 0],
@@ -308,7 +307,7 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize, tileSize) {
     for (const track of tracks) {
       const d = track.getAttribute('d');
       if (!d) continue;
-      let surfaceType = 'asphalt';
+      let surfaceType = 'asphalt1';
       if (track.id) {
         const match = track.id.match(/_([a-zA-Z0-9]+)$/);
         if (match) surfaceType = match[1].toLowerCase();
@@ -426,7 +425,6 @@ export async function loadSVGPhaserWorld(svgUrl, worldSize, tileSize) {
 
   // Domyślne parametry nawierzchni (możesz je potem edytować globalnie)
   const surfaceParams = {
-    asphalt: { grip: 1.0 },
     asphalt1: { grip: 1.0 },
     cobblestone: { grip: 0.9 }, // przykładowa wartość
     gravel: { grip: 0.8 },

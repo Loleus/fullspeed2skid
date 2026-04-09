@@ -9,7 +9,7 @@ export class MenuScene extends window.Phaser.Scene {
     this.hiscores = [];
     this.tracks = window._tracks || [];
     this.selectedTrack = window._selectedTrack ?? 0;
-    this.gameMode = window._gameMode || 'PRACTICE';
+    this.gameMode = window._gameMode || 'TRAINING';
     this.handleMenuButton = this.handleButton.bind(this);
     this.hiscoreManager = new HiscoreManager({
       storageKey: 'mygame_hiscores',
@@ -137,7 +137,7 @@ export class MenuScene extends window.Phaser.Scene {
       window._selectedTrack = this.selectedTrack;
       this.ui.updateButtonText('track', this.tracks[this.selectedTrack].label);
     } else if (key === 'mode') {
-      this.gameMode = this.gameMode === 'PRACTICE' ? 'RACE' : 'PRACTICE';
+      this.gameMode = this.gameMode === 'TRAINING' ? 'RACE' : 'TRAINING';
       window._gameMode = this.gameMode;
       this.ui.updateButtonText('mode', this.gameMode);
     } else if (key === 'hiscore') {

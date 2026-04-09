@@ -10,7 +10,7 @@ export class LoadingScene extends window.Phaser.Scene {
 
   init(data) {
     this.trackFile = data.trackFile;
-    this.gameMode = data.gameMode || 'PRACTICE';
+    this.gameMode = data.gameMode || 'TRAINING';
     this.startFix = data.startFix;
   }
 

@@ -15,7 +15,7 @@ export class World {
     this.minimapImage = null;
     this.minimapOverlay = null;
     this.minimapSize = 128;
-    this.minimapMargin = 18;
+    this.minimapMargin = 26;
     this.minimapWorldSize = 1024;
     this.minimapLastUpdate = 0; // znacznik czasu do throttlingu minimapy
   }
@@ -74,7 +74,7 @@ export class World {
     const key = await createMinimapTextureFromSVG(this.scene, svgPath, this.minimapSize);
     this.minimapKey = key;
     const minimapOffsetX = this.viewW - this.minimapSize - this.minimapMargin;
-    const minimapOffsetY = this.minimapMargin;
+    const minimapOffsetY = this.minimapMargin - 4;
     this.minimapImage = this.scene.add.image(minimapOffsetX + this.minimapSize/2, minimapOffsetY + this.minimapSize/2, this.minimapKey)
       .setScrollFactor(0)
       .setDepth(100);
@@ -98,7 +98,7 @@ export class World {
     const px = Phaser.Math.Clamp(carPos.x, 0, worldW);
     const py = Phaser.Math.Clamp(carPos.y, 0, worldH);
     const minimapOffsetX = this.viewW - this.minimapSize - this.minimapMargin;
-    const minimapOffsetY = this.minimapMargin;
+    const minimapOffsetY = this.minimapMargin - 4;
     const carX = minimapOffsetX + (px / worldW * this.minimapSize);
     const carY = minimapOffsetY + (py / worldH * this.minimapSize);
     if (aiCarPos) {

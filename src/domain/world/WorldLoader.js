@@ -645,13 +645,13 @@ function createMinimapFromSVG(svgUrl, outputSize = 128) {
         canvas.width = outputSize;
         canvas.height = outputSize;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'rgba(143, 143, 143, 0.5)';
+        ctx.fillStyle = 'rgb(71, 71, 71)';
         ctx.fillRect(0, 0, outputSize, outputSize);
 
 
         let pathsSVG = '';
         trackPaths.forEach(pathElem => {
-          pathsSVG += `<path d="${pathElem.getAttribute('d')}" fill="#222" stroke="none"/>`;
+          pathsSVG += `<path d="${pathElem.getAttribute('d')}" fill="#151515" stroke="none"/>`;
         });
         const scaledSVG = `
           <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">

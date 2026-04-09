@@ -27,10 +27,13 @@ export function createGradientOverlay(scene, gradientState) {
   updateGradient(ctx, width, height, gradientState);
   gradientCanvas.refresh();
 
-  const overlayImage = scene.add.image(0, 0, 'gradientOverlay').setOrigin(0, 0).setAlpha(1);
-  overlayImage.setDepth(0);
+const overlayImage = scene.add.image(0, 0, 'gradientOverlay')
+  .setOrigin(0, 0)
+  .setAlpha(1)
+  .setScrollFactor(0)  // ← dodaj tę linię
+  .setDepth(0);
 
-  return gradientCanvas;
+  return overlayImage;
 }
 export function updateGradient(ctx, width, height, gradientState) {
   ctx.clearRect(0, 0, width, height);
@@ -38,7 +41,7 @@ export function updateGradient(ctx, width, height, gradientState) {
   // Gradient poziomy
   const horizontal = ctx.createLinearGradient(0, 0, width, 0);
   horizontal.addColorStop(0, 'rgb(0, 0, 0)');
-  horizontal.addColorStop(gradientState.stop1, 'rgba(255, 255, 255, 0)');
+  horizontal.addColorStop(gradientState.stop1, 'rgba(0, 0, 0, 0)');
   horizontal.addColorStop(gradientState.stop2, 'rgba(0, 0, 0, 0)');
   horizontal.addColorStop(1, 'rgba(0, 0, 0, 1)');
 
@@ -48,7 +51,7 @@ export function updateGradient(ctx, width, height, gradientState) {
   // Gradient pionowy
   const vertical = ctx.createLinearGradient(0, 0, 0, height);
   vertical.addColorStop(0, 'rgb(0, 0, 0)');
-  vertical.addColorStop(gradientState.stop1, 'rgba(255, 255, 255, 0)');
+  vertical.addColorStop(gradientState.stop1, 'rgba(0, 0, 0, 0)');
   vertical.addColorStop(gradientState.stop2, 'rgba(0, 0, 0, 0)');
   vertical.addColorStop(1, 'rgba(0, 0, 0, 1)');
 

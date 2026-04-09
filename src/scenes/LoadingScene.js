@@ -5,7 +5,7 @@ import { createBackground, createGradientOverlay, destroyBackgroundAssets } from
 export class LoadingScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'LoadingScene' });
-    this.gradientState = { stop1: 0.3, stop2: 0.7 };
+    this.gradientState = { stop1: 0.2, stop2: 0.8 };
   }
 
   init(data) {

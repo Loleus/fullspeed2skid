@@ -3,6 +3,7 @@ import { VehicleFactory, AudioService, HiscoreService } from "../services/index.
 import { createHUD, CountdownManager, LapsTimer, SkidMarksSystem, SmokeParticleEmitter } from "../systems/index.js";
 import { CameraManager } from "../cameras/CameraManager.js";
 import { getControlState, createKeyboardBindings } from "../input/index.js";
+import { createGradientOverlay } from "../ui/menu_background.js";
 
 export class GameScene extends window.Phaser.Scene {
     constructor() {
@@ -20,7 +21,7 @@ export class GameScene extends window.Phaser.Scene {
     }
 
     init(data) {
-        console.log(window._hiscores.tracks);  
+        console.log(window._hiscores.tracks);
         this.TILE_SIZE = data.TILE_SIZE;
         this.worldData = data.worldData;
         this.worldData.startFix = data.startFix;
@@ -143,12 +144,13 @@ export class GameScene extends window.Phaser.Scene {
             this.hudCamera.setScroll(0, 0);
             this.hudCamera.setRotation(0);
         }
-
+        // Gradient overlay (po createHUD i hudRoot)
+        this.gradientState = { stop1: 0.035, stop2: 0.975 };
+        this.gradientOverlay = createGradientOverlay(this, this.gradientState);
+        this.cameras.main.ignore(this.gradientOverlay);
         this.hiscoreService = new HiscoreService({});
         this.countdown = new CountdownManager(this);
         this.countdown.start();
-        console.log(this.carController);
-        console.log(this.aiController)
     }
 
     localToWorld(carX, carY, carAngleDeg, offsetX, offsetY) {
@@ -302,27 +304,27 @@ export class GameScene extends window.Phaser.Scene {
         }
     }
 
-handleHiscorePrompt() {
-    if (this.hiscoreChecked) return;
-    this.hiscoreChecked = true;
+    handleHiscorePrompt() {
+        if (this.hiscoreChecked) return;
+        this.hiscoreChecked = true;
 
-    const hiscoreParams = {
-        trackIndex: window._selectedTrack || 0,
-        lapsTimer: this.lapsTimer
-    };
+        const hiscoreParams = {
+            trackIndex: window._selectedTrack || 0,
+            lapsTimer: this.lapsTimer
+        };
 
-    if (!this.hiscoreService.checked(hiscoreParams)) return;
+        if (!this.hiscoreService.checked(hiscoreParams)) return;
 
-    if (this.sound.mute) {
-        this.hiscoreService.tryQualify(hiscoreParams);
-        return;
+        if (this.sound.mute) {
+            this.hiscoreService.tryQualify(hiscoreParams);
+            return;
+        }
+
+        this.audioService.playApplause();
+        this.time.delayedCall(10000, () => {
+            this.hiscoreService.tryQualify(hiscoreParams);
+        });
     }
-
-    this.audioService.playApplause();
-    this.time.delayedCall(10000, () => {
-        this.hiscoreService.tryQualify(hiscoreParams);
-    });
-}
 
     resetGame() {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
@@ -372,6 +374,12 @@ handleHiscorePrompt() {
                 // opcjonalnie ustaw flagę po zatrzymaniu, audioSvc.suspended = true;
             }, 60); // 0 też działa, 60 ms daje WebAudio więcej czasu
             this.scene.start("MenuScene");
+        }
+    }
+
+    shutdown() {
+        if (this.textures.exists('gradientOverlay')) {
+            this.textures.remove('gradientOverlay');
         }
     }
 }

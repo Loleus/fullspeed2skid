@@ -5,7 +5,7 @@ export class MenuUI {
   constructor(scene) {
     this.scene = scene;
     this.menuButtons = [];
-    this.gradientState = { stop1: 0.3, stop2: 0.7 };
+    this.gradientState = { stop1: 0.2, stop2: 0.8 };
     this.gradientCanvas = null;
     this.logo = null;
 

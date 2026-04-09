@@ -11,11 +11,11 @@ export function createHUD(scene, isMobile, cameraManager) {
   }
 
   return scene.add
-    .text(10, 10, "V - view\nR - reset\nX - exit", {
+    .text(33, 20, "V - view\nR - reset\nX - exit", {
       fontFamily: "Harting",
       fontSize: "20px",
-      fill: "#cecdcdff",
-      backgroundColor: "rgb(31, 31, 31)",
+      fill: "rgb(215, 215, 215)",
+      backgroundColor: "rgb(71, 71, 71)",
       padding: { left: 8, right: 8, top: 4, bottom: 4 },
     })
     .setScrollFactor(0)

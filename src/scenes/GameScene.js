@@ -9,7 +9,7 @@ export class GameScene extends window.Phaser.Scene {
     constructor() {
         super({ key: "GameScene" });
         this.minimapa = true;
-        this.gameMode = "PRACTICE";
+        this.gameMode = "TRAINING";
         this.collisionsEnabled = true;
         this.raceFinished = false;
         this.hiscoreChecked = false;
@@ -25,9 +25,9 @@ export class GameScene extends window.Phaser.Scene {
         this.TILE_SIZE = data.TILE_SIZE;
         this.worldData = data.worldData;
         this.worldData.startFix = data.startFix;
-        this.gameMode = data.gameMode || "PRACTICE";
+        this.gameMode = data.gameMode || "TRAINING";
         window._worldData = data.worldData;
-        if (this.gameMode === "PRACTICE") this.aiController = null;
+        if (this.gameMode === "TRAINING") this.aiController = null;
         this.raceFinished = false;
     }
 

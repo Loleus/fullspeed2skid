@@ -15,7 +15,7 @@ export function createHUD(scene, isMobile, cameraManager) {
       fontFamily: "Harting",
       fontSize: "20px",
       fill: "rgb(215, 215, 215)",
-      backgroundColor: "rgb(71, 71, 71)",
+      backgroundColor: "rgba(71, 71, 71, 0.71)",
       padding: { left: 8, right: 8, top: 4, bottom: 4 },
     })
     .setScrollFactor(0)

@@ -40,7 +40,7 @@ export class LapsTimer {
             fontSize: "55px",
             color: "#63db00ff",
             align: "center",
-            // backgroundColor: "rgba(22, 72, 10,0.67)",
+            backgroundColor: "rgba(71, 71, 71, 0.71)",
             padding: { left: 25, right: 25, top: 4, bottom: 58 },
         })
         .setOrigin(0.5, 0)

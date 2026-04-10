@@ -20,7 +20,7 @@ export class MenuUI {
       buttonHoverColor: Phaser.Display.Color.RGBStringToColor("rgb(56, 83, 3)").color,
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(38, 57, 0, 1)").color,
       buttonFontSize: '28px',
-      buttonFontFamily: 'Harting',
+      buttonFontFamily: 'Doto_Rounded-SemiBold',
       buttonTextColor: 'rgb(165, 199, 15)',
       buttonDisabledColor: '#666',
       offsetY: 30,
@@ -34,7 +34,7 @@ export class MenuUI {
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(92, 36, 5)").color,
         buttonTextColor: 'rgb(255, 151, 24)',
         interactionRadiusOffset: 0,
-        buttonFontSize: '58px',
+        buttonFontSize: '55px',
       },
       customMusicStyle: {
         buttonWidth: 110,

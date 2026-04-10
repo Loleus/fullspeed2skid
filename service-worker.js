@@ -23,6 +23,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/fonts/skid.ttf',
   '/fullspeed2skid/assets/fonts/punk_kid.ttf',
   '/fullspeed2skid/assets/fonts/Harting.ttf',
+  '/fullspeed2skid/assets/fonts/Doto_Rounded_SemiBold.ttf',
   // assets/images
   '/fullspeed2skid/assets/images/asphalt1.jpg',
   '/fullspeed2skid/assets/images/bgc.jpg',

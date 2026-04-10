@@ -8,14 +8,14 @@ export function createLogo(scene, menuStyle) {
     fontSize: '54px',
     // color: 'rgb(255, 255, 255)',
     align: 'center'
-  }).setShadow(2, -2, 'rgb(250, 214, 211)', 2, false, true);
+  }).setShadow(2, -2, 'rgb(250, 214, 211)', 1, false, true);
 
   const text1Shadow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: 'rgb(100, 12, 12)',
+    color: 'rgb(49, 4, 4)',
     align: 'center'
-  }).setShadow(0, 3, 'rgb(0, 0, 0)', 3, false, true);
+  }).setShadow(0, 3, 'rgb(0, 0, 0)', 1, false, true);
 
   const text2Glow = scene.add.text(0, 0, 'Skid', {
     fontFamily: 'punk_kid',

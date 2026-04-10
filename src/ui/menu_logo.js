@@ -6,14 +6,14 @@ export function createLogo(scene, menuStyle) {
   const text1Glow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: 'rgb(142, 0, 0)',
+    // color: 'rgb(255, 255, 255)',
     align: 'center'
-  }).setShadow(2, -2, 'rgb(250, 223, 132)', 2, false, true);
+  }).setShadow(2, -2, 'rgb(250, 214, 211)', 2, false, true);
 
   const text1Shadow = scene.add.text(0, 0, 'Full Speed 2', {
     fontFamily: 'skid',
     fontSize: '54px',
-    color: 'rgb(160, 33, 33)',
+    color: 'rgb(100, 12, 12)',
     align: 'center'
   }).setShadow(0, 3, 'rgb(0, 0, 0)', 3, false, true);
 
@@ -29,7 +29,15 @@ export function createLogo(scene, menuStyle) {
     fontSize: '80px',
     color: 'rgb(255, 255, 255)',
     align: 'center'
-  }).setShadow(-3, 3, 'rgb(194, 176, 171)', 1, false, true);
+  }).setShadow(-3, 3, 'rgb(255, 255, 255)', 4, false, true);
+
+  const gradient = text1Glow.context.createLinearGradient(0, 0, 0, text1Glow.height);
+  gradient.addColorStop(0, '#e2e2e2');
+  gradient.addColorStop(0.4, '#ff0000');
+  gradient.addColorStop(0.6, '#920000');
+  gradient.addColorStop(1, '#111111');
+  text1Glow.setStroke('#5d1010', 4);
+  text1Glow.setFill(gradient);
 
   const totalTitleWidth = text1Shadow.width + text2Shadow.width;
   const startX = width / 2 - totalTitleWidth / 2;
@@ -45,7 +53,7 @@ export function createLogo(scene, menuStyle) {
   text2Glow.setPosition(text2X, text2Y).setOrigin(0, 0.5);
 
   // Ustaw głębokość
-  text1Shadow.setDepth(2).setScale(1.02,1.02).setOrigin(0.01, 0.5) ;
+  text1Shadow.setDepth(2).setScale(1.02,1.02).setOrigin(0.007, 0.5) ;
   text1Glow.setDepth(3);
   text2Shadow.setDepth(2);
   text2Glow.setDepth(3);

@@ -21,7 +21,7 @@ body {
   margin: auto auto;
   width: 1280px;
   height: 720px;
-  image-rendering: pixelated; /* Wygładzanie tekstur */
+  image-rendering: smooth; /* Wygładzanie tekstur */
   /* box-shadow: 0 0 32px #000a; */
   background: #000;
   border: none;

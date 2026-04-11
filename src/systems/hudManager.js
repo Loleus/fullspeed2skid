@@ -1,12 +1,18 @@
 export function createHUD(scene, isMobile, cameraManager) {
   if (isMobile) {
     const control = {};
-    scene.game.events.on("hud-control", (ctrl) => {
+    const hudControlHandler = (ctrl) => {
       Object.assign(control, ctrl);
       if (ctrl.v) cameraManager.toggle();
       if (ctrl.r) scene.resetGame();
       if (ctrl.x) scene.exitToMenu();
+    };
+
+    scene.game.events.on("hud-control", hudControlHandler);
+    scene.events.on('shutdown', () => {
+      scene.game.events.off("hud-control", hudControlHandler);
     });
+
     return control;
   }
 

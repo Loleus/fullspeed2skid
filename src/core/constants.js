@@ -18,9 +18,9 @@ export const GAME_CONFIG = {
     height: 720
   },
   render: {
-    pixelArt: true, // wyłącza nearest-neighbor
-    antialias: false, // włącza wygładzanie tekstur
-    antialiasGL: false, // dodatkowe wygładzanie w WebGL
+    pixelArt: false, // wyłącza nearest-neighbor
+    antialias: true, // włącza wygładzanie tekstur
+    antialiasGL: true, // dodatkowe wygładzanie w WebGL
     roundPixels: false, // nie zaokrąglaj pozycji sprite'ów (ważne dla płynności ruchu)
     disableContextMenu: true, // blokuj menu po kliknięciu prawym przyciskiem myszy
     premultipliedAlpha: false

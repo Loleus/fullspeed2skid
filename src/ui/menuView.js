@@ -34,7 +34,7 @@ export class MenuUI {
         buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgb(92, 36, 5)").color,
         buttonTextColor: 'rgb(255, 151, 24)',
         interactionRadiusOffset: 0,
-        buttonFontSize: '55px',
+        buttonFontSize: '58px',
       },
       customMusicStyle: {
         buttonWidth: 110,

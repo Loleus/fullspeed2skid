@@ -34,7 +34,7 @@ export function createLogo(scene, menuStyle) {
   const gradient = text1Glow.context.createLinearGradient(0, 0, 0, text1Glow.height);
   gradient.addColorStop(0, '#e2e2e2');
   gradient.addColorStop(0.4, '#ff0000');
-  gradient.addColorStop(0.8, '#690404');
+  gradient.addColorStop(0.7, '#690404');
   gradient.addColorStop(1, '#111111');
   text1Glow.setStroke('#5d1010', 4);
   text1Glow.setFill(gradient);

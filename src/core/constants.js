@@ -22,8 +22,8 @@ export const GAME_CONFIG = {
     antialias: true, // włącza wygładzanie tekstur
     antialiasGL: true, // dodatkowe wygładzanie w WebGL
     roundPixels: false, // nie zaokrąglaj pozycji sprite'ów (ważne dla płynności ruchu)
-    disableContextMenu: true // blokuj menu po kliknięciu prawym przyciskiem myszy
-    // premultipliedAlpha: false
+    disableContextMenu: true, // blokuj menu po kliknięciu prawym przyciskiem myszy
+    premultipliedAlpha: false
   },
   physics: {
     default: 'arcade',      // silnik fizyczny typu arcade

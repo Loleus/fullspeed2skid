@@ -21,7 +21,7 @@ export class MenuUI {
       buttonStrokeColor: Phaser.Display.Color.RGBStringToColor("rgba(38, 57, 0, 1)").color,
       buttonFontSize: '28px',
       buttonFontFamily: 'Harting',
-      buttonTextColor: 'rgb(165, 199, 15)',
+      buttonTextColor: '#a5c70f',
       buttonDisabledColor: '#666',
       offsetY: 30,
       shadowOffsetDefault: { x: 4, y: 2 },

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fullspeed2skid-v2.6.5';
+const CACHE_NAME = 'fullspeed2skid-v2.6.6';
 const ASSETS = [
   // Root and main files
   '/fullspeed2skid/',
@@ -23,6 +23,7 @@ const ASSETS = [
   '/fullspeed2skid/assets/fonts/skid.ttf',
   '/fullspeed2skid/assets/fonts/punk_kid.ttf',
   '/fullspeed2skid/assets/fonts/Harting.ttf',
+  '/fullspeed2skid/assets/fonts/Doto_Rounded_SemiBold.ttf',
   // assets/images
   '/fullspeed2skid/assets/images/asphalt1.jpg',
   '/fullspeed2skid/assets/images/bgc.jpg',

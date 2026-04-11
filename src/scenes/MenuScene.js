@@ -160,6 +160,17 @@ export class MenuScene extends window.Phaser.Scene {
     if (this.ui) {
       this.ui.destroy();
     }
+    if (this.menuMusic) {
+      if (this.menuMusic.isPlaying) {
+        this.menuMusic.stop();
+      }
+      this.menuMusic.destroy();
+      this.menuMusic = null;
+    }
+    if (this.buttonClick) {
+      this.buttonClick.destroy();
+      this.buttonClick = null;
+    }
     console.log('[MenuScene] Scene shutdown - cleaned up');
   }
 }

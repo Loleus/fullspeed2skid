@@ -109,7 +109,7 @@ export class World {
     this.minimapOverlay.fillStyle(0xffff00, 1);
     this.minimapOverlay.fillCircle(aicarX, aiCarY, 3);
     }
-    this.minimapOverlay.fillStyle(0xffffff, 1);
+    this.minimapOverlay.fillStyle(0x63db00, 1);
     this.minimapOverlay.fillCircle(carX, carY, 3);
   }
 

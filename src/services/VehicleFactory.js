@@ -1,4 +1,3 @@
-// factories/VehicleFactory.js
 import { PlayerCar, AICar } from "../domain/index.js";
 
 export class VehicleFactory {

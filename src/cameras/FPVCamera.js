@@ -1,5 +1,3 @@
-// Kamera leci w helikopterze nad autem i próbuje je dogonić z opóźnieniem
-
 export class FPVCamera {
   constructor(scene, car) {
     this.scene = scene;
@@ -77,8 +75,6 @@ export class FPVCamera {
     // Resetuj rotację kamery po wyjściu z FPV
     this.originalCamera.setRotation(0);
   }
-  
-
   
   // Aktualizuj kamerę FPV
   update(dt) {

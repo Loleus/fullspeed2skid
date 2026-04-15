@@ -3,10 +3,10 @@ export class SkidMarks {
     this.enabled = enabled;
     this.wheelWidth = wheelWidth;
     this.lastWheelPos = [null, null, null, null];
-    // Dodajemy tablicę do śledzenia czasu rozpoczęcia 'palenia gumy' dla tylnych kół
+    // Dodaj tablicę do śledzenia czasu rozpoczęcia 'palenia gumy' dla tylnych kół
     this.burnoutStartTime = [null, null, null, null];
     this.burnoutDrawing = [false, false, false, false];
-    this._lastLog = [{}, {}, {}, {}, {}]; // Dodajemy tablicę do śledzenia czasu ostatnich logów
+    this._lastLog = [{}, {}, {}, {}, {}]; // Dodaj tablicę do śledzenia czasu ostatnich logów
   }
   clear() {
     this.lastWheelPos = [null, null, null, null];

@@ -180,8 +180,6 @@ export class AudioService {
     reset() {
         if (this.musicOn) {
             this.sounds.music?.isPlaying && this.sounds.music.stop();
-            // this.sounds.ambience?.isPlaying && this.sounds.ambience.stop();
-            // this.sounds.idle?.isPlaying && this.sounds.idle.stop();
             this.pitch = 0.0;
             if (this.sounds.race) {
                 this.sounds.race.setRate(1.0);

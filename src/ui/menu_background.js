@@ -30,7 +30,7 @@ export function createGradientOverlay(scene, gradientState) {
 const overlayImage = scene.add.image(0, 0, 'gradientOverlay')
   .setOrigin(0, 0)
   .setAlpha(1)
-  .setScrollFactor(0)  // ← dodaj tę linię
+  .setScrollFactor(0)
   .setDepth(0);
 
   return overlayImage;

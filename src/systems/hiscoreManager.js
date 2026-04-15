@@ -1,4 +1,3 @@
-// hiscoreManager.js
 export class HiscoreManager {
   constructor(options = {}) {
     this.storageKey = options.storageKey || 'mygame_hiscores';

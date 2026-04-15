@@ -1,2 +1,3 @@
 .ssl/
 .vscode/
+.node_modules/

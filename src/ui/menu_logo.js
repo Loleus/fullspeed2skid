@@ -52,7 +52,7 @@ export function createLogo(scene, menuStyle) {
   text2Shadow.setPosition(text2X, text2Y).setOrigin(0, 0.5);
   text2Glow.setPosition(text2X, text2Y).setOrigin(0, 0.5);
 
-  // Ustaw głębokość
+  // Ustaw głębokość warst logo
   text1Shadow.setDepth(2).setScale(1.02,1.02).setOrigin(0.007, 0.5) ;
   text1Glow.setDepth(3);
   text2Shadow.setDepth(2);

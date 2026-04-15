@@ -16,7 +16,7 @@ export class SmokeParticleEmitter {
         }
         this._freeTop = MAX_PARTICLES - 1;
         
-        // Dane cząstek w TypedArrays dla wydajności
+        // Dane cząstek
         this._px = new Float32Array(MAX_PARTICLES);
         this._py = new Float32Array(MAX_PARTICLES);
         this._vx = new Float32Array(MAX_PARTICLES);

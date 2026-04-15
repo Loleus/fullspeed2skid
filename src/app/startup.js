@@ -8,7 +8,7 @@ async function waitForFonts() {
     await document.fonts.load("40px skid");
     await document.fonts.load("50px Stormfaze");
     await document.fonts.load("50px Harting");
-    await document.fonts.ready;                   // Czekaj aż wszystkie czcionki będą gotowe
+    await document.fonts.ready; // Czekaj aż wszystkie czcionki będą gotowe
   }
 }
 

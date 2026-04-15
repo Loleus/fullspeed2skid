@@ -1,4 +1,4 @@
-// Import scen gry (ekran ładowania, menu, właściwa rozgrywka, HUD)
+// main.js - główny punkt wejścia do gry
 import { MenuScene } from '../scenes/MenuScene.js?v=2.5.8';
 import { LoadingScene } from '../scenes/LoadingScene.js?v=2.5.9';
 import { GameScene } from '../scenes/GameScene.js?v=2.5.9';

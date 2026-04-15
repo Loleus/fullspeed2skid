@@ -19,7 +19,6 @@ export class MenuScene extends window.Phaser.Scene {
   }
 
   preload() {
-    // Ładuj tekstury
     this.load.audio('menu_button', 'assets/audio/menu_button.wav');
     this.load.audio('menu_music', 'assets/audio/menu_music.mp3');
   }

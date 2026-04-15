@@ -1,5 +1,4 @@
 // HudScene.js - scena dedykowana HUD, przyciski gazu i hamulca na ekranie mobilnym
-
 export class HudScene extends window.Phaser.Scene {
   constructor() {
     super({ key: 'HudScene', active: true, visible: false });

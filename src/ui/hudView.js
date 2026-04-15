@@ -4,13 +4,13 @@ export class HudView {
     this.scene = scene;
     this.game = scene.game;
     this.control = {};
-    this._elements = [];         // wszystkie display objects do łatwego show/hide/destroy
+    this._elements = [];         // wszystkie display objects - show/hide/destroy
     this._pointerHandlers = [];  // referencje do handlerów żeby odpiąć później
     this.visible = true;
   }
 
   create() {
-    // identyczna logika sprawdzająca urządzenie mobilne jak w oryginale
+    // logika sprawdzająca urządzenie mobilne
     if (!this.scene.sys.game.device.os.android && !this.scene.sys.game.device.os.iOS) {
       // nie tworzymy nic na desktopie
       return;
@@ -46,7 +46,7 @@ export class HudView {
     // zainicjalizuj stan kontrolerów
     this.control = { up: false, down: false, v: false, r: false, x: false };
 
-    // podłącz pointery ale NIE EMITUJEMY globalnie - tylko aktualizujemy this.control
+    //  pointery nie emitują globalnie - tylko aktualizujemy this.control
     this._hookBtn(this.gasBtn, 'up');
     this._hookBtn(this.brakeBtn, 'down');
     this._hookBtn(this.vBtn, 'v');

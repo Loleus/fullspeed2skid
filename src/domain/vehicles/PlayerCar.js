@@ -137,10 +137,6 @@ export class PlayerCar extends Car {
     }
 
     // Aktualizuj sprite
-
-
-
-
     this.carSprite.x = this.carX;
     this.carSprite.y = this.carY;
 

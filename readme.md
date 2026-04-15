@@ -12,11 +12,13 @@
 - ⬇️ **Strzałka w dół** – hamowanie / cofanie
 - ⬅️➡️ **Strzałki lewo/prawo** – skręt
 
-lub
-
 - **W** – przyspieszenie
 - **S** – hamowanie / cofanie
 - **A / D** – skręt
+
+lub na urządzeniach mobilnych
+
+- ⬆️ ⬇️sterowanie dotykowe + ⬅️➡️ żyroskop (skręt)
 
 ---
 
@@ -54,7 +56,8 @@ lub
 ## 🚀 Uruchomienie
 
 1. Sklonuj repozytorium:
+
    ```bash
    git clone https://github.com/Loleus/fullspeed2skid.git
 
-wersja pliku 2.6.7
+wersja pliku 2.6.8

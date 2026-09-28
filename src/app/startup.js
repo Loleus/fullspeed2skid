@@ -30,44 +30,41 @@ function startGameNormally() {
   // Obserwuj cały dokument pod kątem dodawania elementów
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Dynamically import główny plik gry jako moduł JS
-  const script = document.createElement("script");
-  script.type = "module";
-  script.src = "src/app/main.js"; // Wersjonowanie dla cache'owania
-  document.body.appendChild(script);
+  import("./main.js");
 }
 
 // Poczekaj aż DOM zostanie załadowany
 window.addEventListener("DOMContentLoaded", async () => {
   await waitForFonts(); // Wczytaj czcionki
 
-  // Elementy związane z instalacją PWA
+  const isPortalBuild = import.meta.env.MODE === "portal";
   const installContainer = document.getElementById("install-pwa-container");
   const installBtn = document.getElementById("install-pwa-btn");
   let deferredPrompt = null;
 
-  // Obsługa zdarzenia instalacji aplikacji jako PWA
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault(); // Zablokuj domyślne okno instalacji
-    deferredPrompt = e; // Zapisz prompt do późniejszego użycia
-    installContainer.style.display = "block"; // Pokaż przycisk instalacji
+  if (!isPortalBuild) {
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installContainer.style.display = "block";
 
-    installBtn.onclick = () => {
-      installContainer.style.display = "none"; // Ukryj przycisk
-      deferredPrompt.prompt();                 // Wywołaj prompt instalacji
-      deferredPrompt.userChoice.then(() => {
-        deferredPrompt = null;                 // Wyczyść prompt
-        handleGyroPermission(startGameNormally); // Sprawdź dostęp do żyroskopu i uruchom grę
-      });
-    };
-  });
+      installBtn.onclick = () => {
+        installContainer.style.display = "none";
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          deferredPrompt = null;
+          handleGyroPermission(startGameNormally);
+        });
+      };
+    });
+  }
 
   // Funkcje pomocnicze do wykrywania platformy (iOS/Safari)
   const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isSafari = () => /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
   // Specjalna obsługa dla użytkowników iOS Safari bez trybu standalone
-  if (isIOS() && isSafari() && !window.navigator.standalone) {
+  if (!isPortalBuild && isIOS() && isSafari() && !window.navigator.standalone) {
     setTimeout(() => {
       document.getElementById("ios-pwa-instruction").style.display = "block"; // Pokaż instrukcję PWA dla iOS
       document.querySelector(".ios-pwa-close").onclick = function () {
@@ -84,7 +81,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Rejestracja Service Workera — zapewnia cache'owanie, tryb offline itp.
-if ('serviceWorker' in navigator) {
+if (import.meta.env.MODE !== "portal" && 'serviceWorker' in navigator) {
 
   navigator.serviceWorker.addEventListener('message', event => {
     if (event.data.type === 'NEW_VERSION_AVAILABLE') {
@@ -97,7 +94,7 @@ if ('serviceWorker' in navigator) {
   });
 
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/fullspeed2skid/service-worker.js')
+    navigator.serviceWorker.register(new URL("service-worker.js", document.baseURI))
       .then(registration => {
         registration.update(); // Wymuś sprawdzenie nowej wersji
       });

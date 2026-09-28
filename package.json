@@ -1,0 +1,17 @@
+{
+  "name": "fullspeed2skid",
+  "private": true,
+  "version": "2.7.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:pwa",
+    "build:pwa": "vite build --mode pwa",
+    "build:portal": "vite build --mode portal",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0",
+    "vite-plugin-singlefile": "^2.2.0"
+  }
+}

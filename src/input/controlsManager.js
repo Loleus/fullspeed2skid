@@ -1,8 +1,9 @@
 export function getControlState(scene) {
-  let upPressed = scene.cursors.up.isDown || scene.wasdKeys.up.isDown;
-  let downPressed = scene.cursors.down.isDown || scene.wasdKeys.down.isDown;
-  let leftPressed = scene.cursors.left.isDown || scene.wasdKeys.left.isDown;
-  let rightPressed = scene.cursors.right.isDown || scene.wasdKeys.right.isDown;
+  const keyboardEnabled = !scene.isHiscoreNameModalOpen;
+  let upPressed = keyboardEnabled && (scene.cursors.up.isDown || scene.wasdKeys.up.isDown);
+  let downPressed = keyboardEnabled && (scene.cursors.down.isDown || scene.wasdKeys.down.isDown);
+  let leftPressed = keyboardEnabled && (scene.cursors.left.isDown || scene.wasdKeys.left.isDown);
+  let rightPressed = keyboardEnabled && (scene.cursors.right.isDown || scene.wasdKeys.right.isDown);
 
   if (scene.isMobile()) {
     upPressed = scene.control && scene.control.up;
@@ -28,11 +29,12 @@ export function getControlState(scene) {
 }
 
 export function getControlStateP1(scene) {
+  const keyboardEnabled = !scene.isHiscoreNameModalOpen;
   // WASD jako priorytet dla gracza 1
-  let upPressed = scene.wasdKeys?.up?.isDown || false;
-  let downPressed = scene.wasdKeys?.down?.isDown || false;
-  let leftPressed = scene.wasdKeys?.left?.isDown || false;
-  let rightPressed = scene.wasdKeys?.right?.isDown || false;
+  let upPressed = keyboardEnabled && (scene.wasdKeys?.up?.isDown || false);
+  let downPressed = keyboardEnabled && (scene.wasdKeys?.down?.isDown || false);
+  let leftPressed = keyboardEnabled && (scene.wasdKeys?.left?.isDown || false);
+  let rightPressed = keyboardEnabled && (scene.wasdKeys?.right?.isDown || false);
 
   if (scene.isMobile()) {
     upPressed = scene.control && scene.control.up;
@@ -58,4 +60,3 @@ export function getControlStateP2(scene) {
   let rightPressed = scene.cursors?.right?.isDown || false;
   return { up: !!upPressed, down: !!downPressed, left: !!leftPressed, right: !!rightPressed };
 }
-

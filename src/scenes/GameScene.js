@@ -401,6 +401,7 @@ export class GameScene extends window.Phaser.Scene {
         this.collisionsEnabled = true;
         this.raceFinished = false;
         this.hiscoreChecked = false;
+        this.isHiscoreNameModalOpen = false;
         this.audioService = new AudioService(this);
     }
 
@@ -492,7 +493,7 @@ export class GameScene extends window.Phaser.Scene {
         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-        const totalLaps = this.gameMode === "RACE" ? 3 : 100;
+        const totalLaps = this.gameMode === "RACE" ? 1 : 100;
         this.lapsTimer = new LapsTimer(this, this.gameMode, totalLaps);
         this.lapsTimer.initializeCheckpoints(worldData.checkpoints);
 
@@ -526,7 +527,7 @@ export class GameScene extends window.Phaser.Scene {
         this.gradientState = { stop1: 0.035, stop2: 0.975 };
         this.gradientOverlay = createGradientOverlay(this, this.gradientState);
         this.cameras.main.ignore(this.gradientOverlay);
-        this.hiscoreService = new HiscoreService({});
+        this.hiscoreService = new HiscoreService({ scene: this });
         this.countdown = new CountdownManager(this);
 
         if (this.minimapa) {
@@ -598,24 +599,26 @@ export class GameScene extends window.Phaser.Scene {
             this.lapsTimer.startTimer();
         }
 
-        if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
+        if (!this.isHiscoreNameModalOpen) {
+            if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
 
-        if (this.gameMode === "RACE" && this.raceFinishText?.visible) {
-            if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) {
-                this.raceFinishText.setVisible(false);
-                this.resetGame();
+            if (this.gameMode === "RACE" && this.raceFinishText?.visible) {
+                if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) {
+                    this.raceFinishText.setVisible(false);
+                    this.resetGame();
+                }
+                if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) {
+                    this.exitToMenu();
+                }
             }
-            if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) {
-                this.exitToMenu();
-            }
+
+            if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
+            if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
         }
 
         if (this.gameMode === "RACE" && !this.raceFinished && this.lapsTimer.isRaceFinished()) {
             this.showRaceFinish();
         }
-
-        if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
-        if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
 
         const control = getControlState(this);
         if (countdownWasActive || (this.gameMode === "RACE" && this.raceFinished)) {

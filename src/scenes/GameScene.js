@@ -69,7 +69,7 @@
 //         this.vKey = keys.vKey;
 //         this.rKey = keys.rKey;
 //         this.xKey = keys.xKey;
-//         // Efekt dymu z rury wydechowej
+
 //         this.smokeEmitterP1 = new SmokeParticleEmitter(this, {
 //             maxParticles: 1000,
 //             textureKey: 'flares',
@@ -81,7 +81,7 @@
 //             textureKey: 'flares',
 //             frameKey: 'black'
 //         });
-//         // Drugie auto / AI
+
 //         const twoPlayers = !!worldData?.twoPlayers;
 //         if (!twoPlayers && this.gameMode === "RACE" && this.worldData.waypoints?.length > 0) {
 //             const aiStart = this.worldData.waypoints[0];
@@ -104,7 +104,7 @@
 //         this.cameraManager = new CameraManager(this, this.car, worldData.worldSize);
 //         this.hudInfoText = createHUD(this, this.isMobile(), this.cameraManager);
 
-//         const totalLaps = this.gameMode === "RACE" ? 3 : 100;
+//         const totalLaps = this.gameMode === "RACE" ? 5 : 100;
 //         this.lapsTimer = new LapsTimer(this, this.gameMode, totalLaps);
 //         this.lapsTimer.initializeCheckpoints(worldData.checkpoints);
 
@@ -134,6 +134,13 @@
 //         this.world = new World(this, worldData, this.TILE_SIZE, viewW, viewH);
 //         if (worldData.worldSize) this.worldSize = worldData.worldSize;
 
+//         // ważne: countdown przed await, żeby update nie trafiał na undefined
+//         this.gradientState = { stop1: 0.035, stop2: 0.975 };
+//         this.gradientOverlay = createGradientOverlay(this, this.gradientState);
+//         this.cameras.main.ignore(this.gradientOverlay);
+//         this.hiscoreService = new HiscoreService({});
+//         this.countdown = new CountdownManager(this);
+
 //         if (this.minimapa) {
 //             await this.world.initMinimap(worldData.svgPath, this.hudRoot);
 //         } else {
@@ -144,12 +151,7 @@
 //             this.hudCamera.setScroll(0, 0);
 //             this.hudCamera.setRotation(0);
 //         }
-//         // Gradient overlay (po createHUD i hudRoot)
-//         this.gradientState = { stop1: 0.035, stop2: 0.975 };
-//         this.gradientOverlay = createGradientOverlay(this, this.gradientState);
-//         this.cameras.main.ignore(this.gradientOverlay);
-//         this.hiscoreService = new HiscoreService({});
-//         this.countdown = new CountdownManager(this);
+
 //         this.countdown.start();
 //     }
 
@@ -161,6 +163,7 @@
 //         const worldY = carY + offsetX * sin + offsetY * cos;
 //         return { x: worldX, y: worldY };
 //     }
+
 //     updateSmokeForCar(controller, emitter, dt, control = null) {
 //         if (!controller || !emitter) return;
 
@@ -191,7 +194,10 @@
 
 //         emitter.update(dt);
 //     }
+
 //     update(time, dt) {
+//         if (!this.carController || !this.countdown || !this.lapsTimer || !this.world) return;
+
 //         const deltaSeconds = dt / 1000;
 
 //         const countdownWasActive = this.countdown?.isActive();
@@ -270,7 +276,7 @@
 //         const aiCarPos = this.aiController ? this.aiController.getPosition() : this.p2Controller ? this.p2Controller.getPosition() : null;
 
 //         if (this.world) this.world.drawTiles(carPos.x, carPos.y);
-//         this.skidMarksSystem.update()
+//         this.skidMarksSystem.update();
 
 //         if (this.minimapa && this.world) {
 //             this.world.drawMinimap(aiCarPos, carPos, this.worldSize, this.worldSize);
@@ -313,29 +319,31 @@
 //             lapsTimer: this.lapsTimer
 //         };
 
-//         if (!this.hiscoreService.checked(hiscoreParams)) return;
+//         if (!this.hiscoreService.checked?.(hiscoreParams) && this.hiscoreService.checked !== undefined) return;
 
 //         if (this.sound.mute) {
-//             this.hiscoreService.tryQualify(hiscoreParams);
+//             this.hiscoreService.tryQualify?.(hiscoreParams);
 //             return;
 //         }
 
 //         this.audioService.playApplause();
 //         this.time.delayedCall(10000, () => {
-//             this.hiscoreService.tryQualify(hiscoreParams);
+//             this.hiscoreService.tryQualify?.(hiscoreParams);
 //         });
 //     }
 
 //     resetGame() {
 //         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
 //             this.hiscoreChecked = false;
-//             this.audioService.reset();
-//             this.lapsTimer.reset();
+
+//             if (this.audioService?.reset) this.audioService.reset();
+//             if (this.lapsTimer?.reset) this.lapsTimer.reset();
 
 //             const worldData = this.worldData || window._worldData;
 //             const start = worldData.startPos;
 //             this.raceFinished = false;
-//             this.carController.resetState(start.x, start.y);
+
+//             this.carController?.resetState(start.x, start.y);
 
 //             if (this.aiController && this.worldData.waypoints?.length > 0) {
 //                 const aiStart = this.worldData.waypoints[0];
@@ -351,11 +359,25 @@
 //                 for (const tileObj of this.world.tilePool.values()) {
 //                     tileObj.setVisible(false);
 //                 }
+//                 if (this.world.minimapOverlay) this.world.minimapOverlay.clear();
 //             }
 
-//             this.cameraManager?.reset();
-//             this.skidMarksSystem.clear();
+//             if (this.cameraManager?.reset) this.cameraManager.reset();
+//             if (this.skidMarksSystem?.clear) this.skidMarksSystem.clear();
 
+//             // krytyczne: bezpiecznie zresetuj countdown zamiast zostawiać stare tweeny/teksty
+//             if (this.countdown) {
+//                 if (this.countdown.text) {
+//                     this.countdown.text.destroy();
+//                     this.countdown.text = null;
+//                 }
+//                 if (this.countdown.tween) {
+//                     this.countdown.tween.stop();
+//                     this.countdown.tween = null;
+//                 }
+//                 this.countdown.active = false;
+//             }
+//             this.countdown = new CountdownManager(this);
 //             this.countdown.start();
 //         }
 //     }
@@ -366,13 +388,10 @@
 //             const audioSvc = this.audioService || this.game?.audioService;
 
 //             setTimeout(() => {
-//                 // anuluj timery jeśli je rejestrujesz
 //                 audioSvc?.timers?.forEach(t => t.remove && t.remove());
 //                 audioSvc?.timers?.clear?.();
-//                 // zatrzymaj wszystkie znane soundy
 //                 Object.values(audioSvc?.sounds || {}).forEach(s => s?.stop && s.stop());
-//                 // opcjonalnie ustaw flagę po zatrzymaniu, audioSvc.suspended = true;
-//             }, 60); // 0 też działa, 60 ms daje WebAudio więcej czasu
+//             }, 60);
 //             this.scene.start("MenuScene");
 //         }
 //     }
@@ -401,6 +420,7 @@ export class GameScene extends window.Phaser.Scene {
         this.collisionsEnabled = true;
         this.raceFinished = false;
         this.hiscoreChecked = false;
+        this.isHiscoreNameModalOpen = false;
         this.audioService = new AudioService(this);
     }
 
@@ -526,7 +546,7 @@ export class GameScene extends window.Phaser.Scene {
         this.gradientState = { stop1: 0.035, stop2: 0.975 };
         this.gradientOverlay = createGradientOverlay(this, this.gradientState);
         this.cameras.main.ignore(this.gradientOverlay);
-        this.hiscoreService = new HiscoreService({});
+        this.hiscoreService = new HiscoreService({ scene: this });
         this.countdown = new CountdownManager(this);
 
         if (this.minimapa) {
@@ -598,24 +618,26 @@ export class GameScene extends window.Phaser.Scene {
             this.lapsTimer.startTimer();
         }
 
-        if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
+        if (!this.isHiscoreNameModalOpen) {
+            if (this.vKey && window.Phaser.Input.Keyboard.JustDown(this.vKey)) this.cameraManager.toggle();
 
-        if (this.gameMode === "RACE" && this.raceFinishText?.visible) {
-            if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) {
-                this.raceFinishText.setVisible(false);
-                this.resetGame();
+            if (this.gameMode === "RACE" && this.raceFinishText?.visible) {
+                if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) {
+                    this.raceFinishText.setVisible(false);
+                    this.resetGame();
+                }
+                if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) {
+                    this.exitToMenu();
+                }
             }
-            if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) {
-                this.exitToMenu();
-            }
+
+            if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
+            if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
         }
 
         if (this.gameMode === "RACE" && !this.raceFinished && this.lapsTimer.isRaceFinished()) {
             this.showRaceFinish();
         }
-
-        if (this.rKey && window.Phaser.Input.Keyboard.JustDown(this.rKey)) this.resetGame();
-        if (this.xKey && window.Phaser.Input.Keyboard.JustDown(this.xKey)) this.exitToMenu();
 
         const control = getControlState(this);
         if (countdownWasActive || (this.gameMode === "RACE" && this.raceFinished)) {

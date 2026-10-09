@@ -1,3 +1,246 @@
+// export class LapsTimer {
+//     constructor(scene, gameMode = "TRAINING", totalLaps) {
+//         this.scene = scene;
+//         this.gameMode = gameMode;
+//         this.totalLaps = gameMode === "TRAINING" ? 100 : totalLaps;
+
+//         this.currentLap = 0;
+//         this.raceFinished = false;
+//         this.timerStarted = false;
+
+//         this.lapTimes = {
+//             total: 0,
+//             bestLap: 0,
+//             currentLapStart: 0,
+//             lapsCompleted: 0
+//         };
+
+//         this.checkpoints = [];
+//         this.checkpointOrder = [1, 2, 3];
+//         this.expectedCheckpointIndex = 0;
+//         this._cpInside = new Map();
+//         this.hasCompletedFullLap = false;
+
+//         this.lapsText = null;
+//         this.lapTimerMainText = null;
+//         this.bestLapText = null;
+
+//         this._hudUpdateAccumulator = 0;
+//         this._hudUpdateInterval = 1 / 30;
+
+//         this.initializeHUD();
+//     }
+
+//     initializeHUD() {
+//         const { width } = this.scene.sys.game.canvas;
+//         const dispLaps = this.gameMode === "RACE" ? `LAP:${this.currentLap}/${this.totalLaps}` : "TRAINING";
+
+//         this.lapsText = this.scene.add.text(width / 2, 10, dispLaps, {
+//             fontFamily: "Harting",
+//             fontSize: "55px",
+//             color: "#63db00ff",
+//             align: "center",
+//             backgroundColor: "rgba(71, 71, 71, 0.71)",
+//             padding: { left: 25, right: 25, top: 4, bottom: 58 },
+//         })
+//         .setOrigin(0.5, 0)
+//         .setDepth(1000)
+//         .setShadow(3, 3, "#1d1d1dff", 2, false, true)
+//         .setScrollFactor(0);
+
+//         this.lapTimerMainText = this.scene.add.text(width / 2, 70, "", {
+//             fontFamily: "Harting",
+//             fontSize: "23px",
+//             color: "#63db00ff",
+//             align: "center",
+//             padding: { left: 6, right: 8, top: 0, bottom: 4 },
+//         })
+//         .setOrigin(0.5, 0)
+//         .setDepth(1000)
+//         .setShadow(1, 1, "#1d1d1dff", 1, false, true)
+//         .setScrollFactor(0);
+
+//         this.bestLapText = this.scene.add.text(width / 2, 70 + 25, "BEST LAP: 0:00'00\"", {
+//             fontFamily: "Harting",
+//             fontSize: "20px",
+//             color: "#63db00ff",
+//             align: "center",
+//             padding: { left: 13, right: 15, top: 4, bottom: 4 },
+//         })
+//         .setOrigin(0.5, 0)
+//         .setDepth(1000)
+//         .setShadow(1, 1, "#1d1d1dff", 1, false, true)
+//         .setScrollFactor(0);
+
+//         this.updateLapTimerDisplay();
+//     }
+
+//     msToStandardTime(ms) {
+//         const totalMs = Math.floor(ms);
+//         const hours = Math.floor(totalMs / 3600000);
+//         const minutes = Math.floor((totalMs % 3600000) / 60000);
+//         const seconds = Math.floor((totalMs % 60000) / 1000);
+//         const centiseconds = Math.floor((totalMs % 1000) / 10);
+
+//         return `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${centiseconds.toString().padStart(2, '0')}`;
+//     }   
+
+//     updateLapTimerDisplay() {
+//         // użyj helpera dla całkowitego czasu
+//         const totalMs = Math.floor(this.lapTimes.total * 1000);
+//         const formattedMain = this.msToStandardTime(totalMs);
+//         this._totalFormatted = formattedMain;
+//         if (this.lapTimerMainText) {
+//             this.lapTimerMainText.setText(`TOTAL: ${formattedMain}`);
+//         }
+
+//         // BEST LAP: użyj tej samej funkcji pomocniczej
+//         if (this.bestLapText) {
+//             const best = this.lapTimes.bestLap;
+//             if (best && best > 0) {
+//                 const bestMs = Math.floor(best * 1000);
+//                 const formattedBest = this.msToStandardTime(bestMs);
+//                 this.bestLapText.setText(`BEST LAP: ${formattedBest}`);
+//             } else {
+//                 this.bestLapText.setText(`BEST LAP: 0:00'00"00`);
+//             }
+//         }
+//     }
+    
+//     updateLapsDisplay() {
+//         const dispLaps = this.gameMode === "RACE" ? `LAP:${this.currentLap}/${this.totalLaps}` : "TRAINING";
+//         if (this.lapsText) {
+//             this.lapsText.setText(dispLaps);
+//         }
+//     }
+
+//     update(deltaTime) {
+//         if (this.timerStarted && !this.raceFinished) {
+//             this.lapTimes.total += deltaTime;
+
+//             this._hudUpdateAccumulator += deltaTime;
+//             if (this._hudUpdateAccumulator >= this._hudUpdateInterval) {
+//                 this.updateLapTimerDisplay();
+//                 this._hudUpdateAccumulator = 0;
+//             }
+//         }
+//     }
+    
+//     startTimer() {
+//         if (!this.timerStarted) {
+//             this.timerStarted = true;
+//             this.lapTimes.currentLapStart = 0;
+//         }
+//     }
+
+//     completeLap() {
+//         if (this.raceFinished) return;
+
+//         const currentLapTime = this.lapTimes.total - this.lapTimes.currentLapStart;
+
+//         if (this.lapTimes.bestLap === 0 || currentLapTime < this.lapTimes.bestLap) {
+//             this.lapTimes.bestLap = currentLapTime;
+//         }
+
+//         this.lapTimes.currentLapStart = this.lapTimes.total;
+//         this.updateLapTimerDisplay();
+//     }
+
+//     checkpointUpdate(carPosition) {
+//         if (!this.checkpoints || this.checkpoints.length === 0) return;
+
+//         for (const cp of this.checkpoints) {
+//             const inside = carPosition.x >= cp.x &&
+//                            carPosition.x <= cp.x + cp.w &&
+//                            carPosition.y >= cp.y &&
+//                            carPosition.y <= cp.y + cp.h;
+//             const wasInside = this._cpInside.get(cp.id);
+
+//             if (inside && !wasInside) {
+//                 const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
+
+//                 if (cp.id === expectedId) {
+//                     this.expectedCheckpointIndex++;
+
+//                     if (this.expectedCheckpointIndex >= this.checkpointOrder.length) {
+//                         this.hasCompletedFullLap = true;
+//                         this.expectedCheckpointIndex = 0;
+//                     }
+
+//                     if (cp.id === 1 && this.hasCompletedFullLap) {
+//                         if (this.currentLap < this.totalLaps) {
+//                             this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
+//                             this.updateLapsDisplay();
+//                             this.completeLap();
+
+//                             if (this.currentLap >= this.totalLaps) {
+//                                 this.raceFinished = true;
+//                             }
+//                         }
+//                         this.hasCompletedFullLap = false;
+//                     }
+//                 }
+//             }
+//             this._cpInside.set(cp.id, inside);
+//         }
+//     }
+
+//     initializeCheckpoints(checkpointsData) {
+//         if (!Array.isArray(checkpointsData)) return;
+
+//         this.checkpoints = [...checkpointsData];
+//         this.checkpoints.sort((a, b) => a.id - b.id);
+//         this._cpInside = new Map(this.checkpoints.map((cp) => [cp.id, false]));
+//     }
+
+//     reset() {
+//         this.currentLap = 0;
+//         this.expectedCheckpointIndex = 0;
+//         this.hasCompletedFullLap = false;
+//         this.timerStarted = false;
+//         this.raceFinished = false;
+
+//         this.lapTimes = {
+//             total: 0,
+//             bestLap: 0,
+//             currentLapStart: 0,
+//             lapsCompleted: 0
+//         };
+
+//         this._hudUpdateAccumulator = 0;
+
+//         this.updateLapsDisplay();
+//         this.updateLapTimerDisplay();
+
+//         if (this._cpInside) {
+//             for (const key of this._cpInside.keys()) {
+//                 this._cpInside.set(key, false);
+//             }
+//         }
+//     }
+
+//     getHUDElements() {
+//         return [this.lapsText, this.lapTimerMainText, this.bestLapText];
+//     }
+
+//     isRaceFinished() {
+//         return this.raceFinished;
+//     }
+
+//     isTimerStarted() {
+//         return this.timerStarted;
+//     }
+
+//     getCurrentLap() {
+//         return this.currentLap;
+//     }
+
+//     getLapTimes() {
+//         return { ...this.lapTimes };
+//     }
+// }
+
+
 export class LapsTimer {
     constructor(scene, gameMode = "TRAINING", totalLaps) {
         this.scene = scene;
@@ -25,15 +268,22 @@ export class LapsTimer {
         this.lapTimerMainText = null;
         this.bestLapText = null;
 
+        // Liczenie czasu pozostaje ciągłe; ograniczamy tylko odświeżanie tekstu.
         this._hudUpdateAccumulator = 0;
-        this._hudUpdateInterval = 1 / 30;
+        this._hudUpdateInterval = 0.1;
+
+        this._lastTotalCentiseconds = null;
+        this._lastBestCentiseconds = null;
 
         this.initializeHUD();
     }
 
     initializeHUD() {
         const { width } = this.scene.sys.game.canvas;
-        const dispLaps = this.gameMode === "RACE" ? `LAP:${this.currentLap}/${this.totalLaps}` : "TRAINING";
+        const dispLaps =
+            this.gameMode === "RACE"
+                ? `LAP:${this.currentLap}/${this.totalLaps}`
+                : "TRAINING";
 
         this.lapsText = this.scene.add.text(width / 2, 10, dispLaps, {
             fontFamily: "Harting",
@@ -43,10 +293,10 @@ export class LapsTimer {
             backgroundColor: "rgba(71, 71, 71, 0.71)",
             padding: { left: 25, right: 25, top: 4, bottom: 58 },
         })
-        .setOrigin(0.5, 0)
-        .setDepth(1000)
-        .setShadow(3, 3, "#1d1d1dff", 2, false, true)
-        .setScrollFactor(0);
+            .setOrigin(0.5, 0)
+            .setDepth(1000)
+            .setShadow(3, 3, "#1d1d1dff", 2, false, true)
+            .setScrollFactor(0);
 
         this.lapTimerMainText = this.scene.add.text(width / 2, 70, "", {
             fontFamily: "Harting",
@@ -55,24 +305,29 @@ export class LapsTimer {
             align: "center",
             padding: { left: 6, right: 8, top: 0, bottom: 4 },
         })
-        .setOrigin(0.5, 0)
-        .setDepth(1000)
-        .setShadow(1, 1, "#1d1d1dff", 1, false, true)
-        .setScrollFactor(0);
+            .setOrigin(0.5, 0)
+            .setDepth(1000)
+            .setShadow(1, 1, "#1d1d1dff", 1, false, true)
+            .setScrollFactor(0);
 
-        this.bestLapText = this.scene.add.text(width / 2, 70 + 25, "BEST LAP: 0:00'00\"", {
-            fontFamily: "Harting",
-            fontSize: "20px",
-            color: "#63db00ff",
-            align: "center",
-            padding: { left: 13, right: 15, top: 4, bottom: 4 },
-        })
-        .setOrigin(0.5, 0)
-        .setDepth(1000)
-        .setShadow(1, 1, "#1d1d1dff", 1, false, true)
-        .setScrollFactor(0);
+        this.bestLapText = this.scene.add.text(
+            width / 2,
+            70 + 25,
+            `BEST LAP: 0:00'00"00`,
+            {
+                fontFamily: "Harting",
+                fontSize: "20px",
+                color: "#63db00ff",
+                align: "center",
+                padding: { left: 13, right: 15, top: 4, bottom: 4 },
+            }
+        )
+            .setOrigin(0.5, 0)
+            .setDepth(1000)
+            .setShadow(1, 1, "#1d1d1dff", 1, false, true)
+            .setScrollFactor(0);
 
-        this.updateLapTimerDisplay();
+        this.updateLapTimerDisplay(true);
     }
 
     msToStandardTime(ms) {
@@ -82,50 +337,83 @@ export class LapsTimer {
         const seconds = Math.floor((totalMs % 60000) / 1000);
         const centiseconds = Math.floor((totalMs % 1000) / 10);
 
-        return `${hours}:${minutes.toString().padStart(2, '0')}'${seconds.toString().padStart(2, '0')}"${centiseconds.toString().padStart(2, '0')}`;
-    }   
+        return `${hours}:${minutes.toString().padStart(2, "0")}'${seconds
+            .toString()
+            .padStart(2, "0")}"${centiseconds
+            .toString()
+            .padStart(2, "0")}`;
+    }
 
-    updateLapTimerDisplay() {
-        // użyj helpera dla całkowitego czasu
-        const totalMs = Math.floor(this.lapTimes.total * 1000);
-        const formattedMain = this.msToStandardTime(totalMs);
-        this._totalFormatted = formattedMain;
+    updateLapTimerDisplay(force = false) {
         if (this.lapTimerMainText) {
-            this.lapTimerMainText.setText(`TOTAL: ${formattedMain}`);
+            const totalCentiseconds = Math.floor(this.lapTimes.total * 100);
+
+            if (
+                force ||
+                totalCentiseconds !== this._lastTotalCentiseconds
+            ) {
+                this._lastTotalCentiseconds = totalCentiseconds;
+
+                const text =
+                    `TOTAL: ${this.msToStandardTime(totalCentiseconds * 10)}`;
+
+                if (this.lapTimerMainText.text !== text) {
+                    this.lapTimerMainText.setText(text);
+                }
+            }
         }
 
-        // BEST LAP: użyj tej samej funkcji pomocniczej
         if (this.bestLapText) {
-            const best = this.lapTimes.bestLap;
-            if (best && best > 0) {
-                const bestMs = Math.floor(best * 1000);
-                const formattedBest = this.msToStandardTime(bestMs);
-                this.bestLapText.setText(`BEST LAP: ${formattedBest}`);
-            } else {
-                this.bestLapText.setText(`BEST LAP: 0:00'00"00`);
+            const bestCentiseconds =
+                this.lapTimes.bestLap > 0
+                    ? Math.floor(this.lapTimes.bestLap * 100)
+                    : 0;
+
+            if (
+                force ||
+                bestCentiseconds !== this._lastBestCentiseconds
+            ) {
+                this._lastBestCentiseconds = bestCentiseconds;
+
+                const formattedBest =
+                    bestCentiseconds > 0
+                        ? this.msToStandardTime(bestCentiseconds * 10)
+                        : `0:00'00"00`;
+
+                const text = `BEST LAP: ${formattedBest}`;
+
+                if (this.bestLapText.text !== text) {
+                    this.bestLapText.setText(text);
+                }
             }
         }
     }
-    
+
     updateLapsDisplay() {
-        const dispLaps = this.gameMode === "RACE" ? `LAP:${this.currentLap}/${this.totalLaps}` : "TRAINING";
-        if (this.lapsText) {
+        const dispLaps =
+            this.gameMode === "RACE"
+                ? `LAP:${this.currentLap}/${this.totalLaps}`
+                : "TRAINING";
+
+        if (this.lapsText && this.lapsText.text !== dispLaps) {
             this.lapsText.setText(dispLaps);
         }
     }
 
     update(deltaTime) {
-        if (this.timerStarted && !this.raceFinished) {
-            this.lapTimes.total += deltaTime;
+        if (!this.timerStarted || this.raceFinished) {
+            return;
+        }
 
-            this._hudUpdateAccumulator += deltaTime;
-            if (this._hudUpdateAccumulator >= this._hudUpdateInterval) {
-                this.updateLapTimerDisplay();
-                this._hudUpdateAccumulator = 0;
-            }
+        this.lapTimes.total += deltaTime;
+        this._hudUpdateAccumulator += deltaTime;
+
+        if (this._hudUpdateAccumulator >= this._hudUpdateInterval) {
+            this._hudUpdateAccumulator %= this._hudUpdateInterval;
+            this.updateLapTimerDisplay();
         }
     }
-    
+
     startTimer() {
         if (!this.timerStarted) {
             this.timerStarted = true;
@@ -136,13 +424,19 @@ export class LapsTimer {
     completeLap() {
         if (this.raceFinished) return;
 
-        const currentLapTime = this.lapTimes.total - this.lapTimes.currentLapStart;
+        const currentLapTime =
+            this.lapTimes.total - this.lapTimes.currentLapStart;
 
-        if (this.lapTimes.bestLap === 0 || currentLapTime < this.lapTimes.bestLap) {
+        if (
+            this.lapTimes.bestLap === 0 ||
+            currentLapTime < this.lapTimes.bestLap
+        ) {
             this.lapTimes.bestLap = currentLapTime;
         }
 
         this.lapTimes.currentLapStart = this.lapTimes.total;
+
+        // Od razu pokaż nowy best lap, jeśli właśnie się zmienił.
         this.updateLapTimerDisplay();
     }
 
@@ -150,26 +444,36 @@ export class LapsTimer {
         if (!this.checkpoints || this.checkpoints.length === 0) return;
 
         for (const cp of this.checkpoints) {
-            const inside = carPosition.x >= cp.x &&
-                           carPosition.x <= cp.x + cp.w &&
-                           carPosition.y >= cp.y &&
-                           carPosition.y <= cp.y + cp.h;
+            const inside =
+                carPosition.x >= cp.x &&
+                carPosition.x <= cp.x + cp.w &&
+                carPosition.y >= cp.y &&
+                carPosition.y <= cp.y + cp.h;
+
             const wasInside = this._cpInside.get(cp.id);
 
             if (inside && !wasInside) {
-                const expectedId = this.checkpointOrder[this.expectedCheckpointIndex];
+                const expectedId =
+                    this.checkpointOrder[this.expectedCheckpointIndex];
 
                 if (cp.id === expectedId) {
                     this.expectedCheckpointIndex++;
 
-                    if (this.expectedCheckpointIndex >= this.checkpointOrder.length) {
+                    if (
+                        this.expectedCheckpointIndex >=
+                        this.checkpointOrder.length
+                    ) {
                         this.hasCompletedFullLap = true;
                         this.expectedCheckpointIndex = 0;
                     }
 
                     if (cp.id === 1 && this.hasCompletedFullLap) {
                         if (this.currentLap < this.totalLaps) {
-                            this.currentLap = Math.min(this.currentLap + 1, this.totalLaps);
+                            this.currentLap = Math.min(
+                                this.currentLap + 1,
+                                this.totalLaps
+                            );
+
                             this.updateLapsDisplay();
                             this.completeLap();
 
@@ -177,10 +481,12 @@ export class LapsTimer {
                                 this.raceFinished = true;
                             }
                         }
+
                         this.hasCompletedFullLap = false;
                     }
                 }
             }
+
             this._cpInside.set(cp.id, inside);
         }
     }
@@ -190,7 +496,9 @@ export class LapsTimer {
 
         this.checkpoints = [...checkpointsData];
         this.checkpoints.sort((a, b) => a.id - b.id);
-        this._cpInside = new Map(this.checkpoints.map((cp) => [cp.id, false]));
+        this._cpInside = new Map(
+            this.checkpoints.map((cp) => [cp.id, false])
+        );
     }
 
     reset() {
@@ -210,7 +518,7 @@ export class LapsTimer {
         this._hudUpdateAccumulator = 0;
 
         this.updateLapsDisplay();
-        this.updateLapTimerDisplay();
+        this.updateLapTimerDisplay(true);
 
         if (this._cpInside) {
             for (const key of this._cpInside.keys()) {
@@ -220,7 +528,11 @@ export class LapsTimer {
     }
 
     getHUDElements() {
-        return [this.lapsText, this.lapTimerMainText, this.bestLapText];
+        return [
+            this.lapsText,
+            this.lapTimerMainText,
+            this.bestLapText
+        ];
     }
 
     isRaceFinished() {

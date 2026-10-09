@@ -267,16 +267,12 @@ export class LapsTimer {
         this.lapTimerMainText = null;
         this.bestLapText = null;
 
-        // Timer nadal liczy się każdą klatkę; odświeżany jest tylko tekst HUD-u.
+        // Liczenie czasu pozostaje ciągłe; ograniczamy tylko odświeżanie tekstu.
         this._hudUpdateAccumulator = 0;
-        this._hudUpdateInterval = 1 / 20;
+        this._hudUpdateInterval = 0.1;
 
-        // Cache tekstów/wartości pokazanych w HUD-zie.
-        this._lastMainCentiseconds = -1;
-        this._lastBestCentiseconds = -1;
-        this._lastMainText = null;
-        this._lastBestText = null;
-        this._lastLapsText = null;
+        this._lastTotalCentiseconds = null;
+        this._lastBestCentiseconds = null;
 
         this.initializeHUD();
     }
@@ -331,18 +327,20 @@ export class LapsTimer {
             .setScrollFactor(0);
 
         this.updateLapTimerDisplay(true);
-        this.updateLapsDisplay();
     }
 
     msToStandardTime(ms) {
-        const totalMs = Math.max(0, Math.floor(ms));
-
+        const totalMs = Math.floor(ms);
         const hours = Math.floor(totalMs / 3600000);
         const minutes = Math.floor((totalMs % 3600000) / 60000);
         const seconds = Math.floor((totalMs % 60000) / 1000);
         const centiseconds = Math.floor((totalMs % 1000) / 10);
 
-        return `${hours}:${minutes < 10 ? "0" : ""}${minutes}'${seconds < 10 ? "0" : ""}${seconds}"${centiseconds < 10 ? "0" : ""}${centiseconds}`;
+        return `${hours}:${minutes.toString().padStart(2, "0")}'${seconds
+            .toString()
+            .padStart(2, "0")}"${centiseconds
+            .toString()
+            .padStart(2, "0")}`;
     }
 
     updateLapTimerDisplay(force = false) {
@@ -351,17 +349,14 @@ export class LapsTimer {
 
             if (
                 force ||
-                totalCentiseconds !== this._lastMainCentiseconds
+                totalCentiseconds !== this._lastTotalCentiseconds
             ) {
-                this._lastMainCentiseconds = totalCentiseconds;
+                this._lastTotalCentiseconds = totalCentiseconds;
 
-                const formattedMain = this.msToStandardTime(
-                    totalCentiseconds * 10
-                );
-                const text = `TOTAL: ${formattedMain}`;
+                const text =
+                    `TOTAL: ${this.msToStandardTime(totalCentiseconds * 10)}`;
 
-                if (text !== this._lastMainText) {
-                    this._lastMainText = text;
+                if (this.lapTimerMainText.text !== text) {
                     this.lapTimerMainText.setText(text);
                 }
             }
@@ -386,8 +381,7 @@ export class LapsTimer {
 
                 const text = `BEST LAP: ${formattedBest}`;
 
-                if (text !== this._lastBestText) {
-                    this._lastBestText = text;
+                if (this.bestLapText.text !== text) {
                     this.bestLapText.setText(text);
                 }
             }
@@ -400,12 +394,9 @@ export class LapsTimer {
                 ? `LAP:${this.currentLap}/${this.totalLaps}`
                 : "TRAINING";
 
-        if (!this.lapsText || dispLaps === this._lastLapsText) {
-            return;
+        if (this.lapsText && this.lapsText.text !== dispLaps) {
+            this.lapsText.setText(dispLaps);
         }
-
-        this._lastLapsText = dispLaps;
-        this.lapsText.setText(dispLaps);
     }
 
     update(deltaTime) {
@@ -417,7 +408,6 @@ export class LapsTimer {
         this._hudUpdateAccumulator += deltaTime;
 
         if (this._hudUpdateAccumulator >= this._hudUpdateInterval) {
-            // Zachowaj nadwyżkę, zamiast gubić ją przy każdym odświeżeniu.
             this._hudUpdateAccumulator %= this._hudUpdateInterval;
             this.updateLapTimerDisplay();
         }
@@ -431,9 +421,7 @@ export class LapsTimer {
     }
 
     completeLap() {
-        if (this.raceFinished) {
-            return;
-        }
+        if (this.raceFinished) return;
 
         const currentLapTime =
             this.lapTimes.total - this.lapTimes.currentLapStart;
@@ -447,14 +435,12 @@ export class LapsTimer {
 
         this.lapTimes.currentLapStart = this.lapTimes.total;
 
-        // Okrążenie może skończyć się pomiędzy odświeżeniami HUD-u.
-        this.updateLapTimerDisplay(true);
+        // Od razu pokaż nowy best lap, jeśli właśnie się zmienił.
+        this.updateLapTimerDisplay();
     }
 
     checkpointUpdate(carPosition) {
-        if (!this.checkpoints || this.checkpoints.length === 0) {
-            return;
-        }
+        if (!this.checkpoints || this.checkpoints.length === 0) return;
 
         for (const cp of this.checkpoints) {
             const inside =
@@ -465,58 +451,47 @@ export class LapsTimer {
 
             const wasInside = this._cpInside.get(cp.id);
 
-            // Aktualizuj Mapę tylko przy zmianie stanu checkpointu.
-            if (inside === wasInside) {
-                continue;
+            if (inside && !wasInside) {
+                const expectedId =
+                    this.checkpointOrder[this.expectedCheckpointIndex];
+
+                if (cp.id === expectedId) {
+                    this.expectedCheckpointIndex++;
+
+                    if (
+                        this.expectedCheckpointIndex >=
+                        this.checkpointOrder.length
+                    ) {
+                        this.hasCompletedFullLap = true;
+                        this.expectedCheckpointIndex = 0;
+                    }
+
+                    if (cp.id === 1 && this.hasCompletedFullLap) {
+                        if (this.currentLap < this.totalLaps) {
+                            this.currentLap = Math.min(
+                                this.currentLap + 1,
+                                this.totalLaps
+                            );
+
+                            this.updateLapsDisplay();
+                            this.completeLap();
+
+                            if (this.currentLap >= this.totalLaps) {
+                                this.raceFinished = true;
+                            }
+                        }
+
+                        this.hasCompletedFullLap = false;
+                    }
+                }
             }
 
             this._cpInside.set(cp.id, inside);
-
-            if (!inside) {
-                continue;
-            }
-
-            const expectedId =
-                this.checkpointOrder[this.expectedCheckpointIndex];
-
-            if (cp.id !== expectedId) {
-                continue;
-            }
-
-            this.expectedCheckpointIndex++;
-
-            if (
-                this.expectedCheckpointIndex >=
-                this.checkpointOrder.length
-            ) {
-                this.hasCompletedFullLap = true;
-                this.expectedCheckpointIndex = 0;
-            }
-
-            if (cp.id === 1 && this.hasCompletedFullLap) {
-                if (this.currentLap < this.totalLaps) {
-                    this.currentLap = Math.min(
-                        this.currentLap + 1,
-                        this.totalLaps
-                    );
-
-                    this.updateLapsDisplay();
-                    this.completeLap();
-
-                    if (this.currentLap >= this.totalLaps) {
-                        this.raceFinished = true;
-                    }
-                }
-
-                this.hasCompletedFullLap = false;
-            }
         }
     }
 
     initializeCheckpoints(checkpointsData) {
-        if (!Array.isArray(checkpointsData)) {
-            return;
-        }
+        if (!Array.isArray(checkpointsData)) return;
 
         this.checkpoints = [...checkpointsData];
         this.checkpoints.sort((a, b) => a.id - b.id);
@@ -544,8 +519,10 @@ export class LapsTimer {
         this.updateLapsDisplay();
         this.updateLapTimerDisplay(true);
 
-        for (const cp of this.checkpoints) {
-            this._cpInside.set(cp.id, false);
+        if (this._cpInside) {
+            for (const key of this._cpInside.keys()) {
+                this._cpInside.set(key, false);
+            }
         }
     }
 

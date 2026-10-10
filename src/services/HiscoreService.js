@@ -146,11 +146,11 @@ export class HiscoreService {
   `;
 
     modal.innerHTML = `
-    <div style="background: white; padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-      <h2 style="margin: 0 0 20px 0; color: #333;">NEW HISCORE!</h2>
-      <p style="margin: 0 0 15px 0; color: #666;">Enter your name:</p>
+    <div style="background: green;font-family: Harting ; padding: 30px; border-radius: 8px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+      <h2 style="margin: 0 0 20px 0; color: #c6e5a7;">NEW HISCORE!</h2>
+      <p style="margin: 0 0 15px 0; color: #7be90d;">Enter your name:</p>
       <input type="text" id="nick-input" value="${defaultNick}" maxlength="8"
-        style="width: 200px; padding: 10px; font-size: 16px; margin-bottom: 20px; border: 2px solid #ddd; border-radius: 4px;">
+        style="width: 200px; padding: 10px; font-size: 16px; margin-bottom: 20px; border: 0px solid #ddd; border-radius: 4px;">
       <div>
         <button id="confirm-btn" style="padding: 10px 20px; margin-right: 10px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">OK</button>
         <button id="cancel-btn" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>

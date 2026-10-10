@@ -503,7 +503,7 @@ export class GameScene extends window.Phaser.Scene {
 
 
 
-        const totalLaps = this.gameMode === "RACE" ? 5 : 100;
+        const totalLaps = this.gameMode === "RACE" ? 1 : 100;
 
 
         
@@ -747,7 +747,7 @@ export class GameScene extends window.Phaser.Scene {
         if (this.scene.isActive("GameScene") && !this.scene.isActive('MenuScene')) {
             this.hiscoreChecked = false;
 
-            if (this.audioService?.reset) this.audioService.reset();
+            this.audioService.reset();
             if (this.lapsTimer?.reset) this.lapsTimer.reset();
 
             const worldData = this.worldData || window._worldData;

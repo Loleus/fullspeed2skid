@@ -201,6 +201,7 @@ export class AudioService {
         this.sounds = {};
         this.musicOn = false;
         this._delayedCalls = []; // Track all delayed calls for cleanup
+        this._countdownAudioStarted = false;
 
         // Wewnętrzny stan do zarządzania dźwiękiem silnika
         this.maxPitch = 0.5;
@@ -280,20 +281,27 @@ export class AudioService {
         if (!control || !carController) return;
 
         if (countdownWasActive) {
-            if (this.sounds.idle && this.sounds.countdownSound && this.sounds.ambience) {
-                if (!this.sounds.idle.isPlaying && !this.sounds.countdownSound.isPlaying && !this.sounds.ambience.isPlaying) {
-                    this.sounds.countdownSound.play();
+            if (!this._countdownAudioStarted) {
+                this._countdownAudioStarted = true;
+                this.sounds.countdownSound?.play();
+                if (this.sounds.ambience && !this.sounds.ambience.isPlaying) {
                     this.sounds.ambience.play();
+                }
+                if (this.sounds.idle && !this.sounds.idle.isPlaying) {
                     this.sounds.idle.play();
-                    if (gameMode === "RACE") {
-                        this.sounds.music && this.sounds.music.play();
-                    } else {
-                        this.sounds.music && this.sounds.music.stop();
+                }
+                if (gameMode === "RACE") {
+                    if (this.sounds.music && !this.sounds.music.isPlaying) {
+                        this.sounds.music.play();
                     }
+                } else {
+                    this.sounds.music?.stop();
                 }
             }
             return;
         }
+
+        this._countdownAudioStarted = false;
 
         const boom = carController.collisionCount > 0;
         const AIboom = aiController ? aiController.collisionCount > 0 : null;
@@ -410,6 +418,17 @@ export class AudioService {
     playApplause() {
         if (this.musicOn && this.sounds.applause && !this.sounds.applause.isPlaying) {
             this.sounds.applause.play();
+        }
+    }
+
+    reset() {
+        this._cancelDelayedCalls();
+        this._countdownAudioStarted = false;
+        this.pitch = 0.0;
+        this.isThrottle = false;
+
+        for (const sound of Object.values(this.sounds)) {
+            sound?.stop();
         }
     }
 
